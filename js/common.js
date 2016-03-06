@@ -37,8 +37,10 @@ jstorrent.constants = {
     chunkRequestTimeoutInterval: 20000,
     endgameDuplicateRequests: 3,
     publicTrackers: ["udp://tracker.openbittorrent.com:80",
-                     'udp://tracker.istole.it:6969',
-                     "udp://tracker.publicbt.com:80"],
+                     "udp://open.demonii.com:1337",
+                     "udp://tracker.coppersurfer.tk:6969/announce",
+                     "udp://ipv4.tracker.harry.lu:80/announce"
+                    ],
     announceSizeBuckets: [0,1,5,10,25,50,100,200,400,800,1600]
 }
 jstorrent.strings = {
