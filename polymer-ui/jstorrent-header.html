@@ -1,0 +1,68 @@
+<link rel="import" href="bower_components/paper-menu-button/paper-menu-button.html">
+<dom-module id="jstorrent-header">
+
+  <template>
+    <style>
+      
+      .dialog-header {
+      align-items: center;
+      /*  background: rgba(27, 168, 243, 1.0); */
+      border-bottom: 1px solid rgb(56, 179, 244);
+      /*  color: white; */
+      display: flex;
+      flex: none;
+      flex-direction: row;
+      height: 48px;
+      margin: 0;
+      transition: background 220ms ease;
+      }
+    </style>
+
+    <div class="dialog-header" relative>
+
+      <span flex><img src="../js-mini-logo.png" /></span>
+
+
+      <paper-icon-button on-click="btnPlay" style="color:green" icon="av:play-arrow"></paper-icon-button>
+      <paper-icon-button on-click="btnStop" icon="av:pause"></paper-icon-button>
+      <paper-icon-button on-click="btnDelete" icon="delete"></paper-icon-button>
+
+
+      
+      <paper-input-container no-label-float="true">
+        <label>Torrent URL</label>
+        <input is="iron-input">
+      </paper-input-container>
+        
+
+
+
+
+      <iron-icon icon="play-circle-fill"></iron-icon>
+
+      <paper-icon-button icon="add-circle"></paper-icon-button>
+
+
+      <!--paper-icon-button id="trigger" icon="more-vert" on-tap="{{toggle}}"></paper-icon-button-->
+      <paper-menu-button>
+        <paper-icon-button icon="menu" class="dropdown-trigger"></paper-icon-button>
+        <paper-menu class="dropdown-content">
+          <paper-item>Share</paper-item>
+          <paper-item>Settings</paper-item>
+          <paper-item>Help</paper-item>
+        </paper-menu>
+      </paper-menu-button>
+
+      <!--iron-dropdown relatedTarget="{{$.trigger}}">
+        <iron-menu>
+          <iron-item>Cut</iron-item>
+          <iron-item>Copy</iron-item>
+          <iron-item>Paste</iron-item>
+        </iron-menu>
+      </iron-dropdown-->
+
+
+    </div>
+  </template>
+  <script src="jstorrent-header.js"></script>
+</dom-module>

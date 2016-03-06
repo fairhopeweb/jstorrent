@@ -1,0 +1,29 @@
+<dom-module id="torrent-files">
+  <template>
+    <style>
+      .selected {
+      background: #eee;
+      }
+
+      paper-progress::shadow #activeProgress {
+
+      -webkit-animation: pulsey 35s infinite;
+      }
+
+    </style>
+
+    <div> Employee list: </div>
+    <template is="dom-repeat" items="{{data}}">
+
+          <paper-progress style="height:10px" value="{{ item._attributes.complete * 100 }}"></paper-progress>
+          {{ item._attributes.name }} {{ index }} {{ item._attributes.size | byteUnits }}         
+ {{ item._attributes.downloaded | byteUnits }}
+    </template>
+
+  </template>
+
+
+
+
+<script src="torrent-files.js"></script>
+</dom-module>

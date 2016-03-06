@@ -1,0 +1,129 @@
+
+<dom-module id="torrents-list">
+<template>
+  <!--style>
+    .item {
+      box-sizing: border-box;
+      height: 40px;
+      cursor: default;
+      background-color: white;
+      overflow: hidden;
+    }
+
+    .selected {
+      background: silver;
+    }
+
+    .message {
+      padding-left: 77px;
+      line-height: 167%;
+      background-repeat: no-repeat;
+      background-position: 10px 10px;
+      background-size: 60px;
+    }
+    
+    .from {
+      display: inline;
+      font-weight: bold;
+    }
+    
+    .timestamp {
+      margin-left: 10px;
+      font-size: 12px;
+      opacity: 0.8;
+    }
+    
+    .body {
+      font-size: 12px;
+    }
+
+    .spaced {
+      margin: 10px;
+    }
+
+    .selection-display {
+      background: blue;
+      padding: 0 5px;
+      margin: 0 5px;
+    }
+
+    .narrow {
+      width: 40px;
+    }
+
+
+
+.table-header {
+    height: 40px
+}    
+
+
+
+    paper-progress.torrent::shadow #activeProgress {
+      background:yellow;
+    }
+
+
+
+  </style-->
+
+  <style>
+.iron-data-table-0 { border:1px dashed black }
+    </style>
+  <iron-data-table items="[[items]]" selection-enabled multi-selection>
+
+    <data-table-column hidden="true" name="Selected" width="20px" flex="0">
+      <template>
+        <div hidden="[[!selected]]">Yes</div>
+      </template>
+    </data-table-column>
+
+    <data-table-column name="Name" width="220px" sort-by="name">
+      <template>[[ item.name ]]</template>
+    </data-table-column>
+    <data-table-column name="State" width="30px" sort-by="state">
+      <template>[[ item.state ]]</template>
+    </data-table-column>
+    <data-table-column name="Size" sort-by="size">
+      <template>[[byteUnits(item.size) ]]</template>
+    </data-table-column>
+    <data-table-column name="Received" sort-by="bytes_received">
+      <template>[[byteUnits(item.received)]]</template>
+    </data-table-column>
+    <data-table-column name="Complete" sort-by="complete">
+      <template>[[mul100(item.complete)]]</template>
+    </data-table-column>
+    <data-table-column name="Down Speed" sort-by="downspeed">
+      <template>[[byteUnits(item.downspeed)]]</template>
+    </data-table-column>
+    <data-table-column name="ETA" sort-by="eta">
+      <template>[[ item.eta ]]</template>
+    </data-table-column>
+    <data-table-column name="Added" sort-by="added">
+      <template>[[ item.added ]]</template>
+    </data-table-column>
+  </iron-data-table>
+  
+
+    <!--template id="torrentsList" is="dom-repeat" items="{{torrents}}" as="model">
+      <div on-click="toggleSelection">
+        <paper-progress class="torrent" style="height:10px" value="{{ mul100(model._attributes.complete) }}"></paper-progress>
+        <span class="no-testpulse">
+          <span>{{ model._attributes.state }}</span> - 
+          <span>{{ model._attributes.downspeed | byteUnitsSec }}</span> - 
+          <span>{{ model._attributes.name }}</span> 
+          <span>{{ index }}</span> 
+          <span>{{ model._attributes.added }}</span> 
+          <span>{{ model._attributes.size | byteUnits }}</span>
+        </span>
+      </div>
+    </template>
+
+    <array-selector id="selector" items="{{torrents}}" selected="{{selected}}" multi toggle></array-selector-->
+
+
+
+
+</template>
+<script src="torrents-list.js"></script>
+</dom-module>

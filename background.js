@@ -68,7 +68,7 @@ WindowManager.prototype = {
         console.log('creating main window')
         this.creatingMainWindow = true
         var page = 'gui/index.html'
-        //var page = 'jstorrent-polymer-test/index.html'
+        //var page = 'polymer-ui/index.html'
         chrome.app.window.create(page,
                                  this.mainWindowOpts,
                                  function(mainWindow) {

@@ -1,0 +1,88 @@
+<div class="container" vertical layout>
+  <div style="overflow:auto; height: 200px">
+    <!-- top tab -->
+    <torrents-list></torrents-list>
+  </div>
+
+  <core-splitter direction="up"></core-splitter>
+
+  <div flex>
+    <!-- bottom tab -->
+<style>
+paper-tabs.pink::shadow #selectionBar {
+  background-color: rgb(27, 168, 243)
+}
+paper-tabs.pink paper-tab::shadow #ink {
+  color: rgb(27, 168, 243)
+}
+</style>
+
+      <paper-tabs class="pink ttab-style" selected="0">
+        <paper-tab>
+          <iron-icon class="ttab-icon" icon="list"></iron-icon> 
+          Info
+        </paper-tab>
+        <paper-tab>
+          <iron-icon class="ttab-icon" icon="save"></iron-icon> 
+          Files
+        </paper-tab>
+        <paper-tab>
+          <iron-icon class="ttab-icon" icon="account-circle"></iron-icon> 
+          Peers
+        </paper-tab>
+        <paper-tab>
+          <iron-icon class="ttab-icon" icon="cloud"></iron-icon> 
+          Swarm
+        </paper-tab>
+        <paper-tab>
+          <iron-icon class="ttab-icon" icon="settings-input-antenna"></iron-icon> 
+          Trackers
+        </paper-tab>
+        <paper-tab>
+          <iron-icon class="ttab-icon" icon="view-stream"></iron-icon> 
+          Pieces
+        </paper-tab>
+        <paper-tab>
+          <iron-icon class="ttab-icon" icon="device:sd-storage"></iron-icon> 
+          DiskIO
+        </paper-tab>
+      </paper-tabs>
+
+
+        <div style="overflow:auto; height: 200px">
+          <!--div class="testpulse">test pulse...</div-->
+          <torrent-files></torrent-files>
+        </div>
+
+
+  </div>
+
+</div>
+
+  
+
+  
+  <!--section>
+    <template id="toastGroup" is="auto-binding">
+      <paper-button raised right on-click="{{showToast}}">
+        Show Toast
+      </paper-button>
+      <paper-toast id="toast" text="Sample toast here."></paper-toast>
+    </template>
+  </section-->
+
+
+
+  <!--section>
+    <p>A simple Polymer
+      <a href="http://www.polymer-project.org/docs/elements/paper-elements.html">
+      paper elements</a> example that demonstrates using <code>&lt;core-toolbar&gt;,
+      &lt;paper-button&gt;, &lt;paper-checkbox&gt;, &lt;paper-icon-button&gt;,
+      &lt;paper-fab&gt;, &lt;paper-tabs&gt;</code>, and <code>&lt;paper-toast&gt;</code>.
+    </p>
+    <paper-checkbox label="Got it!"></paper-checkbox>
+  </section-->
+
+
+
+  <!--script src="main.js"></script-->

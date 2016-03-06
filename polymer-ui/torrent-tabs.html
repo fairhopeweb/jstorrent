@@ -1,0 +1,49 @@
+<dom-module id="torrent-tabs">
+  <template>
+    <style>
+      paper-tabs.pink::shadow #selectionBar {
+      background-color: rgb(27, 168, 243)
+      }
+      paper-tabs.pink paper-tab::shadow #ink {
+      color: rgb(27, 168, 243)
+      }
+      paper-tabs > paper-tab > span { margin:2px }
+    </style>
+
+
+    <div>
+      <!-- bottom tab -->
+      <paper-tabs class="pink ttab-style plain-tabs" selected="0" no-slide>
+        <paper-tab>
+          <iron-icon class="ttab-icon" icon="list"></iron-icon> 
+          <span>Info</span>
+        </paper-tab>
+        <paper-tab>
+          <iron-icon class="ttab-icon" icon="save"></iron-icon> 
+          <span>Files</span>
+        </paper-tab>
+        <paper-tab>
+          <iron-icon class="ttab-icon" icon="account-circle"></iron-icon> 
+          Peers
+        </paper-tab>
+        <paper-tab>
+          <iron-icon class="ttab-icon" icon="cloud"></iron-icon> 
+          Swarm
+        </paper-tab>
+        <paper-tab>
+          <iron-icon class="ttab-icon" icon="settings-input-antenna"></iron-icon> 
+          Trackers
+        </paper-tab>
+        <paper-tab>
+          <iron-icon class="ttab-icon" icon="view-stream"></iron-icon> 
+          Pieces
+        </paper-tab>
+        <paper-tab>
+          <iron-icon class="ttab-icon" icon="device:sd-storage"></iron-icon> 
+          DiskIO
+        </paper-tab>
+      </paper-tabs>
+    </div>
+  </template>
+  <script src="torrent-tabs.js"></script>
+</dom-module>
