@@ -1,3 +1,5 @@
+- small swarm debugging
+
 2.1 fixes
 - recalculateblacklist serially, bad
 - onupdated background page reload error?
@@ -12,7 +14,6 @@ new stuff to add
 
 
 - need to disconnect from peers when no message received in n seconds (i.e. if computer goes to sleep...)
-- fix the NaN%
 - add "delete torrent and files" to more actions
 - fix file getting to > 100% (downloaded being incremented twice somehow)
 - better handling when disconnecting external storage (display better error)

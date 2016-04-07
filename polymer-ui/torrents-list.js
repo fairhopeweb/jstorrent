@@ -9,7 +9,7 @@
         ready: function() {
             console.log('torrents-list ready')
             this.initArrayEmpty();
-            window._tlist = this
+            //window._tlist = this
         },
         addTorrent: function(torrent) {
             this.$$("iron-data-table").$.list.push('items', torrent._attributes)

@@ -299,6 +299,13 @@ UDPTracker.prototype = {
                 var announceRequest = this.get_announce_payload( connectionInfo.connectionId, event );
                 this.set_state('write_announce')
                 chrome.sockets.udp.send( connectionInfo.socketId, announceRequest.payload, this.host, this.port, _.bind( function(writeResult) {
+                    var lastError = chrome.runtime.lastError
+                    if (lastError) {
+                        console.clog(L.TRACKER, 'udp send fail', lastError)
+                        // callback with error ...
+                        this.set_error({lastError:lastError,error:writeResult})
+                        return
+                    }
                     this.set_state('read_announce')
                     // check error condition?
                     this.readUDP( connectionInfo.socketId, _.bind(this.on_announce_response, this, connectionInfo, announceRequest ) )
@@ -380,6 +387,12 @@ UDPTracker.prototype = {
                 //console.log('udp connected', sockConnectResult)
                 var connRequest = this.get_connection_data();
                 chrome.sockets.udp.send( sockId, connRequest.payload, this.host, this.port, _.bind( function(sockWriteResult) {
+                    var lastError = chrome.runtime.lastError
+                    if (lastError) {
+                        console.clog(L.TRACKER, 'udp send fail',lastError,sockWriteResult)
+                        callback( null, {error:sockWriteResult, lastError:lastError} )
+                        return
+                    }
                     //console.log('udp wrote', sockWriteResult)
                     this.readUDP( sockId, _.bind( function(sockReadResult) {
                         //console.log('udp read get connection response',sockReadResult)

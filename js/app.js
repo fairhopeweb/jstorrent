@@ -62,7 +62,7 @@ function App(opts) {
     this.syncAppAttributes = null
     chrome.storage.sync.get(this.id + '/syncAppAttributes', _.bind(function(d) {
         this.syncAppAttributes = d[this.id + '/syncAppAttributes'] || {} // place to store random stuff
-        console.log('received sync app attributes', this.syncAppAttributes)
+        console.clog(L.INIT, 'received sync app attributes', this.syncAppAttributes)
     },this))
 
     this.updateRemainingDownloadsDisplay()
@@ -282,7 +282,7 @@ App.prototype = {
         })
     },
     initialize_client: function() {
-        console.log('app:initialize_client')
+        console.clog(L.INIT,'app:initialize_client')
         this.client = new jstorrent.Client({app:this, id:'client01'});
         this.client.torrents.on('error', _.bind(this.onTorrentError, this))
         this.client.torrents.on('started', _.bind(this.onTorrentStart, this))
@@ -645,10 +645,12 @@ App.prototype = {
             // already had this notification... hrmmm
         } else {
             if (this.options.get('show_progress_notifications')) {
+                var torrentname = torrent.get('name') || torrent._opts.url || torrent.hashhexlower
+                if (! torrentname) { debugger }
                 var opts = {type: 'progress',
                             message: "Download in Progress",
                             progress: Math.floor(100*torrent.get('complete')),
-                            details: torrent.get('name'),
+                            details: torrentname,
                             id: id}
                 this.createNotification(opts)
             }

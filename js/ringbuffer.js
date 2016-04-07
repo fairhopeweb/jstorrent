@@ -2,6 +2,7 @@
 
     function RingBuffer(sz) {
         this.sz = sz
+        this.filled = 0
         this.buf = []
         for (var i=0; i<sz; i++) {
             this.buf.push(null)
@@ -13,6 +14,9 @@
         add: function(val) {
             this.idx = (this.idx + 1) % this.sz
             this.buf[this.idx] = val
+            if (this.filled < this.sz) {
+                this.filled++
+            }
         },
         get: function(relidx) {
             // get values relative to current index

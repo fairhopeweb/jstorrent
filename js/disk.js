@@ -58,12 +58,13 @@ function Disk(opts) {
         this.key = null
     }
 }
+Disk.__name__ = 'Disk'
 jstorrent.Disk = Disk
 Disk.prototype = {
     restoreFromKey: function() {
-        console.log('restoring disk with id',this.key)
+        console.clog(L.INIT,'restoring disk with id',this.key)
         chrome.fileSystem.restoreEntry(this.key, _.bind(function(entry) {
-            console.log('restored',this.key)
+            console.clog(L.INIT,'restored',this.key)
             // remove this.
             if (!entry) {
                 console.error('unable to restore entry - (was the folder removed?)', this._opts.id)
@@ -87,7 +88,7 @@ Disk.prototype = {
                 //collection.remove(this)
                 //collection.save() // dont remove it
             } else {
-                console.log('successfully restored disk entry',this.key)
+                console.clog(L.INIT,'successfully restored disk entry',this.key)
                 this.entry = entry
                 this.onentry()
             }

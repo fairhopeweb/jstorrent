@@ -362,7 +362,7 @@ Torrent.prototype = {
                     this.metadata.encoding.toLowerCase() == 'utf8') {
                     this.metadata_isutf8 = true
                     this.metadata = bdecode(ui82str(new Uint8Array(buffer)),{utf8:true})
-                    console.log('utf-8 torrent', this.metadata)
+                    console.clog(L.TORRENT,'utf-8 torrent', this.metadata)
                 }
             }
         } catch(e) {

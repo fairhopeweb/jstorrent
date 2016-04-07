@@ -1,3 +1,19 @@
+var DEVMODE = false
+if (! chrome.runtime.getManifest().update_url) { // is this causing the crash on inline install ?
+    console.log('UNPACKED - DEV MODE!')
+    DEVMODE = true
+}
+
+// logging levels
+var L = {
+    INIT: { name: 'INIT', color: '#cef', show: true },
+    UI: { name: 'UI', color: '#ce0', show: true },
+    TRACKER: { name: 'TRACKER', color: '#3e8', show: true },
+    TORRENT: { name: 'TORRENT', color: '#0ae', show: true },
+    DISKIO: { name: 'DISKIO', color: 'orange', show: true },
+    POWER: { name: 'POWER', color: 'blue', show: true }
+}
+
 if (! String.prototype.endsWith) {
     String.prototype.endsWith = function(substr) {
         for (var i=0; i<substr.length; i++) {
@@ -36,9 +52,29 @@ jstorrent.constants = {
     manifest: chrome.runtime.getManifest(),
     chunkRequestTimeoutInterval: 20000,
     endgameDuplicateRequests: 3,
-    publicTrackers: ["udp://tracker.openbittorrent.com:80",
+/*    publicTrackers: ["udp://tracker.openbittorrent.com:80",
                      'udp://tracker.istole.it:6969',
-                     "udp://tracker.publicbt.com:80"],
+                     "udp://tracker.publicbt.com:80"],*/
+    publicTrackers: [
+        'udp://tracker.grepler.com:6969/announce'
+        ,'udp://tracker.kicks-ass.net:80/announce'
+        ,'udp://tracker.leechers-paradise.org:6969'
+        ,'udp://tracker.leechers-paradise.org:6969/announce'
+        ,'udp://tracker.mg64.net:2710/announce'
+        ,'udp://tracker.mg64.net:6969/announce'
+        ,'udp://tracker.openbittorrent.com:6969/announce'
+        ,'udp://tracker.openbittorrent.com:80'
+        ,'udp://tracker.openbittorrent.com:80/announce'
+        ,'udp://tracker.opentrackr.org:1337/announce'
+        ,'udp://tracker.pomf.se:80/announce'
+        ,'udp://tracker.pubt.net:2710/announce'
+        ,'udp://tracker.sktorrent.net:6969'
+        ,'udp://tracker.tiny-vps.com:6969/announce'
+        ,'udp://tracker.tricitytorrents.com:2710/announce'
+        ,'udp://tracker.yoshi210.com:6969/announce'
+        ,'udp://tracker2.indowebster.com:6969/announce'
+    ],
+    // refresh from https://www.reddit.com/r/opentrackerproject
     announceSizeBuckets: [0,1,5,10,25,50,100,200,400,800,1600]
 }
 jstorrent.strings = {

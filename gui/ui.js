@@ -1,13 +1,20 @@
 function UI(opts) {
+    function formatClientName(val) {
+        // encoded as utf-8?
+        return val
+    }
     function fracToPercent(val) {
-        if (val === undefined || val === null) { return '' }
+        if (val === undefined || val === null || isNaN(val)) { return '' }
         return (val * 100).toFixed(1) + '%';
     }
     function priority(val) {
         return val == 0 ? 'Skip' : ''
     }
+    function displayTorrentName(torrent) {
+        return torrent.get('name') || torrent._opts.url || torrent.hashhexlower
+    }
     function fileAction(val) {
-        //return '<a href="https://code.google.com/p/chromium/issues/detail?id=328803&thanks=328803&ts=1387186852" target="_blank">Open</a>'
+        return '<a href="https://code.google.com/p/chromium/issues/detail?id=328803&thanks=328803&ts=1387186852" target="_blank">Open</a>'
 
         var streamable = val.streamable()
         var openable = val.openable()
@@ -35,7 +42,7 @@ function UI(opts) {
 
     this.coldefs = {
         'torrent': [
-            {id: "name", name: "Name", width:400, sortable:true},
+            {id: "name", name: "Name", displayFunc: displayTorrentName, width:400, sortable:true},
             {id: "state", name: "State", sortable:true},
             {id: "bytes_received", name: "Bytes Received", formatVal: byteUnits, width:100},
             {id: "size", name: "Size", formatVal: byteUnits, width: 100, sortable:true},
@@ -51,7 +58,7 @@ function UI(opts) {
         ],
         'peers':[
             {name:"Address", id:"address", width:125},
-            {name:"Client", id:'peerClientName', width:125},
+            {name:"Client", id:'peerClientName', formatVal: formatClientName, width:125},
             {id:"state", name: "State", width:90},
             {id:"complete", name: "% Complete", formatVal: fracToPercent},
             {id:"bytes_sent", name: "Bytes Sent"},
@@ -214,7 +221,7 @@ UI.prototype = {
 
     },
     set_detail: function(type, torrent) {
-        //console.log('set detail',type,torrent)
+        console.clog(L.UI,'set detail',type,torrent)
         this.detailtype = type
 
         if (this.detailtable) {
@@ -233,6 +240,10 @@ UI.prototype = {
             } else {
                 // no storage...
             }
+        } else if (type == 'messages') {
+            // logger pane
+            this.detailtable = new MessagesView({domid:domid})
+            
         } else if (type == 'info') {
             // general info pane
 
@@ -254,8 +265,14 @@ UI.prototype = {
                                                             });
 
                 if (this.detailtype == 'files') {
+                    console.clog(L.UI, 'set torrent detail view')
                     if (torrent.get('metadata') && ! torrent.infodict) {
-                        torrent.loadMetadata(function(){}) // this should initialize the files
+                        torrent.loadMetadata(function(result){
+                            console.clog(L.UI, 'initailized torrent metadata',result)
+                            if (result.error) {
+                                this.detailtable.showError(result.error)
+                            }
+                        }.bind(this)) // this should initialize the files
                     } else if (torrent.infodict) {
                         torrent.initializeFiles()
                     } else {
@@ -273,6 +290,74 @@ UI.prototype = {
     }
 }
 
+function MessagesView(opts) {
+    this.opts = opts
+    this.elt = $('#'+this.opts.domid)
+    this.render()
+    window.LOGLISTENER = this.onNewLog.bind(this)
+    $('#detailGrid')[0].style.overflow = 'auto'
+    $('#detailGrid')[0].style.padding = '4px'
+}
+MessagesView.prototype = {
+    destroy: function() {
+        this.elt.html('')
+        window.LOGLISTENER = null
+        $('#detailGrid')[0].style.overflow = 'hidden'
+        $('#detailGrid')[0].style.padding = '0px'
+    },
+    stringifyArg: function(arg) {
+        if (arg === undefined) {
+            return 'undefined'
+        } else if (arg === null) {
+            return arg
+        } else if (typeof arg == 'string') {
+            return arg
+        } else if (arg instanceof Array) {
+            return '[' + arg.map(function(e) { this.stringifyArg(e) }.bind(this)).join(',') + ']'
+        } else if (arg.simpleSerializer) {
+            return arg.simpleSerializer()
+        } else {
+            try {
+                return JSON.stringify(arg)
+            } catch(e) {
+                return arg
+            }
+       }
+    },
+    stringifyArgs: function(args) {
+        return args.map( function(arg) { return this.stringifyArg(arg) }.bind(this) ).join(' ')
+    },
+    onNewLog: function(args) {
+        var div = document.createElement('div')
+        if (args.length > 0 && typeof args[0] == 'string' && args[0].startsWith('%c')) {
+            var span = document.createElement('span')
+            span.setAttribute('style',args[1])
+            span.innerText = args[0].slice(2,args[0].length)
+            div.appendChild(span)
+            var span2 = document.createElement('span')
+            span2.style['padding-left'] = '1em'
+            span2.innerText = this.stringifyArgs( args.slice(2,args.length) )
+            div.appendChild(span2)
+        } else {
+            div.innerText = this.stringifyArgs( args )
+        }
+        this.elt[0].appendChild(div)
+        var obj = $('#detailGrid')[0]
+        //ORIGINALCONSOLE.log.call(console, obj.scrollTop, obj.scrollHeight - obj.offsetHeight)
+        if( (obj.scrollHeight - obj.offsetHeight) - obj.scrollTop < 30) {
+            obj.scrollTop = obj.scrollHeight
+        }
+    },
+    render: function() {
+        this.elt.show()
+        if (window.LOGHISTORY) {
+            for (var i=0; i<LOGHISTORY.filled; i++) {
+                var line = LOGHISTORY.get(-LOGHISTORY.filled+1+i)
+                this.onNewLog(line)
+            }
+        }
+    }
+}
 
 function GeneralInfoView(opts) {
     this.opts = opts

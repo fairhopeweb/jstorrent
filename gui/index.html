@@ -22,10 +22,10 @@
   <script src="../js/deps/encoding-indexes.js"></script>
   <script src="../js/deps/encoding.js"></script>
 
-
-
   <script src="../js/common.js"></script>
   <script src="../js/ringbuffer.js"></script>
+  <script src="../js/log-full.js"></script>
+
   <script src="../js/analytics.js"></script>
   <script src="../js/bencode.js"></script>
   <script src="../js/collection.js"></script>
@@ -76,7 +76,7 @@
 
 <body>
 
-<div id="top-titlebar">
+<div style="display:none" id="top-titlebar">
   <img style="display:none" id="top-titlebar-icon" src="../js-19.png" />
   <span id="client-infobar-down"></span>
   <span id="client-infobar-up"></span>
@@ -239,12 +239,12 @@
     </a>
   </li>
 
-  <!--li>
-    <a href="#" id="detail-warning">
+  <li>
+    <a href="#" id="detail-messages">
     <span class="glyphicon glyphicon-warning-sign"></span>
-    Warning
+    Messages
     </a>
-  </li-->
+  </li>
 
   <li>
     <a href="#" id="detail-diskio">

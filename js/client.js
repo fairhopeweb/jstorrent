@@ -71,7 +71,7 @@ function Client(opts) {
 
     var onDiskReady = function() {
         this.disks.numLoaded++
-        console.log('onDiskReady',this.disks.numLoaded, this.disks.length)
+        console.clog(L.INIT,'onDiskReady',this.disks.numLoaded, this.disks.length)
         if (this.disks.numLoaded == this.disks.length) {
             loadTorrents()
         }
@@ -206,7 +206,7 @@ Client.prototype = {
         if (attr == 'numActiveTorrents') {
 
             if (this.app.options.get('prevent_sleep')) {
-                console.log('number of active torrents now', newval)
+                console.clog(L.POWER,'number of active torrents now', newval)
                 if (newval == 0) {
                     this.set('downspeed',0)
                     this.set('upspeed',0)
@@ -214,13 +214,13 @@ Client.prototype = {
                         clearInterval(this.thinkInterval)
                         this.thinkInterval = null
                     }
-                    console.log('POWER:release keep awake')
+                    console.clog(L.POWER,'release keep awake')
                     chrome.power.releaseKeepAwake()
                 } else if (newval > 0 && oldval == 0) {
                     if (! this.thinkInterval) {
                         this.thinkInterval = setInterval( _.bind(this.frame,this), 1000 )
                     }
-                    console.log('POWER:requesting system keep awake')
+                    console.clog(L.POWER,'requesting system keep awake')
                     chrome.power.requestKeepAwake('system')
                 }
             }

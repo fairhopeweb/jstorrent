@@ -1,0 +1,5 @@
+2016-04-07
+- adding messages column
+- tweaking logging to add categories
+- remove minimized view (too crappy)
+- show error when .torrent file wont load

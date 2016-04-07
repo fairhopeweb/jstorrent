@@ -58,7 +58,7 @@ function Analytics(opts) {
 
     //id = null
 
-    if (! id) {
+    if (! id || DEVMODE) {
         function FakeTracker() {}
         FakeTracker.prototype = {
             sendAppView: function(){},

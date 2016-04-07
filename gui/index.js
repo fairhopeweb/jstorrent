@@ -35,25 +35,26 @@ function onadd(evt) {
 }
 
 function onresizewindow() {
-    var fudgeFactor = 8 // um, not sure about why we need this
-    if (app.minimized) {
+    //var fudgeFactor = 8 // um, not sure about why we need this
+    var fudgeFactor = 0 // um, not sure about why we need this
+    if (false && app.minimized) {
+        // do away with minimize mode.
         var toph = 0
         var tabh = 0
-        var titlebarh = $('#top-titlebar').height() + fudgeFactor
+        //var titlebarh = $('#top-titlebar').height() + fudgeFactor
+        var titlebarh = fudgeFactor
         var totalchrome = toph + tabh
-
         var width = $(window).width()
         var height = $(window).height() - titlebarh
         $("#mintorrentGrid")[0].style.width = width
         $("#mintorrentGrid")[0].style.height = Math.floor((height - totalchrome) * 1.0)
         if (app && app.minUI && app.minUI.torrenttable) { app.minUI.torrenttable.grid.resizeCanvas() }
-
     } else {
         var toph = $('#chrome-top').height()
         var tabh = $('#detail-tabs').height()
-        var titlebarh = $('#top-titlebar').height() + fudgeFactor
+        //var titlebarh = $('#top-titlebar').height() + fudgeFactor
+        var titlebarh = fudgeFactor
         var totalchrome = toph + tabh
-
         var width = $(window).width()
         var height = $(window).height() - titlebarh
         $("#torrentGrid")[0].style.width = width
@@ -125,12 +126,27 @@ function onappready() {
 }
 
 function onready() {
+    function keydown(evt) {
+        if (evt.metaKey || evt.ctrlKey) {
+            if (evt.keyCode == 82) {
+                console.log('received ctrl(meta)-r, reload app')
+                chrome.runtime.reload()
+                // ctrl-r
+            }
+            // prevent chrome app close window etc shortcuts
+            // metakey is osx
+            // ctrlkey for win
+
+            //evt.preventDefault() // dont prevent ctrl-w
+        }
+    }
+    document.body.addEventListener('keydown', keydown)
+    
     window.app = new jstorrent.App;
     app.initialize( onappready )
 }
 
-function click_detail(tab, evt) {
-    //console.log('click detail',tab,evt);
+function click_detail_torrent(tab, evt) {
     $('#detail-tabs li').removeClass('active')
     var torrent = UI.get_selected_torrent()
     if (torrent) {
@@ -140,11 +156,20 @@ function click_detail(tab, evt) {
         console.warn('no torrent selected')
     }
 }
+function click_detail_other(tab, evt) {
+    $('#detail-tabs li').removeClass('active')
+    UI.set_detail(tab)
+    $('#detail-' + tab).parent().addClass('active')
+}
 
 function bind_events() {
-    var tabs = ['info','files','peers','swarm','trackers','pieces','warning', 'diskio']
-    tabs.forEach(function(tab) {
-	$('#detail-' + tab).click( click_detail.bind(this, tab) )
+    var torrenttabs = ['info','files','peers','swarm','trackers','pieces','diskio']
+    var othertabs = ['messages']
+    torrenttabs.forEach(function(tab) {
+	$('#detail-' + tab).click( click_detail_torrent.bind(this, tab) )
+    });
+    othertabs.forEach(function(tab) {
+	$('#detail-' + tab).click( click_detail_other.bind(this, tab) )
     });
 
 

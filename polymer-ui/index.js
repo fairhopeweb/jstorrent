@@ -1,6 +1,7 @@
-document.addEventListener("DOMContentLoaded", onready);
-//document.addEventListener('WebComponentsReady', onready);
+window.reload = chrome.runtime.reload
+//document.querySelector('core-splitter').size=269
 
+document.addEventListener("DOMContentLoaded", onready);
 
 function destroyChildren(d) {
     while (d.firstNode) { d.removeChild(d.firstNode) }
@@ -26,10 +27,16 @@ window.views = {
     detailController: new DetailController
 }
 
+window.components = {
+    torrentsList: null
+}
+
 function client_ready() {
     console.log('client ready')
-    app.UI.torrents = _tlist // XXX race condition. when is polymer element ready??
+    
+    //app.UI.torrents = _tlist // XXX race condition. when is polymer element ready??
     //app.UI.torrents.torrents = client.torrents.items
+
     for (var i=0; i<client.torrents.items.length; i++) {
         app.UI.torrents.addTorrent(client.torrents.items[i])
     }
@@ -39,6 +46,7 @@ function client_ready() {
 function PolymerUI(opts) {
     console.log('new PolymerUI()')
     this.app = opts.app
+    this.torrents = null
 }
 _.extend(PolymerUI.prototype, {
     
@@ -87,8 +95,39 @@ function options_ready(app) {
 }
 
 function onready() {
+    console.log('domcontentloaded')
+
     //window.app = new jstorrent.App({tab:true}); // tied into UI too much
     var app = new JSTorrentPolymerApp
     window.app = app
     app.options.load( options_ready.bind(this, app) )
+
+
+    function keydown(evt) {
+        console.log('keydown',evt)
+        if (evt.metaKey || evt.ctrlKey) {
+            if (evt.keyCode == 82) {
+                console.log('received ctrl(meta)-r, reload app')
+                chrome.runtime.reload()
+                // ctrl-r
+            }
+            // prevent chrome app close window etc shortcuts
+            // metakey is osx
+            // ctrlkey for win
+
+            //evt.preventDefault() // dont prevent ctrl-w
+        }
+    }
+    document.body.addEventListener('keydown', keydown)
+
 }
+
+
+document.addEventListener('polymer-ready', function() {
+    console.log('polymer-ready');
+});
+
+document.addEventListener('WebComponentsReady', function() {
+    // not called/needed anymore
+    console.log('WebComponentsReady');
+});

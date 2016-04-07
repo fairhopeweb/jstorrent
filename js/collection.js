@@ -247,7 +247,7 @@ var CollectionProto = {
         return [key, toStore]
     },
     fetch: function(callback) {
-        console.log('collection.fetch',this.itemClass.__name__)
+        console.clog(L.INIT,'collection.fetch',this.itemClass.__name__)
         var collectionKey = this.getStoreKey()
         chrome.storage.local.get( collectionKey, _.bind(function(result) {
             if (! result || ! result[collectionKey] || ! result[collectionKey].items) {

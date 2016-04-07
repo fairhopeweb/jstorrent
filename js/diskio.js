@@ -957,7 +957,7 @@
                     //console.log('writer.Write')
                     job.set('state','truncating')
                     maybeTimeout( function() {
-                        console.warn("TRUNCATE!")
+                        console.clog(L.DISKIO,"TRUNCATE!")
                         writer.truncate(opts.size)
                     }, DiskIO.debugtimeout)
                 }.bind(this), oncreatewritererr)

@@ -168,6 +168,12 @@ debugger // using CellSelectEditor now
 }
 
 SlickCollectionTable.prototype = {
+    showError: function(message) {
+        // show the error somewhere...
+        console.clog(L.UI, 'show error message in me',this)
+        // TODO -- make prettier
+        $("#"+this.domid).text(message)
+    },
     destroy: function() {
         // destroy
         this.grid.destroy()

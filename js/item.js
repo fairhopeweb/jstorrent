@@ -34,6 +34,11 @@ function Item(opts) {
 jstorrent.Item = Item
 
 Item.prototype = {
+    simpleSerializer: function() {
+        // for the log window
+        var myKey = this.id || (this.opts && this.opts.id) || this.get_key()
+        return this.__name__ + ':' + myKey
+    },
     getParentIdList: function() {
         var myKey = this.id || (this.opts && this.opts.id) || this.get_key()
         console.assert(myKey)
