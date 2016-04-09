@@ -18,6 +18,15 @@ function getMainWindow() {
     return chrome.app.window.get && chrome.app.window.get('mainWindow')
 }
 
+function debugSockets() {
+    chrome.sockets.tcp.getSockets( function(socketInfos) {
+        console.log('current tcp sockets', socketInfos)
+    })
+    chrome.sockets.udp.getSockets( function(socketInfos) {
+        console.log('current udp sockets', socketInfos)
+    })
+}
+
 function WindowManager() {
     // TODO -- if we add "id" to this, then chrome.app.window.create
     // won't create it twice.  plus, then its size and positioning
@@ -75,6 +84,9 @@ WindowManager.prototype = {
                                      _this.mainWindow = mainWindow
                                      _this.creatingMainWindow = false
 
+                                     mainWindow.onMinimized.addListener( this.onMinimizedMainWindow.bind(this) )
+                                     mainWindow.onRestored.addListener( this.onRestoredMainWindow.bind(this) )
+                                     
                                      mainWindow.onClosed.addListener( function() {
                                          _this.onClosedMainWindow()
                                      })
@@ -86,8 +98,20 @@ WindowManager.prototype = {
                                          cb()
                                      }
 
-                                 }
+                                 }.bind(this)
 			        );
+    },
+    onRestoredMainWindow: function() {
+        console.log('main window restored. re-create UI')
+        var app = this.mainWindow.contentWindow.app
+        app.UI.undestroy()
+        // restore the UI
+    },
+    onMinimizedMainWindow: function() {
+        console.log('main window minimized. destroy UI')
+        var app = this.mainWindow.contentWindow.app
+        app.UI.destroy()
+        // destroy the UI completely to free up memory
     },
     onClosedMainWindow: function() {
         var app = this.mainWindow.contentWindow.app

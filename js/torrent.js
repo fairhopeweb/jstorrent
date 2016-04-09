@@ -52,6 +52,8 @@ function Torrent(opts) {
     this.hashbytes = null
     this.bridges = {}
     this.magnet_info = null
+    this.initializedFromEntry = null
+    this.initializedFromBuffer = null
     // the idea behind endgame is that when we are very near to
     // torrent completion, requests made to slow peers prevent us from
     // making the same requests to peers who would actually complete
@@ -195,8 +197,18 @@ Torrent.prototype = {
                 client.add_from_url(url)
             }, {dontannounce:true})
         } else {
-            app.createNotification({details:"Sorry. Unable to reset state for this torrent. Please remove the torrent and re-add it",
-                                    priority:2})
+            // this torrent was created by dropping in a .torrent file. so unless we have the entry handy... we cant reset state.
+            // but the entry should be stored in our downloads folder!
+            if (this._opts.id) {
+                var id = this._opts.id
+                this.remove( function() {
+                    console.log('removed, adding')
+                    this.client.add_from_id(id) // might want to include optional metadata like the name.
+                }.bind(this), {dontannounce:true})
+            } else {
+                this.client.app.createNotification({details:"Sorry. Unable to reset state for this torrent. Please remove the torrent and re-add it",
+                                                    priority:2})
+            }
         }
     },
     reportIssue: function() {
@@ -391,6 +403,9 @@ Torrent.prototype = {
         // XXX this is not going through diskio. Maybe disable all disk io and wait for inactive and then do this read...
 
         // should we save this as a "disk" ? no... that would be kind of silly. just read out the metadata.
+
+        this.initializedFromEntry = entry // not restored upon restart. we want this for resetState
+        
         var _this = this
         var reader = new FileReader;
         reader.onload = _.bind(function(evt) {

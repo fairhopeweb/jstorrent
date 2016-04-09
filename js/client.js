@@ -232,6 +232,7 @@ Client.prototype = {
         console.log('onBatchTimeout',keys)
     },
     onTorrentAdd: function(torrent) {
+        console.log('Torrent added',torrent)
         // cant do this, because metadata has not been saved yet... (when loading torrent from launch entry)
         if (torrent.autostart === false) { return }
 
@@ -240,7 +241,6 @@ Client.prototype = {
                 torrent.start()
             }
         }
-
     },
     onReady: function() {
         var item
@@ -341,6 +341,22 @@ Client.prototype = {
         } else {
             app.notify('Invalid torrent file. Try a different URL')
             console.error('add url response',data)
+        }
+    },
+    add_from_id: function(id, cb, opts) {
+        console.log('client add by id',id)
+        var torrent = new jstorrent.Torrent({id:id,
+                                             itemClass: jstorrent.Torrent,
+                                             attributes:{added:new Date()},
+                                             callback: _.bind(this.add_from_id_response,this,cb,opts),
+                                             parent:this.torrents})
+        this.torrents.add( torrent )
+        this.torrents.save()
+    },
+    add_from_id_response: function(cb,opts,result) {
+        console.log('add from id response',result)
+        if (cb) {
+            cb(result)
         }
     },
     add_from_url: function(url, cb, opts) {

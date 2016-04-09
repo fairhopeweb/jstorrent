@@ -1,3 +1,9 @@
+2016-04-09
+- fix reset torrent state for case where added by .torrent entry
+- add _locales/en/messages.json starting i8n
+- destroy the UI on minimize, restore on restore (save some memory/cpu maybe)
+- update package script to reduce crx size
+
 2016-04-08
 - fix main logo for retina
 - add setup magnet link option
