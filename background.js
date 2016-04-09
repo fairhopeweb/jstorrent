@@ -1,5 +1,5 @@
 console.log('background page loaded')
-function reload() { chrome.runtime.reload() }
+var reload = chrome.runtime.reload
 // the browser extension that adds a context menu
 var extensionId = "bnceafpojmnimbnhamaeedgomdcgnbjk"
 
@@ -16,7 +16,6 @@ function app() {
 
 function getMainWindow() {
     return chrome.app.window.get && chrome.app.window.get('mainWindow')
-
 }
 
 function WindowManager() {
@@ -174,35 +173,47 @@ function onAppLaunchMessage(launchData) {
 
 }
 
-if (chrome.runtime.setUninstallUrl) {
-    chrome.runtime.setUninstallUrl('http://jstorrent.com/uninstall.html?version=' + 
-                                   encodeURIComponent(chrome.runtime.getManifest().version)
-                                  )
+if (chrome.runtime.setUninstallURL) {
+    setup_uninstall()
+}
+
+function setup_uninstall() {
+    console.log('setting uninstall URL')
+    try {
+        chrome.runtime.setUninstallURL('http://jstorrent.com/uninstall/',
+                                       function(result) {
+                                           var lasterr = chrome.runtime.lastError
+                                           console.log('set uninstall url with result',result,'lasterr',lasterr)
+                                       }
+                                      )
+    } catch(e) {
+        console.error('error setting uninstall url',e)
+    }
 }
 
 chrome.runtime.onInstalled.addListener(function(details) {
+    console.log('onInstalled',details)
     var sk = 'onInstalledInfo'
     chrome.storage.sync.get(sk, function(resp) {
-        console.log('got previous install info',resp.sk)
+        console.log('got previous install info',resp)
 
         details.date = new Date().getTime()
         details.cur = chrome.runtime.getManifest().version
 
-        if (resp.sk) {
-            resp.sk.push(details)
+        if (resp[sk]) {
+            resp[sk].push(details)
         } else {
-            resp.sk = [details]
+            resp[sk] = [details]
         }
 
-        if (resp.sk.length > 30) {
+        if (resp[sk].length > 5) {
             // purge really old entries
-            resp.sk.splice(0,1)
+            resp[sk].splice(0,1)
         }
 
         chrome.storage.sync.set(resp, function(){console.log('persisted onInstalled info')})
     })
     
-    console.log('onInstalled',details.reason, details)
     //details.reason // install, update, chrome_update
     //details.previousVersion // only if update
 })
@@ -223,7 +234,8 @@ if (chrome.runtime.onMessage) {
     chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
         console.log('chrome runtime message',request,sender)
         if (request && request.command == 'openWindow') {
-            window.open(request.url)
+            chrome.browser.openTab({url:request.url})
+            //window.open(request.url,'_blank')
         }
     })
 }
@@ -250,6 +262,14 @@ chrome.runtime.onMessageExternal.addListener(function(request, sender, sendRespo
                        id: chrome.runtime.id, 
                        version: chrome.runtime.getManifest().version
                      })
+    } else if (request && request.command == 'getStatus') {
+        var resp = { version: chrome.runtime.getManifest().version
+                   }
+        var a = app()
+        if (a && a.webapp) {
+            resp.webapp = a.webapp.get_info()
+        }
+        sendResponse(resp)
     } else {
         sendResponse({ handled: false,
                        id: chrome.runtime.id, 
@@ -261,12 +281,17 @@ chrome.runtime.onMessageExternal.addListener(function(request, sender, sendRespo
 
 if (chrome.runtime.onConnectExternal) {
     chrome.runtime.onConnectExternal.addListener( function(port) {
-        if (port.sender.url.startsWith('http://127.0.0.1:' + app().webapp.port)) {
+        var authorized = true
+        if (authorized) {
             console.log('received authorized port',port)
             window.mediaPort = port
             port.onMessage.addListener( function(msg) {
-                app().client.handleExternalMessage(msg, port)
-                console.log('external onmessage',msg)
+                var a = app()
+                if (a) {
+                    a.client.handleExternalMessage(msg, port)
+                } else {
+                    console.warn('no app, could not handle external message')
+                }
             })
             port.onDisconnect.addListener( function(msg) {
                 console.log('external ondisconnect',msg)
@@ -274,6 +299,7 @@ if (chrome.runtime.onConnectExternal) {
             port.postMessage({text:"OK"})
         } else {
             console.error('unauthorized port',port)
+            port.disconnect()
         }
     })
 }

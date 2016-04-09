@@ -1,4 +1,22 @@
+2016-04-08
+- fix main logo for retina
+- add setup magnet link option
+- add option to disable usage tracking
+- fix client name display
+- fix help page
+- add tooltips to options
+- add new option "add public trackers automatically"
+- fix uninstall url
+- add browser permission to use browser.openTab
+- update media stream page
+- update file actions on file complete
+- update web server
+- fix drag in .torrent file
+- fix display of client name
+- add folder path to files list
+
 2016-04-07
+- fix display of % complete
 - adding messages column
 - tweaking logging to add categories
 - remove minimized view (too crappy)

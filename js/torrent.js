@@ -6,7 +6,7 @@ function Bridge(opts) {
     this.end = opts.end
     this.handler = opts.handler
     this.file = opts.file
-    this.file.set('streaming','init')
+    this.file.set('streaming','init'+this.startPiece)
     this.torrent = opts.torrent
     this.ondata = null
 }
@@ -60,8 +60,13 @@ function Torrent(opts) {
     // (say, 3) requests to each chunk, as long as we aren't the one
     // who made the request.
     this.isEndgame = false
-    this.set('bytes_sent', 0)
-    this.set('bytes_received', 0)
+    this.set('bytes_sent', this._attributes.bytes_sent || 0)
+    this.set('bytes_received', this._attributes.bytes_received || 0)
+    this.set('downspeed',0)
+    this.set('upspeed',0)
+    this.set('numpeers',0)
+    this.set('numswarm',0)
+    this.set('eta',0)
     if (! this.get('downloaded')) {
         this.set('downloaded', 0)
     }
@@ -73,6 +78,7 @@ function Torrent(opts) {
     this.started = false; // get('state') ? 
     this.starting = false
     this.stopinfo = null
+    this.autostart = null
 
     this.metadata = {}
     this.infodict = null
@@ -279,7 +285,7 @@ Torrent.prototype = {
             // initialize from info infohash!
             url = 'magnet:?xt=urn:btih:' + url + '&dn=' + url
 
-            for (var i=0; i<jstorrent.constants.publicTrackers.length; i++) {
+            for (var i=0; i<Math.max(jstorrent.constants.publicTrackers.length,4); i++) {
                 url = url + '&tr=' + encodeURIComponent(jstorrent.constants.publicTrackers[i])
             }
         }
@@ -297,7 +303,7 @@ Torrent.prototype = {
             }
 
             if (this.magnet_info.dn) {
-                this.set('name', this.magnet_info.dn[0])
+                this.set('name', this.magnet_info.dn[0].replace(/\+/g,' ')) // what kind of encoding is dn?
             }
 
             if (! this.magnet_info.tr) {
@@ -308,6 +314,11 @@ Torrent.prototype = {
                 // initialize my trackers
                 this.initializeTrackers()
             }
+
+            if (this.magnet_info.start && this.magnet_info.start == '0') {
+                this.autostart = false
+            }
+            
             this.set('url',url)
             this.hashhexlower = this.magnet_info.hashhexlower
 	    this.updateHashBytes()
@@ -737,7 +748,11 @@ Torrent.prototype = {
             fileSpan = filesSpan[i]
             file = this.getFile(fileSpan.fileNum)
             file.set('downloaded',file.get('downloaded')+fileSpan.size)
-            file.set('complete', file.get('downloaded') / file.size )
+            var pct = file.get('downloaded') / file.size
+            file.set('complete', pct )
+            if (pct == 1) {
+                file.trigger('complete')
+            }
         }
     },
     isComplete: function() {
@@ -1317,6 +1332,10 @@ Torrent.prototype = {
         }
     },
     readyToStart: function() {
+        if (this.autostart === false) {
+            return
+        }
+        
         this.set('state','started')
         this.trigger('started')
         this.set('complete', this.getPercentComplete())
@@ -1429,6 +1448,9 @@ Torrent.prototype = {
     },
     onComplete: function() {
         //console.log('torrent.onComplete')
+        this.set('downspeed',0)
+        this.set('eta',0)
+
         var a = this.client.get('activeTorrents')
         this.client.activeTorrents.remove(this)
         delete a[this.hashhexlower]
@@ -1630,18 +1652,23 @@ Torrent.prototype = {
     },
     getStreamPlayerPageURL: function(filenum, streamable) {
         if (! this.client.app.webapp) { debugger; return }
-        var s = 'abcdefghijklmnopqrstuvwxyz'
         var token = ''
+        /*
+        var s = 'abcdefghijklmnopqrstuvwxyz'
         for (var i=0; i<20; i++) {
             token += s[Math.floor(Math.random() * s.length)]
         }
-        this.client.app.webapp.token = token
-        var url = 'http://127.0.0.1:' + this.client.app.webapp.port + '/package/gui/media.html?hash=' + this.hashhexlower + '&token=' + token + '&id=' + chrome.runtime.id
+        this.client.app.webapp.token = token */
+        //var url = 'http://127.0.0.1:' + this.client.app.webapp.port + '/package/gui/media.html?hash=' + this.hashhexlower + '&token=' + token + '&id=' + chrome.runtime.id
+        var url = jstorrent.constants.jstorrent_media_url + '?hash=' + encodeURIComponent(this.hashhexlower) + '&id=' + encodeURIComponent(chrome.runtime.id)
+        if (token) {
+            url += '&token=' + encodeURIComponent(token)
+        }
         if (filenum !== undefined) {
-            url += '&file=' + filenum
+            url += '&file=' + encodeURIComponent(filenum)
         }
         if (streamable && streamable.type) {
-            url += '&type=' + streamable.type
+            url += '&type=' + encodeURIComponent(streamable.type)
         }
         return url
     },
@@ -1649,11 +1676,11 @@ Torrent.prototype = {
         return 'http://127.0.0.1:' + this.client.app.webapp.port + '/proxy?hash=' + this.hashhexlower
     },
     getShareLink: function() {
-        var url = 'http://jstorrent.com/share/#hash=' + this.hashhexlower + '&dn=' + encodeURIComponent(this.get('name')) + '&magnet_uri=' + encodeURIComponent(this.getMagnetLink())
+        var url = jstorrent.constants.jstorrent_share_base + '/share/#hash=' + this.hashhexlower + '&dn=' + encodeURIComponent(this.get('name')) + '&magnet_uri=' + encodeURIComponent(this.getMagnetLink())
         return url
     },
     getMagnetLink: function() {
-        url = 'magnet:?xt=urn:btih:' + this.hashhexlower + '&dn=' + this.get('name')
+        url = 'magnet:?xt=urn:btih:' + this.hashhexlower + '&dn=' + this.get('name') // encode this?
         return url
     },
     should_add_peers: function() {

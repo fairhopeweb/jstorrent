@@ -1,7 +1,7 @@
 function SlickCollectionTable(opts) {
     this.collection = opts.collection
     this.domid = opts.domid
-    this.columns = opts.columns
+    this.columns = opts.columns.filter(function(c) { return ! c.hidden })
     this.formatters = opts.formatters
     var slickOptions = opts.slickOptions || {}
 
@@ -191,7 +191,6 @@ SlickCollectionTable.prototype = {
         var idx = this.collection.indexOf( item.get_key() )
         //console.log('change at row',idx)
         this.grid.updateCell(idx, this.columnNumberByAttribute[attr])
-
     },
     on_add: function(item) {
         //console.log('collection onadd')

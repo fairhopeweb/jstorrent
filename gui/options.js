@@ -3,7 +3,14 @@ var options = null
 var app = null
 
 function bind_events() {
+    $('[data-toggle="tooltip"]').tooltip({'delay': { show: 50, hide: 200 }})
     $('#button-choose-download').prop('disabled', false);
+    $('#button-setup-magnet').prop('disabled',false)
+    $('#button-setup-magnet').click( function(evt) {
+        chrome.browser.openTab({url:'http://jstorrent.com/magnet/'})
+        evt.preventDefault()
+    })
+    
     $('#button-choose-download').click( function(evt) {
         var opts = {'type':'openDirectory'}
 
@@ -46,13 +53,18 @@ OptionDisplay.prototype = {
 
         var s = 'Unsupported Option Type: ' + this.opts.meta.type + ' - ' + this.opts.key
         if (this.opts.meta.type == 'bool') {
-            s = '<div class="checkbox">' +
-                '<label>' +
+            s = '<div class="checkbox">'
+            if (this.opts.meta.help) {
+                s+='<label data-toggle="tooltip" title="'+this.opts.meta.help+'">'
+            } else {
+                s+='<label>'
+            }
+            s+=
                 '<input type="checkbox" ' + (this.opts.val ? 'checked="checked"' : '') + '>' + this.getName() +
                 '</label>' + 
                 '</div>';
         } else if (this.opts.meta.type == 'int') {
-            s = '<div class="input"><label><input style="width:30px" type="text" value="'+this.opts.val+'"></input> ' + this.getName() + '</label></div>'
+            s = '<div class="input"><label><input style="width:30px" type="text" value="'+this.opts.val+'"></input><span data-toggle="tooltip" title="'+this.opts.meta.help+'"> ' + this.getName() + '</span></label></div>'
         } else {
             debugger
         }
@@ -105,7 +117,12 @@ function OptionsView(opts) {
     this.opts = opts
     this.options = opts.options
 
-    var keys = this.options.keys()
+    var keys = this.options.keys() // sort ?
+
+    // move maxconns to be the first option
+    keys.splice(keys.indexOf('maxconns'),1)
+    keys = ['maxconns'].concat(keys)
+    
     var cur, curdom
 
     for (var i=0; i<keys.length; i++) {

@@ -233,8 +233,9 @@ Client.prototype = {
     },
     onTorrentAdd: function(torrent) {
         // cant do this, because metadata has not been saved yet... (when loading torrent from launch entry)
+        if (torrent.autostart === false) { return }
 
-        if (this.app.options.get('new_torrents_auto_start')) { // only for NEW torrents, dummy
+        if (this.app.options.get('new_torrents_auto_start')) {
             if (torrent._opts.initializedBy != 'collection.fetch') {
                 torrent.start()
             }

@@ -1,5 +1,5 @@
 var DEVMODE = false
-if (! chrome.runtime.getManifest().update_url) { // is this causing the crash on inline install ?
+if (! chrome.runtime.getManifest().update_url) { // remove this for prod, could cause crash
     console.log('UNPACKED - DEV MODE!')
     DEVMODE = true
 }
@@ -45,6 +45,8 @@ jstorrent.constants = {
     cws_jstorrent_extension: "bnceafpojmnimbnhamaeedgomdcgnbjk",
     cws_base_url: "https://chrome.google.com/webstore/detail/",
     cws_jstorrent_extension_url: "https://chrome.google.com/webstore/detail/bnceafpojmnimbnhamaeedgomdcgnbjk",
+    jstorrent_media_url: "http://local.jstorrent.com:8888/stream/",
+    jstorrent_share_base: "http://jstorrent.com",
     PRIO_SKIP: 0, // file priority
     PRIO_NORM: 1,
     cws_url: "https://chrome.google.com/webstore/detail/",

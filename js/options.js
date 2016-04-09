@@ -11,20 +11,17 @@ function Options(opts) {
             'type':'bool',
             'description': 'your list of torrents will be synchronized across your devices'
         },
-
         'show_progress_notifications': {
             'default':true,
             'name':'Show notifications for download progress',
             'type':'bool'
         },
-
         'show_extension_notification': {
             'description': 'Whether to display a link to install the JSTorrent Helper Extension when adding a torrent',
             'default': true,
             'enabled': false,
             'type': 'bool',
         },
-
         'prevent_sleep': {
             'default': true,
             'type': 'bool',
@@ -52,26 +49,22 @@ function Options(opts) {
             'type':'bool',
             'description':'whether to exit when downloads have completed'
         },
-
         'maxconns': {
             'name': 'Connections Per Torrent',
             'help': 'The maximum number of peers to download from. Higher numbers can potentially result in faster downloads, but use more system resources',
             'default': 18,
             'type':'int'
         },
-
         'new_torrents_auto_start': {
             'name': 'Automatically start downloading new torrents',
             'default': true,
             'type': 'bool'
         },
-
         'report_anonymous_usage': {
             'default': true,
             'type': 'bool',
             'editable': false
         },
-
         'report_to_trackers_override': {
             'default': false,
             'name': 'Spoofing - report to private trackers as uTorrent',
@@ -82,6 +75,20 @@ function Options(opts) {
             'default': 'uTorrent/330B(30235)(server)(30235)',
             'type': 'string',
             'visible': false
+        },
+        'auto_add_public_trackers': {
+            'default':false,
+            'name':'Add public trackers automatically',
+            'help':'If no peers are found, automatically add some public trackers to look for more peers.',
+            'visible':true,
+            'type':'bool'
+        },
+        'report_usage_statistics': {
+            'default':true,
+            'name':'Report usage statistics',
+            'help':'To help improve the program, send usage anonymous usage statistics',
+            'visible': true,
+            'type':'bool'
         },
         'restart_torrent_on_error': {
             'default':false,
@@ -103,7 +110,6 @@ function Options(opts) {
             // this actually needs to be a multiple of each piece chunk size..
             'type': 'int'
         },
-
         'socks5_proxy': {
             'visible': false,
             'default':'192.168.43.1:8080',
@@ -119,6 +125,7 @@ function Options(opts) {
         'web_server_enable': {
             'default': true,
             'visible':true,
+            'help':'This option lets you stream files before they are complete by clicking \'Stream\' in the Files tab',
             'type': 'bool',
             'name': 'Enable web server (port 8543)'
         },

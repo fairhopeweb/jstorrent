@@ -1,6 +1,16 @@
 function UI(opts) {
+    function intDontShowZero(val) {
+        return val?val:''
+    }
+    function pathFormat(path) {
+        // if we had torrent reference we could make this cleaner..
+        if (path.length > 1) {
+            return path.slice(1,path.length).join('/')
+        } else {
+            return ''
+        }
+    }
     function formatClientName(val) {
-        // encoded as utf-8?
         return val
     }
     function fracToPercent(val) {
@@ -14,23 +24,24 @@ function UI(opts) {
         return torrent.get('name') || torrent._opts.url || torrent.hashhexlower
     }
     function fileAction(val) {
-        return '<a href="https://code.google.com/p/chromium/issues/detail?id=328803&thanks=328803&ts=1387186852" target="_blank">Open</a>'
-
+        // this only returns the html, but app.handle_click is adding an event listener
+        // set the class action to determine what happens
         var streamable = val.streamable()
         var openable = val.openable()
-        if (streamable) {
-            if (val.isComplete()) {
-                return '<a href="#"><span class="glyphicon glyphicon-play"></span>Play</a>'
-            } else {
-                return '<a href="#"><span class="glyphicon glyphicon-play"></span>Stream</a>'
+
+        var parts = []
+        if (val.isComplete()) {
+            if (streamable) {
+                // detect if chromecast extension?
+                parts.push('<a class="action-open" href="#"><span class="glyphicon glyphicon-play"></span>Play</a>')
+                parts.push('<a class="action-cast" href="#"><span class="glyphicon glyphicon-play-circle"></span>Cast</a>')
+            } else if (openable) {
+                parts.push('<a class="action-open" href="#"><span class="glyphicon glyphicon-file"></span>Open</a>')
             }
-        } else if (openable) {
-            return '<a href="#"><span class="glyphicon glyphicon-folder-open"></span>View</a>'
         } else if (streamable && app.webapp) {
-            return '<a target="_blank" href="' + val.torrent.getPlayerURL(val.num, streamable) + '"><span class="glyphicon glyphicon-play"></span>Play</a>'
-        } else {
-            return ''
+            parts.push('<a class="action-stream" href="#"><span class="glyphicon glyphicon-play"></span>Stream(beta)</a>')
         }
+        return parts.join(' ')
     }
 
     this.client = opts.client
@@ -49,12 +60,12 @@ function UI(opts) {
             {id: "complete", name: "% Complete", formatVal: fracToPercent},
             {id:'downspeed', name: "Down Speed", width:90, formatVal: byteUnitsSec },
             {id:'eta', name: "ETA", formatVal: formatValETA, width:60},
-            {id: "numpeers", name: "Peers"},
+            {id: "numpeers", formatVal: intDontShowZero, name: "Peers"},
             {id: "bytes_sent", name: "Bytes Sent", formatVal: byteUnits},
             {id:'upspeed', formatVal: byteUnitsSec},
-            {id: 'downloaded', formatVal:byteUnits},
+            {id: 'downloaded', name:"Stored", formatVal:byteUnits},
             {id: "added", sortable:true},
-            {id: "numswarm", name: "Swarm"}
+            {id: "numswarm", name: "Swarm", hidden:true}
         ],
         'peers':[
             {name:"Address", id:"address", width:125},
@@ -100,10 +111,10 @@ function UI(opts) {
             {id:'torrent'}
         ],
         'files':[
-            {attr:'num', name:"Number", sortable:true},
+            {attr:'num', name:"Number", width:60, sortable:true},
             {attr:'name', name:"Name", width:400, sortable:true},
             {attr:'size', name:"Size", formatVal:byteUnits, width:100, sortable:true},
-            {name:"Action" , displayFunc: fileAction},
+            {name:"Action" , width:115, displayFunc: fileAction},
             {id:"priority", formatVal: priority, sortable:true
 /*
   ,editor: Slick.Editors.SelectCellEditor,
@@ -115,7 +126,8 @@ function UI(opts) {
             },
             {id:'downloaded', name:"Downloaded", formatVal:byteUnits, width:100},
             {id:'complete', name:"Complete", formatVal: fracToPercent, sortable:true},
-            {id:'streaming'},
+            {id:'streaming', name:"Stream"},
+            {attr:'path', name:"Path", formatVal: pathFormat, width:400, sortable:true},
             {id:'leftPiece'},
             {id:'rightPiece'}
         ],
@@ -221,7 +233,11 @@ UI.prototype = {
 
     },
     set_detail: function(type, torrent) {
-        console.clog(L.UI,'set detail',type,torrent)
+        // fix to not redraw messages pane.
+        //console.clog(L.UI,'set detail',type,torrent)
+
+        if (this.detailtype == 'messages' && type == 'messages') {return} // dont need to redraw
+        
         this.detailtype = type
 
         if (this.detailtable) {
@@ -297,8 +313,11 @@ function MessagesView(opts) {
     window.LOGLISTENER = this.onNewLog.bind(this)
     $('#detailGrid')[0].style.overflow = 'auto'
     $('#detailGrid')[0].style.padding = '4px'
+    $('#detailGrid')[0].style['-webkit-user-select'] = 'initial'
 }
 MessagesView.prototype = {
+    // XXX how many methods must we define?
+    resizeCanvas: function(){},
     destroy: function() {
         this.elt.html('')
         window.LOGLISTENER = null
@@ -318,7 +337,12 @@ MessagesView.prototype = {
             return arg.simpleSerializer()
         } else {
             try {
-                return JSON.stringify(arg)
+                var s = JSON.stringify(arg)
+                if (s.length < 1000) {
+                    return s
+                } else {
+                    return arg
+                }
             } catch(e) {
                 return arg
             }
@@ -351,6 +375,11 @@ MessagesView.prototype = {
     render: function() {
         this.elt.show()
         if (window.LOGHISTORY) {
+            var unshown = LOGHISTORY.totalrecorded - LOGHISTORY.filled
+            if (unshown > 0) {
+                this.onNewLog(['%cWarn','color:orange',unshown + ' previous messages not shown'])
+            }
+            
             for (var i=0; i<LOGHISTORY.filled; i++) {
                 var line = LOGHISTORY.get(-LOGHISTORY.filled+1+i)
                 this.onNewLog(line)
@@ -363,6 +392,7 @@ function GeneralInfoView(opts) {
     this.opts = opts
     this.torrent = opts.torrent
     this.render()
+    $('#detailGrid')[0].style['-webkit-user-select'] = 'initial'
 }
 GeneralInfoView.prototype = {
     render: function() {

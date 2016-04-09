@@ -17,19 +17,29 @@ function App(opts) {
     this.options = new jstorrent.Options({app:this}); // race condition, options not yet fetched...
     //this.dht = new jstorrent.DHT // not ready yet!
 
-    var handlers = [
-        ['/favicon.ico',jstorrent.FavIconHandler],
-        ['/stream.*',jstorrent.StreamHandler],
-        ['/package/(.*)',jstorrent.PackageHandler]
-//        ['.*', jstorrent.WebHandler]
-    ]
     if (opts && opts.tab) {
         this.webapp = null
         // dont start server for browser tab instance
-    } else if (chrome.WebApplication) { // temporarily disabled, too buggy
+    } else if (WSC.WebApplication) { // temporarily disabled, too buggy
         // :-( options not yet loaded
         // let this work without submodule
-        this.webapp = new chrome.WebApplication({host:'0.0.0.0',handlers:handlers, port:8543})
+        var opts = {}
+        opts.port = 8543
+        opts.optPreventSleep = false
+        opts.optAllInterfaces = false
+        opts.optTryOtherPorts = true
+        opts.optRetryInterfaces = false
+        opts.useCORSHeaders = true // needed for subtitles
+        //opts.optStopIdleServer = 1000 * 30 // 20 seconds
+        var handlers = [
+            ['/favicon.ico',jstorrent.FavIconHandler],
+            ['/stream.*',jstorrent.StreamHandler],
+            ['/package/(.*)',jstorrent.PackageHandler]
+            //        ['.*', jstorrent.WebHandler]
+        ]
+        opts.handlers = handlers
+        this.webapp = new WSC.WebApplication(opts)
+        this.webapp._stop_callback = this.webappOnStop.bind(this)
     } else {
         this.webapp = null
     }
@@ -92,6 +102,12 @@ function App(opts) {
 jstorrent.App = App
 
 App.prototype = {
+    webappOnStop: function(info) {
+        console.log('webapp stopped',info)
+    },
+    webappOnStart: function(info) {
+        console.log('webapp started',info)
+    },
     close: function() {
         // app wants to close
         // maybe do some cleanup stuff?
@@ -165,7 +181,7 @@ App.prototype = {
     on_options_loaded: function() {
         if (this.options.get('web_server_enable')) {
             if (this.webapp) {
-                this.webapp.start() // TODO -- try to listen on different ports if listen fails
+                this.webapp.start(this.webappOnStart.bind(this))
             }
         }
     },
@@ -333,6 +349,13 @@ App.prototype = {
                                   onClick: _.bind(onclick,this) })
     },
     notifyWantToAddPublicTrackers: function(torrent) {
+        if (this.options.get('auto_add_public_trackers')) {
+            app.analytics.sendEvent("Torrent", "Tracker","addPublicTrackers")
+            torrent.addPublicTrackers()
+            torrent.forceAnnounce()
+            return
+        }
+
         if (torrent.isPrivate()) {
             this.createNotification({ details:"No peers were received from the private tracker. Support for private trackers is limited. You may want to try to enable spoofing in the app options."})
             return
@@ -378,28 +401,54 @@ App.prototype = {
                                   onClick: _.bind(onclick,this) })
     },
     handle_click: function(type, collection, evt, info) {
+        // gui/ui.js
         var file = collection.items[info.row]
         var column = UI.coldefs.files[info.cell]
         if (type == 'files') {
             console.log('clicked in files',file, info.cell)
-            if (evt.target.tagName == 'A' && column.name == 'Action') {
+            if (column.name == 'Action') {
                 // clicking on file action (like Play)
-                if (file.streamable()) {
-                    if (file.isComplete()) {
-                        var url = file.getPlayerURL()
-                        var msg = {command:'openWindow',url:url}
-                        chrome.runtime.sendMessage(msg)
-                    } else {
-                        window.open( file.torrent.getStreamPlayerPageURL(file.num) )
-                    }
-                } else {
-                    file.getPlayableSRCForVideo( function(url) {
-                        var msg = {command:'openWindow',url:url}
-                        chrome.runtime.sendMessage(msg)
-                    })
+
+                console.log('clicked on file action',file)
+
+                var elt = evt.target
+                var ctr = 0
+                while (elt.tagName != 'A' && ctr < 2) {
+                    elt = elt.parentNode
+                    ctr++
+                }
+                if (elt.tagName == 'A') {
+                    var action = elt.classList[0]
+                    this.handle_file_click_action(file, action)
                 }
             }
         }
+    },
+    handle_file_click_action: function(file, action) {
+        var streamable = file.streamable()
+        var complete = file.isComplete()
+        var openable = file.openable()
+
+        if (action == 'action-open') {
+            //var url = 'https://code.google.com/p/chromium/issues/detail?id=328803&thanks=328803&ts=1387186852'
+            //var url = file.getPlayerURL()
+            //var url = file.torrent.getStreamPlayerPageURL(file.num) ) ?
+            file.getPlayableSRCForVideo( function(url) { // blob url
+                var msg = {command:'openWindow',url:url}
+                chrome.runtime.sendMessage(msg)
+            })
+        } else if (action == 'action-stream') {
+            var url = file.torrent.getStreamPlayerPageURL(file.num)
+            var msg = {command:'openWindow',url:url}
+            chrome.runtime.sendMessage(msg)
+        } else if (action == 'action-cast') {
+            var url = 'https://www.mp4cast.com/?src=jstorrent'
+            var msg = {command:'openWindow',url:url}
+            chrome.runtime.sendMessage(msg)
+        } else {
+            console.clog(L.UI,'unknown action',action)
+        }
+
     },
     handle_dblclick: function(type, collection, evt, info) {
         console.log('dblclick',type,collection, evt, info)
@@ -531,7 +580,6 @@ App.prototype = {
             // remove the progress notification
             chrome.notifications.clear(id, function(){})
         }
-
         if (this.options.get('show_progress_notifications')) {
             this.createNotification({details:torrent.get('name') + " finished downloading!",
                                      message:"Download Complete!",
@@ -616,6 +664,8 @@ App.prototype = {
 
         console.error('onTorrentError',arguments)
 
+        // TODO: dont show this error if we never set a directory in the options... also, set a callback to retry it when we do set a disk
+        
         //if (err === undefined) { debugger }
         this.createNotification({
             message: torrent.get('name'),
@@ -688,8 +738,11 @@ App.prototype = {
                 //console.log('drop found item',item)
                 if (item.kind == 'file') {
                     var entry = item.webkitGetAsEntry()
+
+                    var isTorrent = entry.name.endsWith('.torrent') || item.type == 'application/x-bittorrent'
+                    
                     //console.log('was able to extract entry.',entry)
-                    if (item.type == 'application/x-bittorrent') {
+                    if (isTorrent) {
                         app.analytics.sendEvent("MainWindow", "Drop", "Torrent")
                         this.client.handleLaunchWithItem({entry:entry,
                                                           type:item.type})
@@ -822,7 +875,6 @@ App.prototype = {
 
         if (this.syncAppAttributes) {
             if (this.syncAppAttributes['dont_show_extension_help']) {
-                // HOLY CRAP im an idiot
                 return
             }
         }
@@ -873,13 +925,17 @@ App.prototype = {
 
         this.options_window_opening = true
         chrome.app.window.create( 'gui/options.html', 
-                                  { width: 400,
-                                    id: "options",
-                                    height: 400 },
+                                  { 
+                                      id: "options",
+                                      hidden: true
+                                  },
                                   _.bind(this.options_window_opened, this)
                                 );
     },
     options_window_opened: function(optionsWindow) {
+        optionsWindow.outerBounds.width = 360
+        optionsWindow.outerBounds.height = 480
+        optionsWindow.show()
         this.stopPulsateOptions()
         app.analytics.sendAppView("OptionsView")
         this.options_window_opening = false

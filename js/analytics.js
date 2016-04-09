@@ -58,7 +58,7 @@ function Analytics(opts) {
 
     //id = null
 
-    if (! id || DEVMODE) {
+    if (! id || DEVMODE || ! this.app.get('report_usage_statistics')) {
         function FakeTracker() {}
         FakeTracker.prototype = {
             sendAppView: function(){},

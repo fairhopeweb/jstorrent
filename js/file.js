@@ -37,6 +37,9 @@ function File(opts) {
     this.set('name',this.name)
     this.set('size',this.size)
     this.set('path',this.path.join('/'))
+
+    this.on('complete', _.bind(this.onComplete,this))
+    
     //this.on('change', _.bind(this.priorityChanged,this)) // NO, we use contextmenu now
 }
 File.getStoragePath = function(torrent) {
@@ -48,6 +51,14 @@ File.getStoragePath = function(torrent) {
 }
 jstorrent.File = File
 File.prototype = {
+    onComplete: function() {
+        console.log('file complete event',this)
+        var UI = this.torrent.client.app.UI
+        if (UI.detailtype == 'files') {
+            UI.detailtable.on_change(this,null,null,'Action') // update action on this
+        }
+        //this.trigger('change','actions')
+    },
     intersectsPiece: function(piece) {
         var intersection = intersect(piece.startByte,
                                      piece.endByte,
@@ -100,20 +111,23 @@ File.prototype = {
     },
     streamable: function() {
         var ext = this.name.toLowerCase()
-        if (window.MIMECATEGORIES) {
-            for (var i=0; i<MIMECATEGORIES.video.length; i++) {
-                if (ext.endsWith('.' + MIMECATEGORIES.video[i])) {
+        if (WSC.MIMECATEGORIES) {
+            for (var i=0; i<WSC.MIMECATEGORIES.video.length; i++) {
+                if (ext.endsWith('.' + WSC.MIMECATEGORIES.video[i])) {
                     return {type:'video'}
                 }
             }
-            for (var i=0; i<MIMECATEGORIES.audio.length; i++) {
-                if (ext.endsWith('.' + MIMECATEGORIES.audio[i])) {
+            for (var i=0; i<WSC.MIMECATEGORIES.audio.length; i++) {
+                if (ext.endsWith('.' + WSC.MIMECATEGORIES.audio[i])) {
                     return {type:'audio'}
                 }
             }
         } else {
             return ext.endsWith('.mp4') ||
-                ext.endsWith('.mp3')
+                ext.endsWith('.mp3') ||
+                ext.endsWith('.mkv') ||
+                ext.endsWith('.mov') ||
+                ext.endsWith('.m4v')
         }
     },
     openable: function() {
@@ -266,11 +280,12 @@ File.prototype = {
                 callback(entry)
                 return
             }
-            entry.file( function(file) {
+            function onfile(file) {
                 console.log('playable file',file)
                 var url = (window.URL || window.webkitURL).createObjectURL(file)
                 callback(url)
-            })
+            }
+            entry.file(onfile)
         }.bind(this), {create:false})
     },
     getPlayerURL: function() {

@@ -10,7 +10,7 @@ console.log = function() {
 
 (function() {
     window.ORIGINALCONSOLE = {log:console.log, warn:console.warn, error:console.error}
-    window.LOGHISTORY = new jstorrent.RingBuffer(50)
+    window.LOGHISTORY = new jstorrent.RingBuffer(100)
     window.LOGLISTENER = null
 /*
     console.log = function() {

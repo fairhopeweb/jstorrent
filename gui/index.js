@@ -141,9 +141,18 @@ function onready() {
         }
     }
     document.body.addEventListener('keydown', keydown)
-    
-    window.app = new jstorrent.App;
-    app.initialize( onappready )
+
+    function go() {
+        window.app = new jstorrent.App;
+        app.initialize( onappready )
+
+    }
+    if (DEVMODE) {
+        console.log('waiting for webkit inspector to be ready')
+        setTimeout( go, 1000)
+    } else {
+        go()
+    }
 }
 
 function click_detail_torrent(tab, evt) {
@@ -163,7 +172,7 @@ function click_detail_other(tab, evt) {
 }
 
 function bind_events() {
-    var torrenttabs = ['info','files','peers','swarm','trackers','pieces','diskio']
+    var torrenttabs = ['info','files','peers','swarm','trackers','pieces','diskio'] 
     var othertabs = ['messages']
     torrenttabs.forEach(function(tab) {
 	$('#detail-' + tab).click( click_detail_torrent.bind(this, tab) )

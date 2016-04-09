@@ -1,10 +1,10 @@
 (function() {
-    if (! (window.BaseHandler && chrome.WebApplication)) { // if web-server-chrome available
+    if (! (WSC.BaseHandler && WSC.WebApplication)) { // if web-server-chrome available
         return
     }
     function PackageHandler() {
         this.disk = app.client.packageDisk
-        BaseHandler.prototype.constructor.call(this)
+        WSC.BaseHandler.prototype.constructor.call(this)
     }
     var PackageHandlerprototype = {
         get: function() {
@@ -27,7 +27,7 @@
     }
     _.extend(PackageHandler.prototype,
              PackageHandlerprototype,
-             BaseHandler.prototype
+             WSC.BaseHandler.prototype
             )
     jstorrent.PackageHandler = PackageHandler
 
@@ -44,7 +44,7 @@
         //this.chunkSz = 666666 // random size for testing
         this.responseLength = null
 
-        BaseHandler.prototype.constructor.call(this)
+        WSC.BaseHandler.prototype.constructor.call(this)
     }
     var StreamHandlerprototype = {
         get: function() {
@@ -197,6 +197,17 @@
                 this.writeHeaders(200)
             }
             this.fileOffset = this.rangeStart
+
+        },
+        setMimeType: function() {
+            var p = this.file.get('name').split('.')
+            if (p.length > 1 && ! this.isDirectoryListing) {
+                var ext = p[p.length-1].toLowerCase()
+                var type = WSC.MIMETYPES[ext]
+                if (type) {
+                    this.setHeader('content-type',type)
+                }
+            }
         },
         fileReady: function() {
             app.analytics.sendEvent('Torrent','Stream','Starting')
@@ -206,12 +217,13 @@
 
             //console.log('file ready...')
             //this.write('have file!' + JSON.stringify(this.file._attributes))
+            this.setMimeType()
             this.parseRange()
         }
     }
     _.extend(StreamHandler.prototype,
              StreamHandlerprototype,
-             BaseHandler.prototype
+             WSC.BaseHandler.prototype
             )
     jstorrent.StreamHandler = StreamHandler
 
@@ -220,7 +232,7 @@
 
     function FavIconHandler() {
         this.disk = app.client.packageDisk
-        BaseHandler.prototype.constructor.call(this)
+        WSC.BaseHandler.prototype.constructor.call(this)
     }
     var FavIconHandlerprototype = {
         get: function() {
@@ -238,12 +250,12 @@
     }
     _.extend(FavIconHandler.prototype,
              FavIconHandlerprototype,
-             BaseHandler.prototype
+             WSC.BaseHandler.prototype
             )
     jstorrent.FavIconHandler = FavIconHandler
 
     function WebHandler() {
-        BaseHandler.prototype.constructor.call(this)
+        WSC.BaseHandler.prototype.constructor.call(this)
     }
 
     var WebHandlerprototype = {
@@ -318,7 +330,7 @@
 
     _.extend(WebHandler.prototype,
              WebHandlerprototype,
-             BaseHandler.prototype
+             WSC.BaseHandler.prototype
             )
 
 
