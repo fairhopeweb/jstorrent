@@ -54,18 +54,11 @@ jstorrent.constants = {
     manifest: chrome.runtime.getManifest(),
     chunkRequestTimeoutInterval: 20000,
     endgameDuplicateRequests: 3,
-/*    publicTrackers: ["udp://tracker.openbittorrent.com:80",
-                     'udp://tracker.istole.it:6969',
-                     "udp://tracker.publicbt.com:80"],*/
     publicTrackers: [
         'udp://tracker.grepler.com:6969/announce'
         ,'udp://tracker.kicks-ass.net:80/announce'
-        ,'udp://tracker.leechers-paradise.org:6969'
         ,'udp://tracker.leechers-paradise.org:6969/announce'
-        ,'udp://tracker.mg64.net:2710/announce'
         ,'udp://tracker.mg64.net:6969/announce'
-        ,'udp://tracker.openbittorrent.com:6969/announce'
-        ,'udp://tracker.openbittorrent.com:80'
         ,'udp://tracker.openbittorrent.com:80/announce'
         ,'udp://tracker.opentrackr.org:1337/announce'
         ,'udp://tracker.pomf.se:80/announce'
@@ -75,6 +68,9 @@ jstorrent.constants = {
         ,'udp://tracker.tricitytorrents.com:2710/announce'
         ,'udp://tracker.yoshi210.com:6969/announce'
         ,'udp://tracker2.indowebster.com:6969/announce'
+        ,"udp://open.demonii.com:1337"
+        ,"udp://tracker.coppersurfer.tk:6969/announce"
+        ,"udp://ipv4.tracker.harry.lu:80/announce"
     ],
     // refresh from https://www.reddit.com/r/opentrackerproject
     announceSizeBuckets: [0,1,5,10,25,50,100,200,400,800,1600]
