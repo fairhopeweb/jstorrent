@@ -54,7 +54,7 @@ File.prototype = {
     onComplete: function() {
         console.log('file complete event',this)
         var UI = this.torrent.client.app.UI
-        if (UI.detailtype == 'files') {
+        if (UI.detailtype == 'files' && UI.detailtable) {
             UI.detailtable.on_change(this,null,null,'Action') // update action on this
         }
         //this.trigger('change','actions')
@@ -108,6 +108,20 @@ File.prototype = {
             priority = 1
         }
         this.torrent.setFilePriority(this.num,priority,oldVal)
+    },
+    get_extension: function() {
+        var i = this.name.lastIndexOf('.')
+        if (i == -1) {
+            return ''
+        } else {
+            return this.name.slice(i+1,this.name.length).toLowerCase()
+        }
+    },
+    shouldfindapps: function() {
+        var ext = this.get_extension()
+        if (_.contains(['epub'], ext)) {
+            return true
+        }
     },
     streamable: function() {
         var ext = this.name.toLowerCase()

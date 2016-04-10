@@ -28,6 +28,7 @@ function UI(opts) {
         // set the class action to determine what happens
         var streamable = val.streamable()
         var openable = val.openable()
+        var findapps = val.shouldfindapps()
 
         var parts = []
         if (val.isComplete()) {
@@ -38,6 +39,8 @@ function UI(opts) {
                 parts.push('<a class="action-cast" href="#"><span class="glyphicon glyphicon-play-circle"></span>Cast</a>')
             } else if (openable) {
                 parts.push('<a class="action-open" href="#"><span class="glyphicon glyphicon-file"></span>Open</a>')
+            } else if (findapps) {
+                parts.push('<a class="action-findapp" href="#"><span class="glyphicon glyphicon-th-large"></span>Get App</a>')
             }
         } else if (streamable && app.webapp) {
             parts.push('<a class="action-stream" href="#"><span class="glyphicon glyphicon-play"></span>Stream(beta)</a>')
@@ -115,6 +118,7 @@ function UI(opts) {
             {attr:'num', name:"Number", width:60, sortable:true},
             {attr:'name', name:"Name", width:400, sortable:true},
             {attr:'size', name:"Size", formatVal:byteUnits, width:100, sortable:true},
+            {id:'complete', name:"Complete", formatVal: fracToPercent, sortable:true},
             {name:"Action" , width:115, displayFunc: fileAction},
             {id:"priority", formatVal: priority, sortable:true
 /*
@@ -126,9 +130,8 @@ function UI(opts) {
              name:'Priority',*/
             },
             {id:'downloaded', name:"Downloaded", formatVal:byteUnits, width:100},
-            {id:'complete', name:"Complete", formatVal: fracToPercent, sortable:true},
-            {id:'streaming', name:"Stream"},
             {attr:'path', name:"Path", formatVal: pathFormat, width:400, sortable:true},
+            {id:'streaming', name:"Stream"},
             {id:'leftPiece'},
             {id:'rightPiece'}
         ],

@@ -43,7 +43,10 @@ function Analytics(opts) {
     this.app = opts.app
     var id, service
     if (jstorrent.device.platform == 'Android') {
-        console.warn('android - analytics disabled')
+
+    } else if (DEVMODE) {
+        service = 'JSTorrent DEV'
+        id = "UA-35025483-6"
     } else if (chrome.runtime.id == jstorrent.constants.cws_jstorrent) {
         service = 'JSTorrentApp'
         id = "UA-35025483-2"
@@ -53,13 +56,13 @@ function Analytics(opts) {
     } else {
         service = 'JSTorrent-Unpacked'
         id = "UA-35025483-5"
-        console.warn('analytics for jstorrent-unpacked')
     }
+    this.service = service
+    this.id = id
 
-    //id = null
     var report_usage = this.app.options.get('report_usage_statistics')
     
-    if (! id || DEVMODE || ! report_usage) {
+    if (! id || ! report_usage) {
         function FakeTracker() {}
         FakeTracker.prototype = {
             sendAppView: function(){},
@@ -67,6 +70,7 @@ function Analytics(opts) {
         }
         this.tracker = new FakeTracker
     } else {
+        console.log("Setup analytics",this.service)
         this.service = analytics.getService(service);
         this.service.getConfig().addCallback(_.bind(this.initAnalyticsConfig,this));
         this.tracker = this.service.getTracker(id);

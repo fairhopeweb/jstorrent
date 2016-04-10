@@ -218,10 +218,6 @@ function getBlobURL(entry, callback) {
     entry.file(onfile,onfile)
 }
 
-if (chrome.runtime.setUninstallURL && ! DEVMODE) {
-    setup_uninstall()
-}
-
 function setup_uninstall() {
     console.log('setting uninstall URL')
     try {
@@ -239,31 +235,71 @@ function setup_uninstall() {
 chrome.runtime.onInstalled.addListener(function(details) {
     console.log('onInstalled',details)
     var sk = 'onInstalledInfo'
-    chrome.storage.sync.get(sk, function(resp) {
+    chrome.storage.sync.get(["sk",sk], function(resp) {
+        var showUpdateNotification = false
         console.log('got previous install info',resp)
+
+        if (resp["sk"]) {
+            // bug in earlier versions we did resp.sk by accident.
+            resp["sk"] = null
+            showUpdateNotification = true
+        }
 
         details.date = new Date().getTime()
         details.cur = chrome.runtime.getManifest().version
 
         if (! resp[sk]) {
-            resp[sk] = [deatails]
+            resp[sk] = [details]
         } else if (details.previousVersion == details.cur) {
             // happend because of chrome.runtime.reload probably
         } else {
             resp[sk].push(details)
+            showUpdateNotification = true
         }
 
-        if (resp[sk].length > 5) {
+        if (resp[sk].length > 10) {
             // purge really old entries
             resp[sk].splice(0,1)
         }
 
         chrome.storage.sync.set(resp, function(){console.log('persisted onInstalled info')})
+
+        if (showUpdateNotification) {
+            doShowUpdateNotification(details, resp)
+        }
     })
     
     //details.reason // install, update, chrome_update
     //details.previousVersion // only if update
 })
+
+function doShowUpdateNotification(details, history) {
+    // create a notification
+    var currentVersion = details.cur
+    var msg = "JSTorrent has updated to version " + currentVersion
+
+    chrome.notifications.create('update-installed',
+                                { title:"JSTorrent Updated",
+                                  type:"basic",
+                                  priority:2,
+                                  iconUrl: "js-128.png",
+                                  message:msg,
+                                  buttons:[
+                                      {title:"Read more details", iconUrl:"cws_32.png"}
+                                  ]
+                                }, function(id) {
+                                    console.log('created notification with id',id,chrome.runtime.lastError)
+
+                                })
+    function onButtonClick(id, idx) {
+        chrome.notifications.onButtonClicked.removeListener( onButtonClick )
+        if (id == 'update-installed') {
+            var url = 'http://jstorrent.com/#changeLog'
+            chrome.browser.openTab({url:url})
+        }
+    }
+    chrome.notifications.onButtonClicked.addListener( onButtonClick )
+}
 
 chrome.runtime.onUpdateAvailable.addListener( function(details) {
     // notify that there's a new version? click to restart? nah...
@@ -379,6 +415,15 @@ chrome.runtime.onSuspendCanceled.addListener( function(evt) {
     }
     console.log('onSuspendCanceled',evt)
 })
+if (chrome.idle && chrome.idle.onStateChanged) {
+    chrome.idle.onStateChanged.addListener( function(evt) {
+        console.log('idle state changed',evt)
+    })
+}
 chrome.app.runtime.onRestarted.addListener( function(evt) {
     console.log('app onRestarted',evt)
 })
+
+if (chrome.runtime.setUninstallURL && ! DEVMODE) {
+    setup_uninstall()
+}

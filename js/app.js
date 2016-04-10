@@ -455,6 +455,10 @@ App.prototype = {
             var url = 'https://www.mp4cast.com/?src=jstorrent'
             var msg = {command:'openWindow',url:url}
             chrome.runtime.sendMessage(msg)
+        } else if (action == 'action-findapp') {
+            var url = jstorrent.constants.cws_file_handler_url + encodeURIComponent(file.get_extension())
+            var msg = {command:'openWindow',url:url}
+            chrome.runtime.sendMessage(msg)
         } else {
             console.clog(L.UI,'unknown action',action)
         }
@@ -556,7 +560,11 @@ App.prototype = {
     notificationButtonClicked: function(id, idx) {
         //console.log('clicked on notification with id',id)
         var notification = this.notifications.get(id)
-        notification.handleButtonClick(idx)
+        if (notification) {
+            notification.handleButtonClick(idx)
+        } else {
+            //console.log('notification probably created in background.js')
+        }
     },
     createNotification: function(opts) {
         opts.id = opts.id || ('notification' + this.notificationCounter++)

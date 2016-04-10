@@ -40,6 +40,7 @@ jstorrent.constants = {
     cws_jstorrent_extension: "bnceafpojmnimbnhamaeedgomdcgnbjk",
     cws_base_url: "https://chrome.google.com/webstore/detail/",
     cws_jstorrent_extension_url: "https://chrome.google.com/webstore/detail/bnceafpojmnimbnhamaeedgomdcgnbjk",
+    cws_file_handler_url: "https://chrome.google.com/webstore/category/collection/file_handlers?_fe=",
     jstorrent_media_url: "http://jstorrent.com/stream/",
     jstorrent_web_base: "http://jstorrent.com",
     jstorrent_share_base: "http://jstorrent.com",
