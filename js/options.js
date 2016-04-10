@@ -52,7 +52,7 @@ function Options(opts) {
         'maxconns': {
             'name': 'Connections Per Torrent',
             'help': 'The maximum number of peers to download from. Higher numbers can potentially result in faster downloads, but use more system resources',
-            'default': 18,
+            'default': 20,
             'type':'int'
         },
         'new_torrents_auto_start': {

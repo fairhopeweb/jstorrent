@@ -33,7 +33,8 @@ function UI(opts) {
         if (val.isComplete()) {
             if (streamable) {
                 // detect if chromecast extension?
-                parts.push('<a class="action-open" href="#"><span class="glyphicon glyphicon-play"></span>Play</a>')
+                //parts.push('<a class="action-open" href="#"><span class="glyphicon glyphicon-play"></span>Play</a>')
+                parts.push('<a class="action-open" href="#"><span class="glyphicon glyphicon-file"></span>Open</a>')
                 parts.push('<a class="action-cast" href="#"><span class="glyphicon glyphicon-play-circle"></span>Cast</a>')
             } else if (openable) {
                 parts.push('<a class="action-open" href="#"><span class="glyphicon glyphicon-file"></span>Open</a>')

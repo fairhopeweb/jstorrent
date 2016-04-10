@@ -9,40 +9,14 @@ function App(opts) {
         chrome.system.storage.onAttached.addListener( _.bind(this.external_storage_attached, this) )
         chrome.system.storage.onDetached.addListener( _.bind(this.external_storage_detached, this) )
     }
-
+    this.opts = opts
     this.sessionState = {} // session state that only exists for the lifetime of this app run
     this.accept_languages = null
     this.options_window = null
     this.help_window = null
     this.options = new jstorrent.Options({app:this}); // race condition, options not yet fetched...
     //this.dht = new jstorrent.DHT // not ready yet!
-
-    if (opts && opts.tab) {
-        this.webapp = null
-        // dont start server for browser tab instance
-    } else if (WSC.WebApplication) { // temporarily disabled, too buggy
-        // :-( options not yet loaded
-        // let this work without submodule
-        var wopts = {}
-        wopts.port = 8543
-        wopts.optPreventSleep = false
-        wopts.optAllInterfaces = false
-        wopts.optTryOtherPorts = true
-        wopts.optRetryInterfaces = false
-        wopts.useCORSHeaders = true // needed for subtitles
-        //opts.optStopIdleServer = 1000 * 30 // 20 seconds
-        var handlers = [
-            ['/favicon.ico',jstorrent.FavIconHandler],
-            ['/stream.*',jstorrent.StreamHandler],
-            ['/package/(.*)',jstorrent.PackageHandler]
-            //        ['.*', jstorrent.WebHandler]
-        ]
-        wopts.handlers = handlers
-        this.webapp = new WSC.WebApplication(wopts)
-        this.webapp._stop_callback = this.webappOnStop.bind(this)
-    } else {
-        this.webapp = null
-    }
+    this.webapp = null
 
     this.analytics = null
     this.entryCache = new jstorrent.EntryCache
@@ -178,12 +152,34 @@ App.prototype = {
             this.unminimize()
         }
     },
-    on_options_loaded: function() {
-        if (this.options.get('web_server_enable')) {
-            if (this.webapp) {
-                this.webapp.start(this.webappOnStart.bind(this))
-            }
+    maybeStartWebApp: function() {
+        if (this.opts && this.opts.tab) {
+            // dont start server for browser tab instance
+        } else if (WSC.WebApplication && this.options.get('web_server_enable')) { // temporarily disabled, too buggy
+            // :-( options not yet loaded
+            // let this work without submodule
+            var wopts = {}
+            wopts.port = 8543
+            wopts.optPreventSleep = false
+            wopts.optAllInterfaces = false
+            wopts.optTryOtherPorts = true
+            wopts.optRetryInterfaces = false
+            wopts.useCORSHeaders = true // needed for subtitles
+            //opts.optStopIdleServer = 1000 * 30 // 20 seconds
+            var handlers = [
+                ['/favicon.ico',jstorrent.FavIconHandler],
+                ['/stream.*',jstorrent.StreamHandler],
+                ['/package/(.*)',jstorrent.PackageHandler]
+                //        ['.*', jstorrent.WebHandler]
+            ]
+            wopts.handlers = handlers
+            this.webapp = new WSC.WebApplication(wopts)
+            this.webapp._stop_callback = this.webappOnStop.bind(this)
+            this.webapp.start(this.webappOnStart.bind(this))
         }
+    },
+    on_options_loaded: function() {
+        this.maybeStartWebApp()
         this.analytics = new jstorrent.Analytics({app:this})
         this.analytics.sendEvent('acceptLanguages',window.navigator.language,this.accept_languages)
     },
@@ -432,13 +428,25 @@ App.prototype = {
         var openable = file.openable()
 
         if (action == 'action-open') {
-            //var url = 'https://code.google.com/p/chromium/issues/detail?id=328803&thanks=328803&ts=1387186852'
-            //var url = file.getPlayerURL()
-            //var url = file.torrent.getStreamPlayerPageURL(file.num) ) ?
-            file.getPlayableSRCForVideo( function(url) { // blob url
+            if (streamable) {
+                var bugurl = 'https://bugs.chromium.org/p/chromium/issues/detail?id=328803'
+                var url = jstorrent.constants.jstorrent_web_base + '/bug/#id=' + 'openFile&folder=' + encodeURIComponent(file.torrent.getStorage().entry.fullPath)
+                    + '&name=' + encodeURIComponent(file.get('name'))
+                var msg = {command:'openWindow',url:url}
+                chrome.runtime.sendMessage(msg)
+            } else {
+                file.getPlayableSRCForVideo( function(url) { // blob url
+                    var msg = {command:'openWindow',url:url}
+                    chrome.runtime.sendMessage(msg)
+                })
+            }
+            // background didnt help, when app suspends it still goes invalid. instead, have the tab run some code to open up a port?
+            /*
+            file.getBlobURL( function(url) {
                 var msg = {command:'openWindow',url:url}
                 chrome.runtime.sendMessage(msg)
             })
+            */
         } else if (action == 'action-stream') {
             var url = file.torrent.getStreamPlayerPageURL(file.num)
             var msg = {command:'openWindow',url:url}
@@ -625,9 +633,11 @@ App.prototype = {
         },this))
     },
     isLite: function() {
+        if (DEVMODE) { return false }
         return chrome.runtime.id == jstorrent.constants.cws_jstorrent_lite
     },
     isUnpacked: function() {
+        return DEVMODE
         return ! _.contains([jstorrent.constants.cws_jstorrent,
                              jstorrent.constants.cws_jstorrent_lite], chrome.runtime.id)
     },
@@ -770,7 +780,8 @@ App.prototype = {
     open_share_window: function() {
         var torrent = this.UI.get_selected_torrent()
         if (torrent) {
-            window.open(torrent.getShareLink())
+            var url = torrent.getShareLink()
+            chrome.browser.openTab({url:url})
         }
     },
     toolbar_resetstate: function() {
@@ -814,11 +825,16 @@ App.prototype = {
             torrents[i].remove()
         }
     },
+    getCWSPage: function() {
+        if (DEVMODE) {
+            return jstorrent.constants.cws_base_url + jstorrent.constants.cws_jstorrent;
+        }
+        return jstorrent.constants.cws_base_url + chrome.runtime.id
+    },
     openReviewPage: function() {
         this.setSyncAttribute('clicked_review',true)
-        window.open(jstorrent.constants.cws_base_url +
-                    chrome.runtime.id + '/reviews'
-                    ,'_blank')
+        var url = this.getCWSPage() + '/reviews'
+        chrome.browser.openTab({url:url})
     },
     createPleaseReviewMeNotification: function() {
         if (this.sessionState['haderror']) {
@@ -893,7 +909,8 @@ App.prototype = {
                                          onButtonClick: _.bind(function(idx) {
                                              console.log('button clicked',idx)
                                              if (idx == 0) {
-                                                 window.open(jstorrent.constants.cws_jstorrent_extension_url,'_blank')
+                                                 var url = jstorrent.constants.cws_jstorrent_extension_url
+                                                 chrome.browser.openTab({url:url})
                                              } else {
                                                  this.setSyncAttribute('dont_show_extension_help',true)
                                              }

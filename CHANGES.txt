@@ -1,3 +1,7 @@
+2016-04-10
+- replace calls to window.open with chrome.browser.openTab
+- try to make "Open" in files tab work better, instead replace with link to issue tracker.
+
 2016-04-09
 - add onReceiveError TCP events, so now we detect when a connection is closed
   should stop torrents from hanging while downloading. A very important bugfix!

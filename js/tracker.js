@@ -11,7 +11,7 @@ function onUDPReceive(info) {
     } else {
         console.warn('unhandled udp receive',info)
     }
-    if (dhtSockMap[sockId]) {
+    if (window.dhtSockMap && dhtSockMap[sockId]) {
         dhtSockMap[sockId](info)
     }
 }
@@ -23,7 +23,7 @@ function onUDPReceiveError(info) {
     } else {
         console.warn('unhandled udp receive',info)
     }
-    if (dhtSockMap[sockId]) {
+    if (window.dhtpSockMap && dhtSockMap[sockId]) {
         dhtSockMap[sockId](info)
     }
 }

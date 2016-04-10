@@ -99,6 +99,9 @@ function onappready() {
 
     app.analytics.sendAppView("MainView")
 
+
+    $('#webstorelink')[0].href = app.getCWSPage()
+
     if (jstorrent.device.platform == 'Android') {
         var url = "http://academictorrents.com/download/af4c6ce643f30da2619fe6cf7dd838b1d4539743"
 
@@ -108,16 +111,10 @@ function onappready() {
     if (jstorrent.options.add_torrents_on_start) {
 
         setTimeout( function() {
-            //client.add_from_url( window.example_url_betas )
-            //client.add_from_url( window.example_url_southpark )
             client.add_from_url( "http://www.clearbits.net/get/19-lawrence-lessig---free-culture-audiobook.torrent" )
         }, 1000);
 
-
-        //client.add_from_url( example_url )
-        //client.add_from_url( example_url_2 )
         if (jstorrent.options.manual_infohash_on_start) {
-
             setTimeout( function() {
                 client.add_from_url( 'magnet:?xt=urn:btih:' + jstorrent.options.manual_infohash_on_start[0] )
             }, 1000);

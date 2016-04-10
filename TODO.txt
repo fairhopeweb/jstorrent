@@ -1,3 +1,4 @@
+- view file blob url make it in background
 - add a URL handler for the protocolhandler registered url
 - small swarm debugging
 - bytes received show (already downloaded + current session amount)

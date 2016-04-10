@@ -128,6 +128,12 @@ WindowManager.prototype = {
             chrome.notifications.clear(key, function(){})
         }
         this.mainWindow = null
+        
+        if (window.mediaPort) {
+            // send notification to media page that it's about to break.
+            mediaPort.postMessage({error:"window closed"})
+            mediaPort.disconnect()
+        }
     }
 }
 
@@ -155,6 +161,10 @@ chrome.app.runtime.onLaunched.addListener(function(launchData) {
                 launchData: launchData}
     onAppLaunchMessage(info)
 });
+
+function launch() {
+    onAppLaunchMessage({})
+}
 
 function onAppLaunchMessage(launchData) {
     // launchData, request, sender, sendRepsonse
@@ -197,14 +207,25 @@ function onAppLaunchMessage(launchData) {
 
 }
 
-if (chrome.runtime.setUninstallURL) {
+var BLOBS = []
+function getBlobURL(entry, callback) {
+    function onfile(file) {
+        console.log('playable file',file)
+        var url = (window.URL || window.webkitURL).createObjectURL(file)
+        BLOBS.push(url) // when to destroy object url?
+        callback(url)
+    }
+    entry.file(onfile,onfile)
+}
+
+if (chrome.runtime.setUninstallURL && ! DEVMODE) {
     setup_uninstall()
 }
 
 function setup_uninstall() {
     console.log('setting uninstall URL')
     try {
-        chrome.runtime.setUninstallURL('http://jstorrent.com/uninstall/',
+        chrome.runtime.setUninstallURL('http://jstorrent.com/uninstall/?id=' + encodeURIComponent(chrome.runtime.id),
                                        function(result) {
                                            var lasterr = chrome.runtime.lastError
                                            console.log('set uninstall url with result',result,'lasterr',lasterr)
@@ -224,10 +245,12 @@ chrome.runtime.onInstalled.addListener(function(details) {
         details.date = new Date().getTime()
         details.cur = chrome.runtime.getManifest().version
 
-        if (resp[sk]) {
-            resp[sk].push(details)
+        if (! resp[sk]) {
+            resp[sk] = [deatails]
+        } else if (details.previousVersion == details.cur) {
+            // happend because of chrome.runtime.reload probably
         } else {
-            resp[sk] = [details]
+            resp[sk].push(details)
         }
 
         if (resp[sk].length > 5) {
@@ -259,7 +282,6 @@ if (chrome.runtime.onMessage) {
         console.log('chrome runtime message',request,sender)
         if (request && request.command == 'openWindow') {
             chrome.browser.openTab({url:request.url})
-            //window.open(request.url,'_blank')
         }
     })
 }
@@ -303,22 +325,34 @@ chrome.runtime.onMessageExternal.addListener(function(request, sender, sendRespo
 });
 }
 
+
 if (chrome.runtime.onConnectExternal) {
     chrome.runtime.onConnectExternal.addListener( function(port) {
         var authorized = true
         if (authorized) {
             console.log('received authorized port',port)
+            try{
+                if (window.mediaPort) {
+                    // disconnect the other port
+                    mediaPort.postMessage({error:"another port is opening"}) // might already be disconnected.
+                    mediaPort.disconnect()
+                }
+            }catch(e){
+                console.warn("port was already disconnected")
+            }
             window.mediaPort = port
             port.onMessage.addListener( function(msg) {
                 var a = app()
                 if (a) {
                     a.client.handleExternalMessage(msg, port)
                 } else {
+                    port.postMessage({error:"no app"})
                     console.warn('no app, could not handle external message')
                 }
             })
             port.onDisconnect.addListener( function(msg) {
                 console.log('external ondisconnect',msg)
+                window.mediaPort = null
             })
             port.postMessage({text:"OK"})
         } else {
