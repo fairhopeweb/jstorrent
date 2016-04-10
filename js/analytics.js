@@ -57,8 +57,9 @@ function Analytics(opts) {
     }
 
     //id = null
-
-    if (! id || DEVMODE || ! this.app.get('report_usage_statistics')) {
+    var report_usage = this.app.options.get('report_usage_statistics')
+    
+    if (! id || DEVMODE || ! report_usage) {
         function FakeTracker() {}
         FakeTracker.prototype = {
             sendAppView: function(){},

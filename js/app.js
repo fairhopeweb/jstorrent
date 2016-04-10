@@ -11,7 +11,7 @@ function App(opts) {
     }
 
     this.sessionState = {} // session state that only exists for the lifetime of this app run
-
+    this.accept_languages = null
     this.options_window = null
     this.help_window = null
     this.options = new jstorrent.Options({app:this}); // race condition, options not yet fetched...
@@ -23,13 +23,13 @@ function App(opts) {
     } else if (WSC.WebApplication) { // temporarily disabled, too buggy
         // :-( options not yet loaded
         // let this work without submodule
-        var opts = {}
-        opts.port = 8543
-        opts.optPreventSleep = false
-        opts.optAllInterfaces = false
-        opts.optTryOtherPorts = true
-        opts.optRetryInterfaces = false
-        opts.useCORSHeaders = true // needed for subtitles
+        var wopts = {}
+        wopts.port = 8543
+        wopts.optPreventSleep = false
+        wopts.optAllInterfaces = false
+        wopts.optTryOtherPorts = true
+        wopts.optRetryInterfaces = false
+        wopts.useCORSHeaders = true // needed for subtitles
         //opts.optStopIdleServer = 1000 * 30 // 20 seconds
         var handlers = [
             ['/favicon.ico',jstorrent.FavIconHandler],
@@ -37,14 +37,14 @@ function App(opts) {
             ['/package/(.*)',jstorrent.PackageHandler]
             //        ['.*', jstorrent.WebHandler]
         ]
-        opts.handlers = handlers
-        this.webapp = new WSC.WebApplication(opts)
+        wopts.handlers = handlers
+        this.webapp = new WSC.WebApplication(wopts)
         this.webapp._stop_callback = this.webappOnStop.bind(this)
     } else {
         this.webapp = null
     }
 
-    this.analytics = new jstorrent.Analytics({app:this})
+    this.analytics = null
     this.entryCache = new jstorrent.EntryCache
     this.fileMetadataCache = new jstorrent.FileMetadataCache
 
@@ -184,6 +184,8 @@ App.prototype = {
                 this.webapp.start(this.webappOnStart.bind(this))
             }
         }
+        this.analytics = new jstorrent.Analytics({app:this})
+        this.analytics.sendEvent('acceptLanguages',window.navigator.language,this.accept_languages)
     },
     onContextMenuNoItem: function(grid, info, evt) {
         window.contextMenuContextItem = info
@@ -271,8 +273,8 @@ App.prototype = {
         }
     },
     onAcceptLanguages: function(s) {
-        // detect if 
-        app.analytics.sendEvent('acceptLanguages',window.navigator.language,s)
+        // detect if
+        this.accept_languages = s
         if (_.contains(['pt-BR'], window.navigator.language)) {
             this.freeTrialFreeDownloads = 999
         }

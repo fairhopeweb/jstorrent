@@ -1,5 +1,10 @@
 rm package.zip
 
+#sed -i.bak "s/JSTorrent Dev/JSTorrent Lite/g" _locales/en/messages.json
+sed -i.bak '/\"key\":/d' manifest.json
+cp conf.js conf.js.bak
+cp conf_prod.js conf.js
+
 zip package.zip manifest.json \
     -r _locales \
     *.js \
@@ -27,3 +32,7 @@ zip package.zip manifest.json \
     -x js/*old* \
     -x *scratch* \
     -x "*.*~"    
+
+mv _locales/en/messages.json.bak _locales/en/messages.json
+mv manifest.json.bak manifest.json
+mv conf.js.bak conf.js
