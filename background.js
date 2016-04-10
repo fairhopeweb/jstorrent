@@ -416,11 +416,12 @@ chrome.runtime.onSuspendCanceled.addListener( function(evt) {
     }
     console.log('onSuspendCanceled',evt)
 })
+/* // this will cause the background page to wake up every time it changes. not necessary
 if (chrome.idle && chrome.idle.onStateChanged) {
     chrome.idle.onStateChanged.addListener( function(evt) {
         console.log('idle state changed',evt)
     })
-}
+}*/
 chrome.app.runtime.onRestarted.addListener( function(evt) {
     console.log('app onRestarted',evt)
 })
