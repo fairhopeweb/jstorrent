@@ -128,6 +128,10 @@ function Torrent(opts) {
     this.think_interval = null
     this.pieceBlacklist = {}
 
+    if (opts.autostart === false) {
+        this.autostart = false
+    }
+    
     if (opts.url) {
         this.initializeFromWeb(opts.url, opts.callback) 
     } else if (opts.id) {
@@ -203,7 +207,7 @@ Torrent.prototype = {
                 var id = this._opts.id
                 this.remove( function() {
                     console.log('removed, adding')
-                    this.client.add_from_id(id) // might want to include optional metadata like the name.
+                    this.client.add_from_id(id, null, {autostart:false}) // might want to include optional metadata like the name.
                 }.bind(this), {dontannounce:true})
             } else {
                 this.client.app.createNotification({details:"Sorry. Unable to reset state for this torrent. Please remove the torrent and re-add it",
@@ -330,7 +334,7 @@ Torrent.prototype = {
             if (this.magnet_info.start && this.magnet_info.start == '0') {
                 this.autostart = false
             }
-            
+
             this.set('url',url)
             this.hashhexlower = this.magnet_info.hashhexlower
 	    this.updateHashBytes()
@@ -1347,6 +1351,7 @@ Torrent.prototype = {
         }
     },
     readyToStart: function() {
+        console.log('readyToStart')
         if (this.autostart === false) {
             return
         }
@@ -1666,6 +1671,10 @@ Torrent.prototype = {
         return this.get('maxconns') || this.client.app.options.get('maxconns')
     },
     getStreamPlayerPageURL: function(filenum, streamable) {
+        if (! this.metadata) { return }
+        if (this.metadata && ! this.multifile && filenum === undefined) {
+            filenum = 0
+        }
         if (! this.client.app.webapp) { debugger; return }
         var token = ''
         /*
@@ -1675,7 +1684,7 @@ Torrent.prototype = {
         }
         this.client.app.webapp.token = token */
         //var url = 'http://127.0.0.1:' + this.client.app.webapp.port + '/package/gui/media.html?hash=' + this.hashhexlower + '&token=' + token + '&id=' + chrome.runtime.id
-        var url = jstorrent.constants.jstorrent_media_url + '?hash=' + encodeURIComponent(this.hashhexlower) + '&id=' + encodeURIComponent(chrome.runtime.id)
+        var url = jstorrent.constants.jstorrent_media_url + '#hash=' + encodeURIComponent(this.hashhexlower) + '&id=' + encodeURIComponent(chrome.runtime.id)
         if (token) {
             url += '&token=' + encodeURIComponent(token)
         }

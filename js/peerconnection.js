@@ -4,10 +4,21 @@ function onTCPReceive(info) {
     var sockId = info.socketId
     if (peerSockMap[sockId]) {
         peerSockMap[sockId].onReadTCP(info)
+    } else {
+        console.clog(L.PEER, 'tcp.onReceive untracked socket',info)
+    }
+}
+function onTCPReceiveError(info) {
+    var sockId = info.socketId
+    if (peerSockMap[sockId]) {
+        peerSockMap[sockId].onReadTCPError(info)
+    } else {
+        console.clog(L.PEER, 'tcp.onReceiveError untracked socket',info, NET_ERRORS_D[info.resultCode])
     }
 }
 
 chrome.sockets.tcp.onReceive.addListener( onTCPReceive )
+chrome.sockets.tcp.onReceiveError.addListener( onTCPReceiveError )
 
 
 function PeerConnection(opts) {
@@ -284,7 +295,6 @@ PeerConnection.prototype = {
         if (this.hasclosed) { return }
         if (this.reading) { return }
         this.reading = true
-        // chrome.sockets.tcp.read( this.sockInfo.socketId, jstorrent.protocol.socketReadBufferMax, _.bind(this.onRead,this) ) // new socket API doesnt do it this way
     },
     sendExtensionHandshake: function() {
         this.sentExtensionHandshake = true
@@ -386,8 +396,9 @@ PeerConnection.prototype = {
         chrome.sockets.tcp.send( this.sockInfo.socketId, data, _.bind(this.onWrite,this) )
     },
     onWrite: function(writeResult) {
-        if (chrome.runtime.lastError) {
-            //console.warn('lasterror on tcp.send',chrome.runtime.lastError,writeResult.resultCode)
+        var lastError = chrome.runtime.lastError
+        if (lastError) {
+            console.warn('lasterror on tcp.send',chrome.runtime.lastError,writeResult)
         }
 
         if (! this.sockInfo) {
@@ -625,6 +636,13 @@ debugger
     },
     onReadTCP: function(readResult) {
         this.onRead(readResult)
+    },
+    onReadTCPError: function(readResult) {
+        this.onReadError(readResult)
+    },
+    onReadError: function(info) {
+        console.clog(L.PEER, 'onReceiveError',info)
+        this.close()
     },
     onRead: function(readResult) {
         //console.log('onread',readResult,readResult.data.byteLength, [ui82str(new Uint8Array(readResult.data))])
@@ -915,6 +933,12 @@ debugger
         } else {
             //debugger
         }
+    },
+    sendKeepalive: function() {
+        // TODO -- send a keepalive message
+        // send empty 4 bytes
+        var msg = new Uint8Array(4)
+        this.write(msg.buffer)
     },
     sendPEX: function(data) {
         if (this.peerExtensionHandshake) {

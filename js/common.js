@@ -11,7 +11,8 @@ var L = {
     TRACKER: { name: 'TRACKER', color: '#3e8', show: true },
     TORRENT: { name: 'TORRENT', color: '#0ae', show: true },
     DISKIO: { name: 'DISKIO', color: 'orange', show: true },
-    POWER: { name: 'POWER', color: 'blue', show: true }
+    POWER: { name: 'POWER', color: 'blue', show: true },
+    PEER: { name: 'PEER', color: '#082', show: true }
 }
 
 if (! String.prototype.endsWith) {
@@ -45,7 +46,8 @@ jstorrent.constants = {
     cws_jstorrent_extension: "bnceafpojmnimbnhamaeedgomdcgnbjk",
     cws_base_url: "https://chrome.google.com/webstore/detail/",
     cws_jstorrent_extension_url: "https://chrome.google.com/webstore/detail/bnceafpojmnimbnhamaeedgomdcgnbjk",
-    jstorrent_media_url: "http://local.jstorrent.com:8888/stream/",
+    jstorrent_media_url: "http://local.jstorrent.com:8888/stream/", // want to use a different URL for dev mode probably
+    //jstorrent_media_url: "http://jstorrent.com/stream/",
     jstorrent_share_base: "http://jstorrent.com",
     PRIO_SKIP: 0, // file priority
     PRIO_NORM: 1,
@@ -113,7 +115,7 @@ jstorrent.options = {
 //    always_add_special_peer: ['127.0.0.1:8030','127.0.0.1:8031','127.0.0.1:8032','127.0.0.1:8033']
 //    manual_infohash_on_start: ['726ff42f84356c9aeb27dfa379678c89f0e62149']
 }
-bind = Function.prototype.bind
+var bind = Function.prototype.bind
 
 
 function tryauth() {
@@ -141,13 +143,15 @@ function tryauth() {
 
     
 
-
+/*
 function reload() {
     if (app) { app.unminimize() }
     if (app && app.webapp) { app.webapp.stop() }
 
     chrome.runtime.reload()
 }
+*/
+var reload = chrome.runtime.reload
 
 function ui8IndexOf(arr, s, startIndex) {
     // searches a ui8array for subarray s starting at startIndex

@@ -413,8 +413,11 @@ GeneralInfoView.prototype = {
             s += '<label>Links</label>'
             s += ('<li>magnet link: <a target="_blank" href="'+magnet+'">' + _.escape(magnet) +  '</a></li>')
             s += ('<li>share link: <a target="_blank" href="'+this.torrent.getShareLink()+'">JSTorrent.com web link for sharing</a></li>')
-            if (false && app.options.get('enable_webserver')) {
-                s += ('<li>share link: <a target="_blank" href="'+this.torrent.getPlayerURL()+'">Video Player</a></li>') // now in files tab
+            if (app.options.get('web_server_enable') && app.webapp && ! this.torrent.multifile && this.torrent.metadata) {
+                var streamUrl = this.torrent.getStreamPlayerPageURL()
+                if (streamUrl) {
+                    s += ('<li>Stream Page: <a target="_blank" href="'+streamUrl+'">Video Player</a></li>') // now in files tab
+                }
             }
 
             //var attr_includes = ['added']

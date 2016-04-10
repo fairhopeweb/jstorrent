@@ -247,6 +247,7 @@ var CollectionProto = {
         return [key, toStore]
     },
     fetch: function(callback) {
+
         console.clog(L.INIT,'collection.fetch',this.itemClass.__name__)
         var collectionKey = this.getStoreKey()
         chrome.storage.local.get( collectionKey, _.bind(function(result) {
@@ -271,6 +272,8 @@ var CollectionProto = {
 
                 this._attributes = result[collectionKey].attributes
                 chrome.storage.local.get(fullItemKeys, _.bind(function(itemsResult) {
+
+                    // need to split this into separate function that we can call independently.
                     for (var i=0; i<itemKeys.length; i++) {
                         itemData = itemsResult[ fullItemKeys[i] ]
 /*

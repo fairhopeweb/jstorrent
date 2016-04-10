@@ -1,4 +1,6 @@
 2016-04-09
+- add onReceiveError TCP events, so now we detect when a connection is closed
+  should stop torrents from hanging while downloading. A very important bugfix!
 - fix reset torrent state for case where added by .torrent entry
 - add _locales/en/messages.json starting i8n
 - destroy the UI on minimize, restore on restore (save some memory/cpu maybe)

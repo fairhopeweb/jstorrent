@@ -344,12 +344,16 @@ Client.prototype = {
         }
     },
     add_from_id: function(id, cb, opts) {
+        var torrentopts = {id:id,
+                           itemClass: jstorrent.Torrent,
+                           attributes:{added:new Date()},
+                           callback: _.bind(this.add_from_id_response,this,cb,opts),
+                           parent:this.torrents}
+        if (opts.autostart !== undefined) {
+            torrentopts.autostart = opts.autostart
+        }
         console.log('client add by id',id)
-        var torrent = new jstorrent.Torrent({id:id,
-                                             itemClass: jstorrent.Torrent,
-                                             attributes:{added:new Date()},
-                                             callback: _.bind(this.add_from_id_response,this,cb,opts),
-                                             parent:this.torrents})
+        var torrent = new jstorrent.Torrent(torrentopts)
         this.torrents.add( torrent )
         this.torrents.save()
     },

@@ -15,10 +15,23 @@ function onUDPReceive(info) {
         dhtSockMap[sockId](info)
     }
 }
+function onUDPReceiveError(info) {
+    var sockId = info.socketId
+    console.clog(L.TRACKER, 'udp receive error',info, NET_ERRORS_D[info.resultCode])
+    if (trackerSockMap[sockId]) {
+        trackerSockMap[sockId].onReadUDPError(info)
+    } else {
+        console.warn('unhandled udp receive',info)
+    }
+    if (dhtSockMap[sockId]) {
+        dhtSockMap[sockId](info)
+    }
+}
 
 var trackerSockMap = {}
 
 chrome.sockets.udp.onReceive.addListener( onUDPReceive )
+chrome.sockets.udp.onReceiveError.addListener( onUDPReceiveError )
 
 function Tracker(opts) {
     // TODO -- make sure we are destroying sockets and there aren't
@@ -374,6 +387,9 @@ UDPTracker.prototype = {
     readUDP: function(sockId, callback) {
         this._read_udp_callback = callback
         trackerSockMap[sockId] = this
+    },
+    onReadUDPError: function(info) {
+        this.set_error({error:info})
     },
     onReadUDP: function(info) {
 	//console.log('onReadUDP',info)
