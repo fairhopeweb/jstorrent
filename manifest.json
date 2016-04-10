@@ -37,6 +37,8 @@
         "storage",
         "unlimitedStorage",
         "system.storage",
+        "system.cpu",
+        "system.memory",
 	"system.network",
         "idle",
         "power",

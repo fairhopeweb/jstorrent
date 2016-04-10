@@ -1,3 +1,5 @@
+// from https://src.chromium.org/svn/trunk/src/net/base/net_error_list.h
+// chrome sockets network errors
 var NET_ERRORS = [
     ["IO_PENDING", -1],
     ["FAILED", -2],
@@ -195,5 +197,5 @@ var NET_ERRORS = [
 ];
 var NET_ERRORS_D = {}
 for (var i=0; i<NET_ERRORS.length; i++) {
-    NET_ERRORS_D[NET_ERRORS[1]] = NET_ERRORS[0]
+    NET_ERRORS_D[NET_ERRORS[i][1]] = NET_ERRORS[i][0]
 }

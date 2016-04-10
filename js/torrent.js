@@ -207,7 +207,7 @@ Torrent.prototype = {
                 var id = this._opts.id
                 this.remove( function() {
                     console.log('removed, adding')
-                    this.client.add_from_id(id, null, {autostart:false}) // might want to include optional metadata like the name.
+                    this.client.add_from_id(id, null) // might want to include optional metadata like the name.
                 }.bind(this), {dontannounce:true})
             } else {
                 this.client.app.createNotification({details:"Sorry. Unable to reset state for this torrent. Please remove the torrent and re-add it",

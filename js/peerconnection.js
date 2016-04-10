@@ -641,7 +641,7 @@ debugger
         this.onReadError(readResult)
     },
     onReadError: function(info) {
-        console.clog(L.PEER, 'onReceiveError',info)
+        console.clog(L.PEER, 'onReceiveError',info, NET_ERRORS_D[info.resultCode])
         this.close()
     },
     onRead: function(readResult) {
