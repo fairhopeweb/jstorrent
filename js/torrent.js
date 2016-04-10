@@ -802,7 +802,7 @@ Torrent.prototype = {
 
                     if (chokers.length > 0) {
                         chokers.sort( function(a,b) { return a.connectedWhen < b.connectedWhen } )
-                        //console.log('closing choker',chokers[0])
+                        //console.clog(L.PEER,'closing choker',chokers[0])
                         chokers[0].close('oldest choked connection')
                     }
 
@@ -816,7 +816,7 @@ Torrent.prototype = {
                         timeOuters.sort( function(a,b) { return 
                                                          a.get('timeouts') / a.get('requests') <
                                                          b.get('timeouts') / b.get('requests') } )
-                        //console.log('closing timeouter',timeOuters[0], timeOuters[0].get('timeouts'))
+                        console.clog(L.PEER,'closing timeouter',timeOuters[0], timeOuters[0].get('timeouts'))
                         timeOuters[0].close('timeouty connection')
                     }
 
@@ -1351,7 +1351,6 @@ Torrent.prototype = {
         }
     },
     readyToStart: function() {
-        console.log('readyToStart')
         if (this.autostart === false) {
             return
         }
@@ -1621,27 +1620,7 @@ Torrent.prototype = {
 
         if (this.thinkCtr % 4 == 0) {
             // only update these stats every second
-
-            var sent = this.get('bytes_sent')
-            var received = this.get('bytes_received')
-
-            this.rings.sent.add( sent )
-            this.rings.received.add( received )
-
-            // calculate rate based on last 4 seconds
-            var prev = this.rings.sent.get(-4)
-            if (prev !== null) {
-                this.set('upspeed', (sent - prev) / 4)
-            }
-            var prev = this.rings.received.get(-4)
-            if (prev !== null) {
-                var downSpeed = (received - prev)/4
-                this.set('downspeed', downSpeed)
-                var bytesRemain = (1-this.get('complete')) * this.size
-                this.set('eta', bytesRemain / downSpeed)
-            }
-
-
+            this.calculate_speeds()
         }
 
         if (this.thinkCtr % 12 == 0) {
@@ -1651,6 +1630,8 @@ Torrent.prototype = {
 
         if (this.thinkCtr % 2 == 0) {
             // add new peers every 1/2 second
+            // TODO add more, faster.
+
             var idx, peer, peerconn
             if (this.should_add_peers() && this.swarm.items.length > 0) {
                 idx = Math.floor( Math.random() * this.swarm.items.length )
@@ -1665,6 +1646,30 @@ Torrent.prototype = {
                 }
                 // peer.set('only_connect_once',true) // huh?
             }
+        }
+    },
+    calculate_speeds: function() {
+        var sent = this.get('bytes_sent')
+        var received = this.get('bytes_received')
+
+        this.rings.sent.add( sent )
+        this.rings.received.add( received )
+
+        // calculate rate based on last 4 seconds
+        var prev = this.rings.sent.get(-4)
+        if (prev !== null) {
+            this.set('upspeed', (sent - prev) / 4)
+        }
+        var prev = this.rings.received.get(-4)
+        if (prev !== null) {
+            var downSpeed = (received - prev)/4
+            this.set('downspeed', downSpeed)
+            var bytesRemain = (1-this.get('complete')) * this.size
+            this.set('eta', bytesRemain / downSpeed)
+        }
+
+        for (var i=0; i<this.peers.items.length; i++) {
+            this.peers.items[i].calculate_speeds()
         }
     },
     getMaxConns: function() {

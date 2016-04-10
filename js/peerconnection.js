@@ -1,3 +1,5 @@
+// TODO. good connections are having outstanding req set without having sent a request, and no timeouts. (libtorrent)
+
 var peerSockMap = {}
 
 function onTCPReceive(info) {
@@ -56,11 +58,15 @@ function PeerConnection(opts) {
     this.set('address', this.peer.get_key())
     this.set('bytes_sent', 0)
     this.set('bytes_received', 0)
+    this.set('upspeed', 0)
+    this.set('downspeed', 0)
+    this.rings = { sent: new jstorrent.RingBuffer(8),
+                   received: new jstorrent.RingBuffer(8) }
     this.set('requests',0)
     this.set('responses',0)
     this.set('timeouts',0)
     this.set('outstanding',0)
-
+    this.set('limit',2)
     this.set('complete',0)
 
     // TODO -- if we have a peer that we keep sending "HAVE" messages
@@ -74,7 +80,6 @@ function PeerConnection(opts) {
     this.pieceChunkRequests = {} // XXX not being stored here? wtf. we need that data!!!
 
     this.outstandingPieceChunkRequestCount = 0// "outstanding"
-    this.pieceChunkRequestPipelineLimit = 2 // TODO - make self adjusting
 
     // inefficient that we create this for everybody in the
     // swarm... (not actual peer objects) but whatever, good enough
@@ -106,6 +111,12 @@ function PeerConnection(opts) {
 jstorrent.PeerConnection = PeerConnection;
 
 PeerConnection.prototype = {
+    debugCheckState: function() {
+        // checks if state is sane...
+        // if choked and req == resp and outstanding requests... and timeout does not match
+
+        // maybe timeout 
+    },
     registerPieceChunkRequest: function(pieceNum, chunkNum) {
         this.pieceChunkRequests[pieceNum + '/' + chunkNum] = true
     },
@@ -398,7 +409,8 @@ PeerConnection.prototype = {
     onWrite: function(writeResult) {
         var lastError = chrome.runtime.lastError
         if (lastError) {
-            console.warn('lasterror on tcp.send',chrome.runtime.lastError,writeResult)
+            //console.warn('lasterror on tcp.send',this,chrome.runtime.lastError,writeResult)
+            this.close()
         }
 
         if (! this.sockInfo) {
@@ -428,8 +440,8 @@ debugger
             }
 
         } else {
-            this.set('bytes_sent', this.get('bytes_sent') + this.writing_length)
-            this.torrent.countBytes('sent', this.writing_length)
+            //this.set('bytes_sent', this.get('bytes_sent') + this.writing_length)
+            this.countBytes('sent', this.writing_length)
             //this.torrent.set('uploaded', this.torrent.get('uploaded') + this.writing_length) // cheating? what is "uploaded" supposed to be, anyway
             this.writing = false
             this.writing_length = 0
@@ -446,7 +458,7 @@ debugger
         if (app.options.get('debug_dht')) { return }
 
         //console.log('couldRequestPieces')
-        if (this.outstandingPieceChunkRequestCount > this.pieceChunkRequestPipelineLimit) {
+        if (this.outstandingPieceChunkRequestCount > this._attributes.limit) {
             return
         }
 
@@ -486,7 +498,7 @@ debugger
                 curPiece = this.torrent.getPiece(pieceNum)
                 if (curPiece.haveData) { continue } // we have the data for this piece, we just havent hashed and persisted it yet
 
-                while (this.outstandingPieceChunkRequestCount < this.pieceChunkRequestPipelineLimit) {
+                while (this.outstandingPieceChunkRequestCount < this._attributes.limit) {
                     //console.log('getting chunk requests for peer')
 
                     // what's ideal batch number?
@@ -501,7 +513,7 @@ debugger
                 }
             }
 
-            if (this.outstandingPieceChunkRequestCount >= this.pieceChunkRequestPipelineLimit) {
+            if (this.outstandingPieceChunkRequestCount >= this._attributes.limit) {
                 break
             }
         }
@@ -641,8 +653,39 @@ debugger
         this.onReadError(readResult)
     },
     onReadError: function(info) {
-        console.clog(L.PEER, 'onReceiveError',info, NET_ERRORS_D[info.resultCode])
+        if (info.resultCode == -100 || info.resultCode == -101) {
+            // conn closed or reset
+        } else {
+            console.clog(L.PEER, 'onReceiveError',info, NET_ERRORS_D[info.resultCode])
+        }
         this.close()
+    },
+    calculate_speeds: function() {
+        var sent = this.get('bytes_sent')
+        var received = this.get('bytes_received')
+
+        this.rings.sent.add( sent )
+        this.rings.received.add( received )
+
+        // calculate rate based on last 4 seconds
+        var prev = this.rings.sent.get(-4)
+        if (prev !== null) {
+            this.set('upspeed', (sent - prev) / 4)
+        }
+        var prev = this.rings.received.get(-4)
+        if (prev !== null) {
+            var downSpeed = (received - prev)/4
+            this.set('downspeed', downSpeed)
+        }
+    },
+    countBytes: function(type, val) {
+        // bubble up to client
+        this.torrent.countBytes(type, val)
+        if (type == 'received') {
+            this.set('bytes_received', this.get('bytes_received') + val)
+        } else {
+            this.set('bytes_sent', this.get('bytes_sent') + val)
+        }
     },
     onRead: function(readResult) {
         //console.log('onread',readResult,readResult.data.byteLength, [ui82str(new Uint8Array(readResult.data))])
@@ -660,8 +703,8 @@ debugger
             this.close('peer closed socket (read 0 bytes)')
             return
         } else {
-            this.set('bytes_received', this.get('bytes_received') + readResult.data.byteLength)
-            this.torrent.countBytes('received', readResult.data.byteLength)
+            //this.set('bytes_received', this.get('bytes_received') + readResult.data.byteLength)
+            this.countBytes('received', readResult.data.byteLength)
             //this.log('onRead',readResult.data.byteLength)
             this.readBuffer.add( readResult.data )
 
@@ -730,7 +773,9 @@ debugger
     handleMessage: function(msgData) {
         //console.log('handling message',msgData)
         var method = this['handle_' + msgData.type]
-        this.set('last_message_received',msgData.type) // TODO - get a more specific message for piece number
+        if (msgData.type != "KEEPALIVE") {
+            this.set('last_message_received',msgData.type) // TODO - get a more specific message for piece number
+        }
         if (! method) {
             this.unhandledMessage(msgData)
         } else {
@@ -791,6 +836,7 @@ debugger
             //console.log('handle piece, but piece not extant') // happens after a timeout and the piece finishes from another peer
         } else {
             this.torrent.getPiece(pieceNum).registerChunkResponseFromPeer(this, chunkOffset, data)
+            delete this.pieceChunkRequests[pieceNum + '/' + chunkOffset]
         }
     },
     handle_UNCHOKE: function() {

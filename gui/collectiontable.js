@@ -161,7 +161,6 @@ debugger // using CellSelectEditor now
     this.l_onadd = _.bind(this.on_add, this)
     this.l_onremove = _.bind(this.on_remove, this)
     this.l_onchange = _.bind(this.on_change, this)
-
     this.collection.on('add', this.l_onadd)
     this.collection.on('remove', this.l_onremove)
     this.collection.on('change', this.l_onchange)
@@ -183,8 +182,6 @@ SlickCollectionTable.prototype = {
         this.collection.unon('add', this.l_onadd)
         this.collection.unon('remove', this.l_onremove)
         this.collection.unon('change', this.l_onchange)
-
-
     },
     on_change: function(item, newval, oldval, attr) {
         //console.log('collection item change',item,attr,p1,p2,p3)

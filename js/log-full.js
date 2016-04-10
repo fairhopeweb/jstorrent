@@ -1,3 +1,4 @@
+// TODO in production mode, dont log anything unless it's clog
 /*
 console.log = function() {
     var context = "%cLOG";

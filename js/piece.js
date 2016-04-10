@@ -160,7 +160,7 @@ Piece.prototype = {
             var filled = this.checkChunkResponsesFilled();
 
             if (this.checkingChunkResponseHash) {
-                console.warn('got a chunk response but already checking hash...')
+                //console.warn('got a chunk response but already checking hash...')
             } else if (filled) {
                 this.checkingChunkResponseHash = true
                 this.checkChunkResponseHash( null, _.bind(function(valid) {

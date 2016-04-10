@@ -1,4 +1,5 @@
 2016-04-10
+- add bytes/sec to peer list
 - show notification when app updates
 - add an action "get app" to files list
 - replace calls to window.open with chrome.browser.openTab
