@@ -40,8 +40,7 @@ jstorrent.constants = {
     cws_jstorrent_extension: "bnceafpojmnimbnhamaeedgomdcgnbjk",
     cws_base_url: "https://chrome.google.com/webstore/detail/",
     cws_jstorrent_extension_url: "https://chrome.google.com/webstore/detail/bnceafpojmnimbnhamaeedgomdcgnbjk",
-    jstorrent_media_url: "http://local.jstorrent.com:8888/stream/", // want to use a different URL for dev mode probably
-    //jstorrent_media_url: "http://jstorrent.com/stream/",
+    jstorrent_media_url: DEVMODE?"http://local.jstorrent.com:8888/stream/":"http://jstorrent.com/stream/",
     jstorrent_share_base: "http://jstorrent.com",
     PRIO_SKIP: 0, // file priority
     PRIO_NORM: 1,
