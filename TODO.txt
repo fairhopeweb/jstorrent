@@ -1,3 +1,4 @@
+- store bitfield as binary string in local storage
 - show notification when update available, or when update was installed.
 - view file blob url make it in background
 - add a URL handler for the protocolhandler registered url

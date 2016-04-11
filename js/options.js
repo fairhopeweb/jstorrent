@@ -52,7 +52,7 @@ function Options(opts) {
         'maxconns': {
             'name': 'Connections Per Torrent',
             'help': 'The maximum number of peers to download from. Higher numbers can potentially result in faster downloads, but use more system resources',
-            'default': 20,
+            'default': 25,
             'type':'int'
         },
         'new_torrents_auto_start': {
@@ -77,7 +77,7 @@ function Options(opts) {
             'visible': false
         },
         'auto_add_public_trackers': {
-            'default':false,
+            'default':true,
             'name':'Add public trackers automatically',
             'help':'If no peers are found, automatically add some public trackers to look for more peers.',
             'visible':true,

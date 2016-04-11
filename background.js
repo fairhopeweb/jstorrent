@@ -1,11 +1,12 @@
-console.log('background page loaded')
+console.log('background.js')
 var reload = chrome.runtime.reload
+var MAINWIN = 'mainWindow2'
 // the browser extension that adds a context menu
 var extensionId = "bnceafpojmnimbnhamaeedgomdcgnbjk"
 
 function app() {
     if (chrome.app && chrome.app.window.get) {
-        var mw = chrome.app.window.get('mainWindow')
+        var mw = chrome.app.window.get(MAINWIN)
         if (mw) {
             if (mw.contentWindow) {
                 return mw.contentWindow.app
@@ -15,7 +16,7 @@ function app() {
 }
 
 function getMainWindow() {
-    return chrome.app.window.get && chrome.app.window.get('mainWindow')
+    return chrome.app.window.get && chrome.app.window.get(MAINWIN)
 }
 
 function debugSockets() {
@@ -31,32 +32,20 @@ function WindowManager() {
     // TODO -- if we add "id" to this, then chrome.app.window.create
     // won't create it twice.  plus, then its size and positioning
     // will be remembered. so put it in.
-    this.mainWindowOpts = {
-        width: 865,
-//        frame: 'none',
-            frame:{color:'#1687d0'},
-        height: 610,
-        resizable: true,
-        minHeight: 32,
-//        minWidth: 770, // set/get doesnt work yet (dev channel?)
-        id: 'mainWindow'
-    }
-
     this.creatingMainWindow = false
     this.createMainWindowCallbacks = []
-    this.mainWindow = null
+    this.mainWindow = chrome.app.window.get(MAINWIN)
 }
 
 WindowManager.prototype = {
     getMainWindow: function(callback) {
         // gets main window or creates if needed
-        var _this = this
         if (this.mainWindow) {
-            callback(_this.mainWindow)
+            callback(this.mainWindow)
         } else {
             this.createMainWindow( function() {
-                callback(_this.mainWindow)
-            })
+                callback(this.mainWindow)
+            }.bind(this))
         }
     },
     createMainWindow: function(callback) {
@@ -71,30 +60,41 @@ WindowManager.prototype = {
             this.createMainWindowCallbacks.push(callback)
             return
         }
-
-        var _this = this;
-        console.log('creating main window')
         this.creatingMainWindow = true
         var page = 'gui/index.html'
         //var page = 'polymer-ui/index.html'
+        var opts ={
+            outerBounds: { width: 865,
+                           height: 610,
+                           minWidth: 780,
+                           minHeight: 200 },
+/*            width: 865,
+            height: 610,*/
+            //frame: 'none',
+            frame:{color:'#1687d0'},
+            resizable: true,
+            hidden: true,
+            id: MAINWIN
+        }
+        console.log('creating main window',opts)
         chrome.app.window.create(page,
-                                 this.mainWindowOpts,
+                                 opts,
                                  function(mainWindow) {
                                      ensureAlive()
-                                     _this.mainWindow = mainWindow
-                                     _this.creatingMainWindow = false
-
+                                     this.mainWindow = mainWindow
+                                     this.creatingMainWindow = false
                                      mainWindow.onMinimized.addListener( this.onMinimizedMainWindow.bind(this) )
                                      mainWindow.onRestored.addListener( this.onRestoredMainWindow.bind(this) )
                                      
                                      mainWindow.onClosed.addListener( function() {
-                                         _this.onClosedMainWindow()
-                                     })
-                                     callback()
+                                         this.onClosedMainWindow()
+                                     }.bind(this))
+
+                                     if (callback) { callback() }
 
                                      var cb
-                                     while (_this.createMainWindowCallbacks.length > 0) {
-                                         cb = _this.createMainWindowCallbacks.pop()
+                                     while (this.createMainWindowCallbacks.length > 0) {
+                                         cb = this.createMainWindowCallbacks.pop()
                                          cb()
                                      }
 
@@ -114,20 +114,25 @@ WindowManager.prototype = {
         // destroy the UI completely to free up memory
     },
     onClosedMainWindow: function() {
+        console.log('onClosedMainWindow')
+        this.mainWindow = null
         var app = this.mainWindow.contentWindow.app
 
-        if (app.options_window) {
-            app.options_window.close()
+        if (app) {
+            if (app.options_window) {
+                app.options_window.close()
+            }
+            if (app.help_window) {
+                app.help_window.close()
+            }
+            // app cannot close the notificationts, but we can grab data from it beforehand
+            // cannot do anything async on main window javascript context at this point
+            if (app.notifications.keyeditems) {
+                for (var key in app.notifications.keyeditems) {
+                    chrome.notifications.clear(key, function(){})
+                }
+            }
         }
-        if (app.help_window) {
-            app.help_window.close()
-        }
-        // app cannot close the notificationts, but we can grab data from it beforehand
-        // cannot do anything async on main window javascript context at this point
-        for (var key in app.notifications.keyeditems) {
-            chrome.notifications.clear(key, function(){})
-        }
-        this.mainWindow = null
         
         if (window.mediaPort) {
             // send notification to media page that it's about to break.
@@ -141,6 +146,7 @@ var windowManager = new WindowManager
 // if background page reloads, we lose reference to windowmanager main window...
 //window.ctr = 0
 function ensureAlive() {
+    return
     // attempt to make this page not suspend, because that causes our retained directoryentry to become invalid
     if (! window.ensureAliveTimeout) {
         if (getMainWindow()) { // only when the page is alive
@@ -163,7 +169,7 @@ chrome.app.runtime.onLaunched.addListener(function(launchData) {
 });
 
 function launch() {
-    onAppLaunchMessage({})
+    onAppLaunchMessage({type:'debugger'})
 }
 
 function onAppLaunchMessage(launchData) {
@@ -203,8 +209,6 @@ function onAppLaunchMessage(launchData) {
             onMainWindowSpecial(mainWindow)
         }
     })
-
-
 }
 
 var BLOBS = []
@@ -219,16 +223,17 @@ function getBlobURL(entry, callback) {
 }
 
 function setup_uninstall() {
-    console.log('setting uninstall URL')
     try {
         chrome.runtime.setUninstallURL('http://jstorrent.com/uninstall/?id=' + encodeURIComponent(chrome.runtime.id),
                                        function(result) {
                                            var lasterr = chrome.runtime.lastError
-                                           console.log('set uninstall url with result',result,'lasterr',lasterr)
+                                           if (lasterr) {
+                                               console.warn('set uninstall url with result',result,'lasterr',lasterr)
+                                           }
                                        }
                                       )
     } catch(e) {
-        console.error('error setting uninstall url',e)
+        console.warn('error setting uninstall url',e)
     }
 }
 
@@ -269,7 +274,6 @@ chrome.runtime.onInstalled.addListener(function(details) {
         }
     })
     })
-    
     //details.reason // install, update, chrome_update
     //details.previousVersion // only if update
 })

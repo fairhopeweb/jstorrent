@@ -275,6 +275,8 @@ Client.prototype = {
             }
         } else if (launchData.type == 'drop') {
             this.handleLaunchWithItem(item)
+        } else if (launchData.type == 'debugger') {
+            
         } else {
             debugger
         }

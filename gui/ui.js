@@ -69,7 +69,7 @@ function UI(opts) {
             {id:'upspeed', formatVal: byteUnitsSec},
             {id: 'downloaded', name:"Stored", formatVal:byteUnits},
             {id: "added", sortable:true},
-            {id: "numswarm", name: "Swarm", hidden:true}
+            {id: "numswarm", name: "Swarm", hidden:false}
         ],
         'peers':[
             {name:"Address", id:"address", width:125},

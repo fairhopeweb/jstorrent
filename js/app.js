@@ -93,6 +93,7 @@ App.prototype = {
     },
     minimize: function() {
         if (this.minimized) { return }
+        console.log('minimize')
         var cw = chrome.app.window.current()
         // destroy the UI and make the window small and save current window state and stuff
         this.minimized = true
@@ -108,6 +109,7 @@ App.prototype = {
     },
     unminimize: function() {
         if (! this.minimized) { return }
+        console.log('unminimize')
         if (this.minUI) {
             this.minUI.destroy()
         }

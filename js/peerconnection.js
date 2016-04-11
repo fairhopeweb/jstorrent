@@ -111,12 +111,6 @@ function PeerConnection(opts) {
 jstorrent.PeerConnection = PeerConnection;
 
 PeerConnection.prototype = {
-    debugCheckState: function() {
-        // checks if state is sane...
-        // if choked and req == resp and outstanding requests... and timeout does not match
-
-        // maybe timeout 
-    },
     registerPieceChunkRequest: function(pieceNum, chunkNum) {
         this.pieceChunkRequests[pieceNum + '/' + chunkNum] = true
     },
@@ -836,7 +830,6 @@ debugger
             //console.log('handle piece, but piece not extant') // happens after a timeout and the piece finishes from another peer
         } else {
             this.torrent.getPiece(pieceNum).registerChunkResponseFromPeer(this, chunkOffset, data)
-            delete this.pieceChunkRequests[pieceNum + '/' + chunkOffset]
         }
     },
     handle_UNCHOKE: function() {

@@ -102,6 +102,9 @@ function Torrent(opts) {
     // want to persist trackers too as torrent attribute...
     this.trackers = new jstorrent.Collection({torrent:this, itemClass:jstorrent.Tracker})
     this.swarm = new jstorrent.Collection({torrent:this, itemClass:jstorrent.Peer})
+    this.swarm.on('add', function() {
+        this.set('numswarm',this.swarm.items.length)
+    }.bind(this))
     this.peers = new jstorrent.PeerConnections({torrent:this, itemClass:jstorrent.PeerConnection})
     this.pieces = new jstorrent.Collection({torrent:this, itemClass:jstorrent.Piece})
     this.files = new jstorrent.Collection({torrent:this, itemClass:jstorrent.File})
@@ -1458,7 +1461,7 @@ Torrent.prototype = {
             app.analytics.sendEvent("Torrent", tstr,"SwarmSize(<="+bucket+")")
         }
         // called after all tracker announce responses
-        if (this.haveNoSeeders() && ! jstorrent.options.disable_trackers) {
+        if (! this.isPrivate() && this.haveNoSeeders() && ! jstorrent.options.disable_trackers) {
             //this.error("No peers were received from any trackers. Unable to download. Try a more popular torrent or a different torrent site")
             app.notifyWantToAddPublicTrackers(this)
             //this.addPublicTrackers()
