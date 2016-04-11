@@ -1,6 +1,7 @@
 console.log('background.js')
 var reload = chrome.runtime.reload
 var MAINWIN = 'mainWindow2'
+var _update_available = false
 // the browser extension that adds a context menu
 var extensionId = "bnceafpojmnimbnhamaeedgomdcgnbjk"
 
@@ -111,24 +112,22 @@ WindowManager.prototype = {
     },
     onClosedMainWindow: function() {
         console.log('onClosedMainWindow')
-        this.mainWindow = null
-        var app = this.mainWindow.contentWindow.app
 
-        if (app) {
-            if (app.options_window) {
-                app.options_window.close()
-            }
-            if (app.help_window) {
-                app.help_window.close()
-            }
-            // app cannot close the notificationts, but we can grab data from it beforehand
-            // cannot do anything async on main window javascript context at this point
-            if (app.notifications.keyeditems) {
-                for (var key in app.notifications.keyeditems) {
-                    chrome.notifications.clear(key, function(){})
-                }
-            }
+        if (_update_available) {
+            chrome.runtime.reload()
         }
+        
+        this.mainWindow = null
+
+        chrome.notifications.getAll( function(nots) {
+            for (var key in nots) {
+                chrome.notifications.clear(key)
+            }
+        })
+        var opts = chrome.app.window.get('options')
+        if (opts) { opts.close() }
+        var help = chrome.app.window.get('help')
+        if (help) { help.close() }
         
         if (window.mediaPort) {
             // send notification to media page that it's about to break.
@@ -274,8 +273,35 @@ chrome.runtime.onInstalled.addListener(function(details) {
     //details.previousVersion // only if update
 })
 
+function doShowUpdateAvailable(details) {
+    var msg = "An update is available and will be installed the next time you restart JSTorrent"
+    chrome.notifications.create('update-available',
+                                { title:"JSTorrent Update",
+                                  type:"basic",
+                                  priority:2,
+                                  iconUrl: "js-128.png",
+                                  message:msg,
+                                  buttons:[
+                                      {title:"Install Now", iconUrl:"cws_32.png"},
+                                      {title:"Later", iconUrl:"cws_32.png"}
+                                  ]
+                                }, function(id) {
+                                    console.log('created notification with id',id,chrome.runtime.lastError)
+
+                                })
+    function onButtonClick(id, idx) {
+        chrome.notifications.onButtonClicked.removeListener( onButtonClick )
+        if (id == 'update-available') {
+            if (idx == 0) {
+                chrome.runtime.reload()
+            }
+        }
+        chrome.notifications.clear('update-available')
+    }
+    chrome.notifications.onButtonClicked.addListener( onButtonClick )
+}
+
 function doShowUpdateNotification(details, history) {
-    // create a notification
     var currentVersion = details.cur
     var msg = "JSTorrent has updated to version " + currentVersion
 
@@ -306,6 +332,8 @@ function doShowUpdateNotification(details, history) {
 chrome.runtime.onUpdateAvailable.addListener( function(details) {
     // notify that there's a new version? click to restart? nah...
     console.log('a new version is available:',details.version,details)
+    _update_available = true
+    doShowUpdateAvailable(details)
 })
 
 /*
