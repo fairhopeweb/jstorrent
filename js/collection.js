@@ -286,6 +286,7 @@ var CollectionProto = {
                                                    itemClass: this.itemClass,
                                                    initializedBy: 'collection.fetch',
                                                    attributes:itemData})
+
                         if (item.onRestore) { _.defer(item.onRestore.bind(item)) }
                         console.assert(item.get_key() == itemKeys[i])
                         this.add(item)

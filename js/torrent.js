@@ -47,6 +47,7 @@ function Torrent(opts) {
     this.client = opts.client || opts.parent.parent
     this.thinkIntervalTime = 250
     this.thinkCtr = 0
+    this.tickTime = Date.now() // a cached call to Date.now() (for better performance?)
     console.assert(this.client)
     this.hashhexlower = null
     this.hashbytes = null
@@ -80,6 +81,7 @@ function Torrent(opts) {
     this.started = false; // get('state') ? 
     this.starting = false
     this.stopinfo = null
+    this.paused = false
     this.autostart = null
 
     this.metadata = {}
@@ -121,6 +123,7 @@ function Torrent(opts) {
     this.peers.on('error', _.bind(this.on_peer_close,this))
     this.peers.on('close', _.bind(this.on_peer_close,this))
     this.peers.on('disconnect', _.bind(this.on_peer_close,this))
+    this.peers.on('add', _.bind(this.on_peer_add,this))
 
     this.on('started', _.bind(this.onStarted,this))
     this.on('complete', _.bind(this.onComplete,this))
@@ -784,6 +787,13 @@ Torrent.prototype = {
     isComplete: function() {
         return this.get('complete') == 1
     },
+    sendKeepalives: function() {
+        this.peers.items.forEach( function(peer) {
+            if (peer.connected) {
+                peer.maybeSendKeepalive()
+            }
+        })
+    },
     maybeDropShittyConnection: function() {
         // TODO only call every few seconds, as we drop too aggressively
         if (! this.infodict) { return }
@@ -797,20 +807,21 @@ Torrent.prototype = {
 
                 if (connected.length > this.getMaxConns() * 0.7
                     ||
-                    (this.swarm.items.length > this.getMaxConns() * 5 && connected.length > this.getMaxConns() * 0.3)
+                    (this.swarm.items.length > this.getMaxConns() * 5 && connected.length > this.getMaxConns() * 0.6)
                    ) { // 70% of connections are connected
-                    // OR, if we have a much larger swarm than our current maxconns and say, 30% connected...
+                    // OR, if we have a much larger swarm than our current maxconns and say, 60% connected...
 
                     var chokers = _.filter( connected, function(p) { 
                         return (p.amChoked &&
                                 p.peer.host != '127.0.0.1' &&
+                                p.get('bytes_received') < 1048576 && // dont drop a connection that sent us nice stuff!
                                 now - p.connectedWhen > 10000)
                     } )
 
                     if (chokers.length > 0) {
                         chokers.sort( function(a,b) { return a.connectedWhen < b.connectedWhen } )
                         //console.clog(L.PEER,'closing choker',chokers[0])
-                        chokers[0].close('oldest choked connection')
+                        chokers[0].drop('oldest choked connection')
                     }
 
 
@@ -824,7 +835,7 @@ Torrent.prototype = {
                                                          a.get('timeouts') / a.get('requests') <
                                                          b.get('timeouts') / b.get('requests') } )
                         console.clog(L.PEER,'closing timeouter',timeOuters[0], timeOuters[0].get('timeouts'))
-                        timeOuters[0].close('timeouty connection')
+                        timeOuters[0].drop('timeouty connection')
                     }
 
                 }
@@ -1226,6 +1237,9 @@ Torrent.prototype = {
         this.starting = false
         this.save()
     },
+    on_peer_add: function(peer) {
+        this.set('numpeers',this.peers.items.length)
+    },
     on_peer_close: function(peer) {
         // called by .close()
         // later onWrites may call on_peer_error, also
@@ -1385,7 +1399,7 @@ Torrent.prototype = {
                     //console.log('should add peer!', idx, peer)
                     if (! this.peers.contains(peerconn)) {
                         this.peers.add( peerconn )
-                        this.set('numpeers',this.peers.items.length)
+                        //this.set('numpeers',this.peers.items.length)
                         peerconn.connect()
                     }
                 }
@@ -1561,6 +1575,8 @@ Torrent.prototype = {
         },this), 200)
     },
     newStateThink: function() {
+        this.tickTime = Date.now()
+        
         // misnomer, this is actually a regular interval triggered function
         this.thinkCtr = (this.thinkCtr + 1) % 2048 // overflow condition?
 
@@ -1609,6 +1625,11 @@ Torrent.prototype = {
             console.log("ENDGAME ON")
         }
 
+        if (this.thinkCtr % 40 == 0) {
+            // every 10 seconds
+            this.sendKeepalives()
+        }
+        
         if (this.thinkCtr % 4 == 0) {
             // only update these stats every second
             this.calculate_speeds()
@@ -1622,18 +1643,26 @@ Torrent.prototype = {
         if (this.thinkCtr % 2 == 0) {
             // add new peers every 1/2 second
             // TODO add more, faster.
-
+            var tries = 0
             var idx, peer, peerconn
             if (this.should_add_peers() && this.swarm.items.length > 0) {
-                idx = Math.floor( Math.random() * this.swarm.items.length )
-                peer = this.swarm.get_at(idx)
-                peerconn = new jstorrent.PeerConnection({peer:peer})
-                //console.log('should add peer!', idx, peer)
-                if (! this.peers.contains(peerconn)) {
-                    if (peer.get('only_connect_once')) { return }
-                    this.peers.add( peerconn )
-                    this.set('numpeers',this.peers.items.length)
-                    peerconn.connect()
+                while (tries < 3) {
+                    tries++
+                    idx = Math.floor( Math.random() * this.swarm.items.length )
+                    peer = this.swarm.get_at(idx)
+                    if (peer.get('connectionResult') == 'net::ERR_CONNECTION_REFUSED') {
+                        // TODO keep a list of valid peers separate from all peers
+                        //console.log('skipping peer that refused connection')
+                        continue
+                    }
+                    peerconn = new jstorrent.PeerConnection({peer:peer})
+                    //console.log('should add peer!', idx, peer)
+                    if (! this.peers.contains(peerconn)) {
+                        if (peer.get('only_connect_once')) { return }
+                        this.peers.add( peerconn )
+                        //this.set('numpeers',this.peers.items.length)
+                        peerconn.connect()
+                    }
                 }
                 // peer.set('only_connect_once',true) // huh?
             }
@@ -1704,6 +1733,8 @@ Torrent.prototype = {
         return url
     },
     should_add_peers: function() {
+        if (this.paused) { return }
+        if (! navigator.onLine) { return }
         if (this.started) {
             if (this.isComplete()) {
                 return false // TODO -- how to seed?

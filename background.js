@@ -20,14 +20,6 @@ function getMainWindow() {
     return chrome.app.window.get && chrome.app.window.get(MAINWIN)
 }
 
-function debugSockets() {
-    chrome.sockets.tcp.getSockets( function(socketInfos) {
-        console.log('current tcp sockets', socketInfos)
-    })
-    chrome.sockets.udp.getSockets( function(socketInfos) {
-        console.log('current udp sockets', socketInfos)
-    })
-}
 
 function WindowManager() {
     // TODO -- if we add "id" to this, then chrome.app.window.create
@@ -275,9 +267,9 @@ chrome.runtime.onInstalled.addListener(function(details) {
 })
 
 function doShowUpdateAvailable(details) {
-    var msg = "An update is available and will be installed the next time you restart JSTorrent"
+    var msg = "An update is available and will be installed the next time you restart " + chrome.i18n.getMessage("extName")
     chrome.notifications.create('update-available',
-                                { title:"JSTorrent Update",
+                                { title:chrome.i18n.getMessage("extName") + " Update",
                                   type:"basic",
                                   priority:2,
                                   iconUrl: "js-128.png",
@@ -304,10 +296,10 @@ function doShowUpdateAvailable(details) {
 
 function doShowUpdateNotification(details, history) {
     var currentVersion = details.cur
-    var msg = "JSTorrent has updated to version " + currentVersion
+    var msg = chrome.i18n.getMessage("extName") + " has updated to version " + currentVersion
 
     chrome.notifications.create('update-installed',
-                                { title:"JSTorrent Updated",
+                                { title:chrome.i18n.getMessage("extName") + " Updated",
                                   type:"basic",
                                   priority:2,
                                   iconUrl: "js-128.png",
@@ -349,6 +341,32 @@ if (chrome.runtime.onMessage) {
         console.log('chrome runtime message',request,sender)
         if (request && request.command == 'openWindow') {
             chrome.browser.openTab({url:request.url})
+        }
+    })
+}
+
+function checkForUpdateMaybe() {
+    function docheck() {
+        console.log('check for update')
+        chrome.storage.local.set({'lastUpdateCheck':Date.now()})
+        chrome.runtime.requestUpdateCheck(function(result){
+            console.log('update check:', result)
+        })
+    }
+    chrome.storage.local.get('lastUpdateCheck', function(d) {
+        var lastcheck = d['lastUpdateCheck']
+        var willcheck = false
+        if (lastcheck) {
+            if (Date.now() - lastcheck > 1000 * 60 * 60) {
+                willcheck = true
+            }
+        } else {
+            willcheck = true
+        }
+        if (willcheck) {
+            docheck()
+        } else {
+            console.log('will not check for update')
         }
     })
 }

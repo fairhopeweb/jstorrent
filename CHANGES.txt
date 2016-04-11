@@ -1,3 +1,8 @@
+2016-04-11
+- tweak peer selection / disconnection logic
+- make request update check when loading options page
+- check for online status in some cases
+
 2016-04-10
 - add bytes/sec to peer list
 - show notification when app updates

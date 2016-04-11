@@ -167,6 +167,7 @@ function onready() {
 
     chrome.runtime.getBackgroundPage( function(bg) {
         window.app = bg.app()
+        bg.checkForUpdateMaybe()
         window.options = app.options
 
         if (app.client.disks.items.length == 0) {

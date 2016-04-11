@@ -30,6 +30,10 @@ function App(opts) {
     chrome.notifications.onClosed.addListener(_.bind(this.notificationClosed, this))
     chrome.contextMenus.onClicked.addListener(_.bind(this.onContextMenuClick, this))
 
+    if (chrome.idle && chrome.idle.onStateChanged) {
+        chrome.idle.onStateChanged.addListener( this.onIdleStateChanged.bind(this) )
+    }
+    
     this.popupwindowdialog = null // what it multiple are triggered? do we queue up the messages?
     // maybe use notifications instead... ( or in addition ... )
     this.UI = null
@@ -76,6 +80,12 @@ function App(opts) {
 jstorrent.App = App
 
 App.prototype = {
+    onLine: function() {
+        return navigator.onLine
+    },
+    onIdleStateChanged: function(info) {
+        console.clog(L.SYSTEM, 'idle state changed',info, ', online:',this.onLine())
+    },
     webappOnStop: function(info) {
         console.log('webapp stopped',info)
     },
@@ -181,6 +191,8 @@ App.prototype = {
                 window.contextMenuContextItem = item
                 chrome.contextMenus.create(opts, _.bind(this.onContextMenuCreate,this) )
             }
+        } else if (item.__name__ == 'PeerConnection') {
+            item.debugInfo()
         } else if (item.itemClass == jstorrent.File) {
             window.contextMenuContextItem = item
             var opts1 = {
@@ -449,7 +461,7 @@ App.prototype = {
                 //console.log('should add peer!', idx, peer)
                 if (! torrent.peers.contains(peerconn)) {
                     torrent.peers.add( peerconn )
-                    torrent.set('numpeers',torrent.peers.items.length)
+                    //torrent.set('numpeers',torrent.peers.items.length)
                     peerconn.connect()
                 }
 

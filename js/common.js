@@ -6,7 +6,9 @@ var L = {
     TORRENT: { name: 'TORRENT', color: '#0ae', show: true },
     DISKIO: { name: 'DISKIO', color: 'orange', show: true },
     POWER: { name: 'POWER', color: 'blue', show: true },
-    PEER: { name: 'PEER', color: '#082', show: true }
+    PEER: { name: 'PEER', color: '#082', show: true },
+    SYSTEM: { name: 'SYSTEM', color: '#236', show: true },
+    DEV: { name: 'DEV', color: '#622', show: DEVMODE }
 }
 
 if (! String.prototype.endsWith) {

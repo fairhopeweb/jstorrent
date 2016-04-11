@@ -1,5 +1,3 @@
-// TODO. good connections are having outstanding req set without having sent a request, and no timeouts. (libtorrent)
-
 var peerSockMap = {}
 
 function onTCPReceive(info) {
@@ -28,17 +26,12 @@ chrome.sockets.tcp.onReceiveError.addListener( onTCPReceiveError )
 
 function PeerConnection(opts) {
     jstorrent.Item.apply(this, arguments)
+    this.__name__ = arguments.callee.name // cant trust itemClass (initializing jstorrent.Peer randomly without it)
 
-    
     this.peer = opts.peer
     this.torrent = opts.peer.torrent
-
-
-
-    // initial bittorrent state settings
     this.amInterested = false
     this.amChoked = true
-
     this.readThrottled = false
 
     this.peerInterested = false
@@ -57,6 +50,9 @@ function PeerConnection(opts) {
     this.peerExtensionHandshakeCodes = {}
     this.peerPort = null
     this.peerBitfield = null
+
+    this.lastReadTime = null
+    this.lastWriteTime = null
 
     this.set('address', this.peer.get_key())
     this.set('bytes_sent', 0)
@@ -95,7 +91,8 @@ function PeerConnection(opts) {
     if (jstorrent.device.platform == 'Android') {
         this.connect_timeout_delay = 1000 // BUG THIS BLOCKS MAIN THREAD
     } else {
-        this.connect_timeout_delay = 10000
+        //this.connect_timeout_delay = 10000
+        this.connect_timeout_delay = 3000
     }
     this.connect_timeout_callback = null
     this.connecting = false
@@ -107,13 +104,17 @@ function PeerConnection(opts) {
     this.writing_length = 0
     this.readBuffer = new jstorrent.Buffer
     this.writeBuffer = new jstorrent.Buffer
-
-    this.hasclosed = false
 }
 
 jstorrent.PeerConnection = PeerConnection;
 
 PeerConnection.prototype = {
+    debugInfo: function() {
+        chrome.sockets.tcp.getInfo(this.sockInfo.socketId, function(res) {
+            console.log(this.sockInfo.socketId, 'peer connection debug socket info',res)
+        }.bind(this))
+        window.debugSocket = this
+    },
     registerPieceChunkRequest: function(pieceNum, chunkNum) {
         this.pieceChunkRequests[pieceNum + '/' + chunkNum] = true
     },
@@ -180,17 +181,30 @@ PeerConnection.prototype = {
     on_connect_timeout: function() {
         this.connecting = false;
         this.connect_timeouts++;
+        this.peer.set('connectionResult', 'timeout')
         if (! peerSockMap[this.sockInfo.socketId]) { debugger }
-        this.close('timeout')
-        var lasterr = chrome.runtime.lastError
-        if (lasterr) {
-            console.warn('close sync lastError',lasterr)
-        }
+        this.close('connect_timeout')
+    },
+    drop: function(reason) {
+        // called by torrent.maybeDropShittyConnection
+        console.clog(L.DEV, 'dropping',reason,'received:',byteUnits(this._attributes.bytes_received), this._attributes)
+        this.close(reason)
     },
     close: function(reason) {
-        this.set('state','closed')
+        if (this.get('downspeed') > 1024 * 50) {
+            console.clog(L.DEV, 'a good connection is closing',byteUnits(this._attributes.bytes_received), reason)
+        }
+        this.set('state','closing')
         this.connected = false
+        this.maybeClearConnectTimeout()
         chrome.sockets.tcp.close(this.sockInfo.socketId, this.onClose.bind(this,reason))
+    },
+    maybeClearConnectTimeout: function() {
+        if (this.connect_timeout_callback) {
+            clearTimeout( this.connect_timeout_callback )
+            this.connect_timeout_callback = null
+            this.connecting = false
+        }
     },
     onDisconnect: function(result) {
         var lasterr = chrome.runtime.lastError
@@ -201,16 +215,18 @@ PeerConnection.prototype = {
         }
     },
     onClose: function(reason, result) {
+        this.set('state','closed')
+        var sockid = this.sockInfo.socketId
         delete peerSockMap[this.sockInfo.socketId]
         this.trigger('close')
         this.cleanup()
         this.cleanupRequests()
         var lasterr = chrome.runtime.lastError
         if (lasterr) {
-            console.warn('onClose:',reason,'lasterror',lasterr,'result',result) // TODO -- "Socket not found" ?
+            console.warn('onClose:',(reason.message||reason),'lasterror',lasterr,'result',result) // TODO -- "Socket not found" ?
             // double close, not a big deal. :-\
         } else {
-            console.log('onClose',reason,'result',result)
+            //console.log('onClose',reason,'result',result,sockid)
         }
     },
     connect: function() {
@@ -221,20 +237,17 @@ PeerConnection.prototype = {
     },
     oncreate: function(sockInfo) {
         this.sockInfo = sockInfo;
+        this.set('socketId',sockInfo.socketId)
         peerSockMap[this.sockInfo.socketId] = this
         //this.log('peer oncreate')
         this.connect_timeout_callback = setTimeout( _.bind(this.on_connect_timeout, this), this.connect_timeout_delay )
         chrome.sockets.tcp.connect( sockInfo.socketId, this.peer.host, this.peer.port, _.bind(this.onconnect, this) )
     },
     onconnect: function(connectInfo) {
-        if (this.connect_timeout_callback) {
-            clearTimeout( this.connect_timeout_callback )
-            this.connect_timeout_callback = null
-            this.connecting = false
-        }
+        this.maybeClearConnectTimeout()
         var lasterr = chrome.runtime.lastError
         if (lasterr) {
-            this.peer.set('connectionResult', lasterr)
+            this.peer.set('connectionResult', lasterr.message)
             this.close('connect_error'+lasterr.message)
             return
         }
@@ -333,28 +346,19 @@ PeerConnection.prototype = {
         }
     },
     writeFromBuffer: function() {
-        if (! this.sockInfo) {
-            //console.error('cannot write from buffer, sockInfo null (somebody closed connection on us...)')
-            console.warn('sockInfo missing writeFromBuffer')
-            return
-        }
         console.assert(! this.writing)
         var data = this.writeBuffer.consume_any_max(jstorrent.protocol.socketWriteBufferMax)
         //this.log('write',data.byteLength)
         this.writing = true
         this.writing_length = data.byteLength
+        this.lastWriteTime = this.torrent.tickTime
         chrome.sockets.tcp.send( this.sockInfo.socketId, data, _.bind(this.onWrite,this) )
     },
     onWrite: function(writeResult) {
         var lastError = chrome.runtime.lastError
         if (lastError) {
             //console.warn('lasterror on tcp.send',this,chrome.runtime.lastError,writeResult)
-            this.close('writeerr'+lastError)
-            return
-        }
-
-        if (! this.sockInfo) {
-            //console.error('onwrite for socket forcibly or otherwise closed')
+            this.close('writeerr'+(lastError.message||lastError) )
             return
         }
 
@@ -567,7 +571,8 @@ PeerConnection.prototype = {
         }
         console.log.apply(console, args)
     },
-    shouldThrottleRead: function() { 
+    shouldThrottleRead: function() {
+        // TODO need to use sockets.tcp.setPaused
         return false
         // if byte upload rate too high?
         if (this.peer.host == '127.0.0.1') { return true }
@@ -581,6 +586,7 @@ PeerConnection.prototype = {
         }
     },
     onReadTCP: function(readResult) {
+        this.lastReadTime = this.torrent.tickTime
         this.onRead(readResult)
     },
     onReadTCPError: function(readResult) {
@@ -592,7 +598,7 @@ PeerConnection.prototype = {
         } else {
             console.clog(L.PEER, 'onReceiveError',info, NET_ERRORS_D[info.resultCode])
         }
-        this.close('readerr')
+        this.close('readerr'+info.resultCode)
     },
     calculate_speeds: function() {
         var sent = this.get('bytes_sent')
@@ -627,10 +633,6 @@ PeerConnection.prototype = {
             this.close('torrent stopped')
         }
 
-        if (! this.sockInfo) {
-            //console.error('onRead for socket forcibly or otherwise closed')
-            return
-        }
         if (readResult.data.byteLength == 0) {
             this.close('peer closed socket (read 0 bytes)')
             return
@@ -909,7 +911,17 @@ PeerConnection.prototype = {
             //debugger
         }
     },
+    maybeSendKeepalive: function() {
+        // TODO only if no activity on socket for a long time
+        if (this.lastWriteTime && this.lastReadTime) {
+            if (this.torrent.tickTime - this.lastWriteTime > 120000 ||
+                this.torrent.tickTime - this.lastReadTime > 120000) {
+                this.sendKeepalive()
+            }
+        }
+    },
     sendKeepalive: function() {
+        this.set('last_message_sent','KEEPALIVE')
         // TODO -- send a keepalive message
         // send empty 4 bytes
         var msg = new Uint8Array(4)

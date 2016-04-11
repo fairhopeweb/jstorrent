@@ -1,5 +1,5 @@
 function Item(opts) {
-    this.__name__ = arguments.callee.name
+    //this.__name__ = arguments.callee.name
     this.parent = opts.parent
     this.itemClass = opts.itemClass
     this._opts = opts

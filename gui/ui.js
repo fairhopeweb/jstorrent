@@ -58,20 +58,21 @@ function UI(opts) {
     this.coldefs = {
         'torrent': [
             {id: "name", name: "Name", displayFunc: displayTorrentName, width:400, sortable:true},
-            {id: "state", name: "State", sortable:true},
-            {id: "bytes_received", name: "Bytes Received", formatVal: byteUnits, width:100},
-            {id: "size", name: "Size", formatVal: byteUnits, width: 100, sortable:true},
+            {id: "state", name: "Status", sortable:true},
+            {id: "bytes_received", name: "Downloaded", formatVal: byteUnits, width:100},
+            {id: "size", name: "Total Size", formatVal: byteUnits, width: 100, sortable:true},
             {id: "complete", name: "% Complete", formatVal: fracToPercent},
             {id:'downspeed', name: "Down Speed", width:90, formatVal: byteUnitsSec },
             {id:'eta', name: "ETA", formatVal: formatValETA, width:60},
             {id: "numpeers", formatVal: intDontShowZero, name: "Peers"},
-            {id: "bytes_sent", name: "Bytes Sent", formatVal: byteUnits},
-            {id:'upspeed', formatVal: byteUnitsSec},
-            {id: 'downloaded', name:"Stored", formatVal:byteUnits},
-            {id: "added", sortable:true},
+            {id: "bytes_sent", name: "Uploaded", formatVal: byteUnits},
+            {id:'upspeed', name:"Up Speed", formatVal: byteUnitsSec},
+            {id: 'downloaded', name:"Saved", formatVal:byteUnits},
+            {id: "added", width:185,sortable:true},
             {id: "numswarm", name: "Swarm", hidden:false}
         ],
         'peers':[
+            {id:"socketId", name: "Socket", width:45},
             {name:"Address", id:"address", width:125},
             {name:"Client", id:'peerClientName', formatVal: formatClientName, width:125},
             {id:"state", name: "State", width:90},
