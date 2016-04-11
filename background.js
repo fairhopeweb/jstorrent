@@ -68,12 +68,8 @@ WindowManager.prototype = {
                            height: 610,
                            minWidth: 780,
                            minHeight: 200 },
-/*            width: 865,
-            height: 610,*/
-            //frame: 'none',
             frame:{color:'#1687d0'},
             resizable: true,
-            hidden: true,
             id: MAINWIN
         }
         console.log('creating main window',opts)
@@ -302,6 +298,7 @@ function doShowUpdateNotification(details, history) {
             var url = 'http://jstorrent.com/#changeLog'
             chrome.browser.openTab({url:url})
         }
+        chrome.notifications.clear('update-installed')
     }
     chrome.notifications.onButtonClicked.addListener( onButtonClick )
 }

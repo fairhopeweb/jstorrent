@@ -287,7 +287,7 @@ UDPTracker.prototype = {
                 this.torrent.swarm.add( peer )
             }
         }
-        this.torrent.set('numswarm', this.torrent.swarm.length )
+        this.torrent.set('numswarm', this.torrent.swarm.items.length )
 
         if (callback) { callback(countPeers) }
     },
