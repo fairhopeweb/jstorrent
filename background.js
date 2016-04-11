@@ -130,6 +130,7 @@ WindowManager.prototype = {
         if (help) { help.close() }
         
         if (window.mediaPort) {
+            console.log('disconnecting media port')
             // send notification to media page that it's about to break.
             mediaPort.postMessage({error:"window closed"})
             mediaPort.disconnect()

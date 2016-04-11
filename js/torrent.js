@@ -116,9 +116,11 @@ function Torrent(opts) {
     this.connectionsServingInfodict = [] // maybe use a collection class for this instead
     this.connectionsServingInfodictLimit = 3 // only request concurrently infodict from 3 peers
 
-    this.peers.on('connect_timeout', _.bind(this.on_peer_connect_timeout,this))
-    this.peers.on('error', _.bind(this.on_peer_error,this))
-    this.peers.on('disconnect', _.bind(this.on_peer_disconnect,this))
+    // XXX duplicate looking events!
+    this.peers.on('connect_timeout', _.bind(this.on_peer_close,this))
+    this.peers.on('error', _.bind(this.on_peer_close,this))
+    this.peers.on('close', _.bind(this.on_peer_close,this))
+    this.peers.on('disconnect', _.bind(this.on_peer_close,this))
 
     this.on('started', _.bind(this.onStarted,this))
     this.on('complete', _.bind(this.onComplete,this))
@@ -646,8 +648,10 @@ Torrent.prototype = {
 
         this.peers.each(function(peer){
             // send new extension handshake to everybody, because now it has ut_metadata...
-            peer.sendExtensionHandshake()
-            peer.newStateThink() // in case we dont send them extension handshake because they dont advertise the bit
+            if (peer.connected) {
+                peer.sendExtensionHandshake()
+                peer.newStateThink() // in case we dont send them extension handshake because they dont advertise the bit
+            }
         })
 
         var onsaved = function() {
@@ -903,7 +907,7 @@ Torrent.prototype = {
             v.setUint32(0,result.piece.num)
 
             this.peers.each( function(peer) {
-                if (peer.peerHandshake) {
+                if (peer.peerHandshake && peer.connected) {
                     peer.sendMessage("HAVE", [payload.buffer])
                 }
             });
@@ -919,7 +923,9 @@ Torrent.prototype = {
 
             // send everybody NOT_INTERESTED!
             this.peers.each( function(peer) {
-                peer.sendMessage("NOT_INTERESTED")
+                if (peer.connected) {
+                    peer.sendMessage("NOT_INTERESTED")
+                }
             });
 
             app.analytics.sendEvent("Torrent", "Completed", undefined, this.size)
@@ -1150,15 +1156,6 @@ Torrent.prototype = {
             console.error('cannot re-check, dont have metadata')
         }
     },
-    on_peer_connect_timeout: function(peer) {
-        // TODO -- fix this up so it doesn't get triggered unneccesarily
-        //console.log('peer connect timeout...')
-        if (!this.peers.contains(peer)) {
-            //console.warn('peer wasnt in list')
-        } else {
-            this.peers.remove(peer)
-        }
-    },
     initializeFiles: function() {
         // TODO -- this blocks the UI cuz it requires so much
         // computation. split it into several computation steps...
@@ -1229,16 +1226,7 @@ Torrent.prototype = {
         this.starting = false
         this.save()
     },
-    on_peer_error: function(peer) {
-        //console.log('on_peer error')
-        if (!this.peers.contains(peer)) {
-            //console.warn('peer wasnt in list')
-        } else {
-            this.peers.remove(peer)
-            this.set('numpeers',this.peers.items.length)
-        }
-    },
-    on_peer_disconnect: function(peer) {
+    on_peer_close: function(peer) {
         // called by .close()
         // later onWrites may call on_peer_error, also
         //console.log('peer disconnect...')
@@ -1505,7 +1493,7 @@ Torrent.prototype = {
         if (this.isPrivate()) { return false }
         return
         this.peers.each( function(peer) {
-            if (peer.peer.host == '127.0.0.1') {
+            if (peer.connected && peer.peer.host == '127.0.0.1') {
                 // definitely send it
                 peer.sendPEX(data)
             }
@@ -1564,7 +1552,7 @@ Torrent.prototype = {
             this.set('state','stopped')
             // TODO -- clear the entry from storage? nah, just put it in a trash bin
             this.save( function() {
-                console.log('torrent.remove().timeout(200).save(...',callback)
+                console.log('torrent.remove().timeout(200).save(...')
                 setTimeout( function() {
                     if (callback) { callback() }
                 }, 200)

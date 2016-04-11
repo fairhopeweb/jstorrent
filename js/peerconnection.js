@@ -6,15 +6,18 @@ function onTCPReceive(info) {
     var sockId = info.socketId
     if (peerSockMap[sockId]) {
         peerSockMap[sockId].onReadTCP(info)
+    } else if (window.WSC && WSC.peerSockMap[sockId]) {
     } else {
-        console.clog(L.PEER, 'tcp.onReceive untracked socket',info)
+        console.clog(L.PEER, 'tcp.onReceive untracked socket',info,info.data.byteLength)
     }
 }
 function onTCPReceiveError(info) {
     var sockId = info.socketId
     if (peerSockMap[sockId]) {
         peerSockMap[sockId].onReadTCPError(info)
+    } else if (window.WSC && WSC.peerSockMap[sockId]) {
     } else {
+        // might be from WSC... need to clean that up
         console.clog(L.PEER, 'tcp.onReceiveError untracked socket',info, NET_ERRORS_D[info.resultCode])
     }
 }
@@ -96,12 +99,12 @@ function PeerConnection(opts) {
     }
     this.connect_timeout_callback = null
     this.connecting = false
+    this.connected = false
     this.connect_timeouts = 0
 
     // read/write buffer stuff
     this.writing = false
     this.writing_length = 0
-    this.reading = false
     this.readBuffer = new jstorrent.Buffer
     this.writeBuffer = new jstorrent.Buffer
 
@@ -175,73 +178,42 @@ PeerConnection.prototype = {
         return this.peer.host + ':' + this.peer.port
     },
     on_connect_timeout: function() {
-        //console.log(this.get_key(),'connect timeout')
         this.connecting = false;
         this.connect_timeouts++;
         if (! peerSockMap[this.sockInfo.socketId]) { debugger }
-        //if (peerSockMap[this.sockInfo.socketId] === undefined) { return } // FIXME -- somebody should have cleared the connect timeout already
-        chrome.sockets.tcp.close( this.sockInfo.socketId, this.onClose.bind(this) ) // seeing a warning unchecked chrome.runtime.lastError even though we check it in this callback ???
-        // perhaps this is because when a socket gets a lastError (e.g. ERR_CONNECTION_REFUSED its implied to be closed already)
-        if (chrome.runtime.lastError) {
-            console.warn('close sync lastError',chrome.runtime.lastError)
+        this.close('timeout')
+        var lasterr = chrome.runtime.lastError
+        if (lasterr) {
+            console.warn('close sync lastError',lasterr)
         }
-        delete peerSockMap[this.sockInfo.socketId]
-        this.sockInfo = null
-        this.trigger('connect_timeout')
     },
     close: function(reason) {
-        //console.log('socket close',reason)
-        // XXX TODO -- does this always get called when the socket closes/peer disconnects/they leave peer list?
-        if (this.connect_timeout_callback) { clearTimeout(this.connect_timeout_callback) }
-        if (this.hasclosed) {
-            // this can happen when we stop the torrent while we are
-            // reading from the socket and we get the onRead event
-            // nothing to worry about too much... though it would be
-            // nice to get a better handle on all the possible cases
-            // of stopping/closing etc while read events are pending.
-
-            //console.assert(! this.hasclosed)
-            return
-        }
-
-/*
-        if (this.writing || this.reading) {
-            //console.warn('called close on socket that had pending read/write callbacks')
-        }
-*/
-        
-        this.hasclosed = true
-        //this.log('closing',reason)
-
-        // unfortunately the pending read/write callbacks still get
-        // triggered... make sure we look for sockInfo being gone
-        this.cleanupRequests()
-        this.cleanup()
-        if (this.sockInfo) {
-            // if no this.sockInfo, perhaps we were not yet connected
-            if (this.connectedWhen) {
-                chrome.sockets.tcp.disconnect(this.sockInfo.socketId, this.onDisconnect.bind(this))
-            }
-            chrome.sockets.tcp.close(this.sockInfo.socketId, this.onClose.bind(this))
-            delete peerSockMap[this.sockInfo.socketId]
-        }
-        this.sockInfo = null
-        // need to clean up registerd requests
-        this.trigger('disconnect')
+        this.set('state','closed')
+        this.connected = false
+        chrome.sockets.tcp.close(this.sockInfo.socketId, this.onClose.bind(this,reason))
     },
     onDisconnect: function(result) {
-        if (chrome.runtime.lastError) {
-            //console.warn('ondisconnect lasterror',chrome.runtime.lastError.message)
+        var lasterr = chrome.runtime.lastError
+        if (lasterr) {
+            console.warn('ondisconnect lasterror',lasterr)
+        } else {
+            console.log('ondisconnect')
         }
     },
-    onClose: function(result) {
-        if (chrome.runtime.lastError) {
-            //console.warn('onclose lasterror',chrome.runtime.lastError.message) // TODO -- "Socket not found" ?
+    onClose: function(reason, result) {
+        delete peerSockMap[this.sockInfo.socketId]
+        this.trigger('close')
+        this.cleanup()
+        this.cleanupRequests()
+        var lasterr = chrome.runtime.lastError
+        if (lasterr) {
+            console.warn('onClose:',reason,'lasterror',lasterr,'result',result) // TODO -- "Socket not found" ?
             // double close, not a big deal. :-\
+        } else {
+            console.log('onClose',reason,'result',result)
         }
     },
     connect: function() {
-        //console.log(this.get_key(),'connecting...')
         console.assert( ! this.connecting )
         this.connecting = true;
         this.set('state','connecting')
@@ -255,51 +227,32 @@ PeerConnection.prototype = {
         chrome.sockets.tcp.connect( sockInfo.socketId, this.peer.host, this.peer.port, _.bind(this.onconnect, this) )
     },
     onconnect: function(connectInfo) {
-        if (chrome.runtime.lastError) {
-            //console.log('onconnect lasterror',chrome.runtime.lastError)
-            this.peer.set('connectionResult', chrome.runtime.lastError.message)
-            this.error('connect_error')
-            return
-        }
-        //console.log(this.get_key(),'connected.',connectInfo)
-        if (this.hasclosed) { return } // XXX -- better handling for closing of sockets still in connecting state?
-
-        this.connectedWhen = new Date()
-        if (connectInfo < 0) {
-            this.peer.set('connectionResult', connectInfo)
-
-            //console.error('socket connect error:',connectInfo)
-            this.error('connect_error')
-            return
-        }
-
-        if (! this.sockInfo) {
-            console.log('onconnect, but we already timed out')
-        }
-        //console.log(this.get_key(),'connected!')
-        //this.log('peer onconnect',connectInfo);
-        this.set('state','connected')
-        this.peer.set('connected_ever',true)
         if (this.connect_timeout_callback) {
             clearTimeout( this.connect_timeout_callback )
             this.connect_timeout_callback = null
             this.connecting = false
         }
-
+        var lasterr = chrome.runtime.lastError
+        if (lasterr) {
+            this.peer.set('connectionResult', lasterr)
+            this.close('connect_error'+lasterr.message)
+            return
+        }
+        if (connectInfo < 0) {
+            this.peer.set('connectionResult', connectInfo)
+            this.close('connect_error'+connectInfo)
+            return
+        }
+        this.connectedWhen = new Date()
+        this.connected = true
+        this.set('state','connected')
+        this.peer.set('connected_ever',true)
         this.torrent.maybePropagatePEX({added: this.peer.serialize()})
-
-        this.doRead()
         this.sendHandshake()
         this.sendExtensionHandshake()
         if (this.torrent.has_infodict()) {
             this.sendBitfield()
         }
-    },
-    doRead: function() {
-        console.assert(! this.reading)
-        if (this.hasclosed) { return }
-        if (this.reading) { return }
-        this.reading = true
     },
     sendExtensionHandshake: function() {
         this.sentExtensionHandshake = true
@@ -318,10 +271,6 @@ PeerConnection.prototype = {
         this.sendMessage('UTORRENT_MSG', [new Uint8Array([0]).buffer, arr])
     },
     sendMessage: function(type, payloads) {
-        if (this.hasclosed) {
-            // connection was closed, yo
-            return
-        }
         this.set('last_message_sent',type)
         switch (type) {
         case "INTERESTED":
@@ -339,7 +288,6 @@ PeerConnection.prototype = {
             this.set('peerChoked',false)
             break
         }
-        
         if (! payloads) { payloads = [] }
         //console.log('Sending Message',type)
         console.assert(jstorrent.protocol.messageNames[type] !== undefined)
@@ -367,7 +315,6 @@ PeerConnection.prototype = {
         for (var i=0; i<jstorrent.protocol.protocolName.length; i++) {
             bytes.push( jstorrent.protocol.protocolName.charCodeAt(i) )
         }
-        // handshake flags, null for now
         bytes = bytes.concat( jstorrent.protocol.handshakeFlags )
         bytes = bytes.concat( this.torrent.hashbytes )
         bytes = bytes.concat( this.torrent.client.peeridbytes )
@@ -377,8 +324,7 @@ PeerConnection.prototype = {
         this.write( payload )
     },
     write: function(data) {
-        //console.log('peer write',data,data.byteLength)
-        console.assert(! this.hasclosed)
+        console.assert( this.connected )
         console.assert(data.byteLength > 0)
         console.assert(data instanceof ArrayBuffer)
         this.writeBuffer.add(data)
@@ -387,7 +333,6 @@ PeerConnection.prototype = {
         }
     },
     writeFromBuffer: function() {
-        console.assert(! this.hasclosed)
         if (! this.sockInfo) {
             //console.error('cannot write from buffer, sockInfo null (somebody closed connection on us...)')
             console.warn('sockInfo missing writeFromBuffer')
@@ -404,7 +349,8 @@ PeerConnection.prototype = {
         var lastError = chrome.runtime.lastError
         if (lastError) {
             //console.warn('lasterror on tcp.send',this,chrome.runtime.lastError,writeResult)
-            this.close()
+            this.close('writeerr'+lastError)
+            return
         }
 
         if (! this.sockInfo) {
@@ -416,21 +362,21 @@ PeerConnection.prototype = {
         // probably only need to worry about partial writes with really large buffers
         if (writeResult.resultCode < 0) {
             //console.warn('sock onwrite resultcode',writeResult.resultCode)
-            this.error('negative onwrite')
+            this.close('negative onwrite')
         } else if (writeResult.bytesSent != this.writing_length) {
             if (writeResult.bytesSent == 0) {
                 this.close('bytesSent==0, closed connection')
             } else if (writeResult.bytesSent < 0) {
-                this.error('negative bytesSent',writeResult.bytesSent)
+                this.close('negative bytesSent',writeResult.bytesSent)
             } else {
-debugger
+                debugger
                 console.error('bytes written does not match!, was',writeResult.bytesSent,'should be',this.writing_length)
 /*
                 chrome.socket.getInfo( this.sockInfo.socketId, function(socketStatus) {
                     console.log('socket info -',socketStatus)
                 })
 */
-                this.error('did not write everything')
+                this.close('did not write everything')
             }
 
         } else {
@@ -535,6 +481,9 @@ debugger
         
     },
     newStateThink: function() {
+        if (! this.connected) {
+            return
+        }
         if (! this.readThrottled) {
             while (this.checkBuffer()) {}
         }
@@ -618,14 +567,6 @@ debugger
         }
         console.log.apply(console, args)
     },
-    error: function(msg) {
-        //this.log(msg)
-        if (this.connectedWhen) {
-            chrome.sockets.tcp.disconnect(this.sockInfo.socketId, this.onDisconnect.bind(this))
-        }
-        chrome.sockets.tcp.close(this.sockInfo.socketId, this.onClose.bind(this))
-        this.trigger('error')
-    },
     shouldThrottleRead: function() { 
         return false
         // if byte upload rate too high?
@@ -633,10 +574,9 @@ debugger
     },
     checkShouldUnthrottleRead: function() {
         if (true) { // throttling just means a delay for now
-            if (! this.hasclosed) {
+            if (this.connected) {
                 this.readThrottled = false
                 this.checkBuffer()
-                this.doRead()
             }
         }
     },
@@ -652,7 +592,7 @@ debugger
         } else {
             console.clog(L.PEER, 'onReceiveError',info, NET_ERRORS_D[info.resultCode])
         }
-        this.close()
+        this.close('readerr')
     },
     calculate_speeds: function() {
         var sent = this.get('bytes_sent')
@@ -684,11 +624,9 @@ debugger
     onRead: function(readResult) {
         //console.log('onread',readResult,readResult.data.byteLength, [ui82str(new Uint8Array(readResult.data))])
         if (! this.torrent.started) {
-            //console.error('onRead, but torrent stopped')
             this.close('torrent stopped')
         }
 
-        this.reading = false
         if (! this.sockInfo) {
             //console.error('onRead for socket forcibly or otherwise closed')
             return
@@ -702,13 +640,11 @@ debugger
             //this.log('onRead',readResult.data.byteLength)
             this.readBuffer.add( readResult.data )
 
-            //this.doRead() // TODO -- only if we are actually interested right now...
             if (this.shouldThrottleRead()) {
                 this.readThrottled = true
                 setTimeout( _.bind(this.checkShouldUnthrottleRead,this), 10000 )
             } else {
                 this.checkBuffer()
-                this.doRead()
             }
         }
         //this.close('no real reason')
@@ -1013,7 +949,7 @@ debugger
             this.torrent.metadataPresentInitialize()
         } else {
             console.error('received metadata does not have correct infohash! bad!')
-            this.error('bad_metadata')
+            this.close('bad_metadata')
         }
     },
     doAfterInfodict: function(msg) {
