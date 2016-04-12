@@ -269,7 +269,67 @@ chrome.runtime.onInstalled.addListener(function(details) {
     //details.reason // install, update, chrome_update
     //details.previousVersion // only if update
 })
-
+function fetchVersion() {
+    var url = 'http://jstorrent.com/data/version.txt'
+    function onload(evt) {
+        console.log('fetch version response',evt)
+        if (evt.target.status == 200) {
+            var remoteversion = evt.target.response.trim()
+            var curver = chrome.runtime.getManifest().version
+            console.log('comparing server version',remoteversion,'to my version',curver)
+            if (compareVersion(remoteversion, curver) < 0) {
+                doShowUpdateAvailableDEV()
+            }
+        }
+    }
+    var xhr = new XMLHttpRequest
+    xhr.onload = xhr.ontimeout = xhr.onerror = onload
+    xhr.open("GET",url)
+    xhr.send()
+}
+function compareVersion(version1, version2) {
+    var a1 = version1.split('.').map(function(s){return parseInt(s)})
+    var a2 = version2.split('.').map(function(s){return parseInt(s)})
+    var n = Math.max(a1.length,a2.length)
+    a1 = a1.concat( new Array(n-a1.length).fill(0) )
+    a2 = a2.concat( new Array(n-a2.length).fill(0) )
+    for (var i=0; i<n; i++) {
+        if (a1[i] > a2[i]) {
+            return 1
+        } else if (a1[i] < a2[i]) {
+            return -1
+        }
+    }
+    return 0
+}
+function doShowUpdateAvailableDEV(details) {
+    var msg = "Your version of " + chrome.i18n.getMessage("extName") + " is older than the one available in the Chrome Web Store. Install it there or manually update."
+    chrome.notifications.create('update-available',
+                                { title:chrome.i18n.getMessage("extName") + " Version Warning",
+                                  type:"basic",
+                                  priority:2,
+                                  iconUrl: "js-128.png",
+                                  message:msg,
+                                  buttons:[
+                                      {title:"Install", iconUrl:"cws_32.png"},
+                                      {title:"Not now"}
+                                  ]
+                                }, function(id) {
+                                    console.log('created notification with id',id,chrome.runtime.lastError)
+                                })
+    function onButtonClick(id, idx) {
+        chrome.notifications.onButtonClicked.removeListener( onButtonClick )
+        if (id == 'update-available') {
+            if (idx == 0) {
+                chrome.browser.openTab( { url: "https://chrome.google.com/webstore/detail/jstorrent/anhdpjpojoipgpmfanmedjghaligalgb" } )
+            } else if (idx == 1) {
+                // nothing
+            }
+        }
+        chrome.notifications.clear('update-available')
+    }
+    chrome.notifications.onButtonClicked.addListener( onButtonClick )
+}
 function doShowUpdateAvailable(details) {
     var msg = "An update is available and will be installed the next time you restart " + chrome.i18n.getMessage("extName")
     chrome.notifications.create('update-available',
@@ -330,7 +390,11 @@ chrome.runtime.onUpdateAvailable.addListener( function(details) {
     // notify that there's a new version? click to restart? nah...
     console.log('a new version is available:',details.version,details)
     _update_available = true
-    doShowUpdateAvailable(details)
+    if (DEVMODE) {
+        doShowUpdateAvailableDEV(details)
+    } else {
+        doShowUpdateAvailable(details)
+    }
 })
 
 /*
@@ -353,9 +417,13 @@ function checkForUpdateMaybe() {
     function docheck() {
         console.log('check for update')
         chrome.storage.local.set({'lastUpdateCheck':Date.now()})
-        chrome.runtime.requestUpdateCheck(function(result){
-            console.log('update check:', result)
-        })
+        if (DEVMODE) {
+            fetchVersion()
+        } else {
+            chrome.runtime.requestUpdateCheck(function(result){
+                console.log('update check:', result)
+            })
+        }
     }
     chrome.storage.local.get('lastUpdateCheck', function(d) {
         var lastcheck = d['lastUpdateCheck']

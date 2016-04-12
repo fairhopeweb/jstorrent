@@ -39,8 +39,8 @@ function UI(opts) {
         if (val.isComplete()) {
             if (streamable) {
                 // detect if chromecast extension?
-                //parts.push('<a class="action-open" href="#"><span class="glyphicon glyphicon-play"></span>Play</a>')
-                parts.push('<a class="action-open" href="#"><span class="glyphicon glyphicon-file"></span>Open</a>')
+                parts.push('<a class="action-open" href="#"><span class="glyphicon glyphicon-play"></span>Play</a>')
+                //parts.push('<a class="action-open" href="#"><span class="glyphicon glyphicon-file"></span>Open</a>')
                 parts.push('<a class="action-cast" href="#"><span class="glyphicon glyphicon-play-circle"></span>Cast</a>')
             } else if (openable) {
                 parts.push('<a class="action-open" href="#"><span class="glyphicon glyphicon-file"></span>Open</a>')
@@ -474,7 +474,8 @@ GeneralInfoView.prototype = {
                     s += ('<li>' + _.escape(key) + ': ' + this.renderValue(this.torrent._attributes[key]) + '</li>')
                 }
             }
-
+            s += ('<li>' + _.escape('unflushed pieces') + ': ' + this.renderValue(byteUnits(this.torrent.unflushedPieceDataSize)) + '</li>')
+            s += ('<li>' + _.escape('unflushed pieces limit') + ': ' + this.renderValue(byteUnits(this.torrent.unflushedPieceDataSizeLimit)) + '</li>')
             s += ('<li>' + _.escape('multifile') + ': ' + this.renderValue(this.torrent.multifile) + '</li>')
             s += ('<li>' + _.escape('private') + ': ' + this.renderValue(this.torrent.isPrivate()) + '</li>')
             if (this.torrent.getStorage()) {

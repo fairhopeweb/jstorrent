@@ -406,13 +406,8 @@ PeerConnection.prototype = {
             return
         }
 
-        var lim = this.torrent.client.app.options.get('max_unflushed_piece_data') * Math.max(this.torrent.pieceLength,
-                                                                                             jstorrent.protocol.chunkSize * 128)
-
-
-
-        if (this.torrent.unflushedPieceDataSize > lim) {
-            //console.log('not requesting more pieces -- need disk io to write out more first')
+        if (this.torrent.unflushedPieceDataSize > this.torrent.unflushedPieceDataSizeLimit) {
+            console.clog(L.DEV,'not requesting more pieces -- need disk io to write out more first')
             return
         }
 

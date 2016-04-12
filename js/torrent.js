@@ -87,9 +87,8 @@ function Torrent(opts) {
     this.metadata = {}
     this.infodict = null
     this.infodict_buffer = null
-
     this.unflushedPieceDataSize = 0
-
+    this.updatePieceDataSizeLimit()
     this.pieceLength = null
     this.multifile = null
     this.fileOffsets = null
@@ -191,6 +190,10 @@ Torrent.attributeSerializers = {
 }
 
 Torrent.prototype = {
+    updatePieceDataSizeLimit: function() {
+        this.unflushedPieceDataSizeLimit = this.client.app.options.get('max_unflushed_piece_data') * Math.max(this.pieceLength,
+                                                                                                              jstorrent.protocol.chunkSize * 128)
+    },
     updateHashBytes: function() {
         this.hashbytes = []
         for (var i=0; i<20; i++) {
@@ -630,7 +633,7 @@ Torrent.prototype = {
         }
         this.bitfieldFirstMissing = 0 // should fix this/set this correctly, but itll fix itself (when a piece is saved)
         this.pieceLength = this.infodict['piece length']
-
+        this.updatePieceDataSizeLimit()
         if (this.infodict.files) {
             this.fileOffsets = []
             this.multifile = true
@@ -787,7 +790,7 @@ Torrent.prototype = {
     isComplete: function() {
         return this.get('complete') == 1
     },
-    sendKeepalives: function() {
+    maybeSendKeepalives: function() {
         this.peers.items.forEach( function(peer) {
             if (peer.connected) {
                 peer.maybeSendKeepalive()
@@ -874,6 +877,17 @@ Torrent.prototype = {
             }
         }.bind(this))
 
+    },
+    updateUnflushedPieceSize: function() {
+        // periodically call this to check that we tabulated this.unflushedPieceDataSize correctly.
+        var sz = 0
+        var piece
+        var imax = this.pieces.items.length
+        for (var i=0; i<imax; i++) {
+            piece = this.pieces.items[i]
+            if (piece.data) { sz += piece.byteLength }
+        }
+        this.unflushedPieceDataSize = sz
     },
     persistPieceResult: function(result) {
         var foundmissing = true
@@ -1478,7 +1492,8 @@ Torrent.prototype = {
 
         this.peers.items.forEach( function(peer) {
             if (peer.connected) {
-                peer.sendMessage("UNCHOKE")
+                // TODO make sure piece cache gets cleared out!
+                //peer.sendMessage("UNCHOKE")
             }
         })
 
@@ -1632,9 +1647,14 @@ Torrent.prototype = {
             console.clog(L.TORRENT,"ENDGAME ON")
         }
 
+        if (this.thinkCtr % 80 == 0) {
+            // every 20 seconds
+            this.updateUnflushedPieceSize()
+        }
+
         if (this.thinkCtr % 40 == 0) {
             // every 10 seconds
-            this.sendKeepalives()
+            this.maybeSendKeepalives()
         }
         
         if (this.thinkCtr % 4 == 0) {

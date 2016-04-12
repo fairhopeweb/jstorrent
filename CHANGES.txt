@@ -1,3 +1,7 @@
+2016-04-12
+- fix bug with large torrents where it would stop downloading/hang
+- update notifications and styles
+
 2016-04-11
 - align numeric columns on right
 - show warning when selecting google drive folder as save path

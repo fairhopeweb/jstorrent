@@ -409,17 +409,22 @@ App.prototype = {
         var openable = file.openable()
 
         if (action == 'action-open') {
-            if (false && streamable) {
-                var bugurl = 'https://bugs.chromium.org/p/chromium/issues/detail?id=328803'
-                var url = jstorrent.constants.jstorrent_web_base + '/bug/#id=' + 'openFile&folder=' + encodeURIComponent(file.torrent.getStorage().entry.fullPath)
-                    + '&name=' + encodeURIComponent(file.get('name'))
-                var msg = {command:'openWindow',url:url}
-                chrome.runtime.sendMessage(msg)
-            } else {
-                file.getPlayableSRCForVideo( function(url) { // blob url
+            if (streamable) {
+
+                if (false) {
+                    var bugurl = 'https://bugs.chromium.org/p/chromium/issues/detail?id=328803'
+                    var url = jstorrent.constants.jstorrent_web_base + '/bug/#id=' + 'openFile&folder=' + encodeURIComponent(file.torrent.getStorage().entry.fullPath)
+                        + '&name=' + encodeURIComponent(file.get('name'))
                     var msg = {command:'openWindow',url:url}
                     chrome.runtime.sendMessage(msg)
-                })
+                } else {
+                    this.createNotification({message:chrome.i18n.getMessage("PlayFileWarningTitle"),
+                                             id:'play-file-warning',
+                                             details:chrome.i18n.getMessage("PlayFileWarningDetails")})
+                    file.openBlobInTab()
+                }
+            } else {
+                file.openBlobInTab()
             }
             // background didnt help, when app suspends it still goes invalid. instead, have the tab run some code to open up a port?
             /*
@@ -566,6 +571,12 @@ App.prototype = {
         if (this.UI && this.UI.get_selected_torrent() == torrent) {
             // reset the detail view (works for files view, general view)
             this.UI.set_detail(this.UI.detailtype, torrent)
+        }
+        var id = torrent.hashhexlower
+        if (this.notifications.get(id)) {
+            chrome.notifications.update(id,
+                                        {message:torrent.get('name')},
+                                        function(){})
         }
     },
     onTorrentComplete: function(torrent) {

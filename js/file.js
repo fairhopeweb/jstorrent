@@ -51,6 +51,12 @@ File.getStoragePath = function(torrent) {
 }
 jstorrent.File = File
 File.prototype = {
+    openBlobInTab: function() {
+        this.getPlayableSRCForVideo( function(url) { // blob url
+            var msg = {command:'openWindow',url:url}
+            chrome.runtime.sendMessage(msg)
+        })
+    },
     onComplete: function() {
         console.log('file complete event',this)
         var UI = this.torrent.client.app.UI

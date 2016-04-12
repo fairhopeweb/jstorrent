@@ -103,9 +103,8 @@ function Options(opts) {
             'visible':false
         },
         'max_unflushed_piece_data': {
-            //        'default': 16384 * 20, // needs to be much larger, or else we will get "stuck" a lot...
             'editable': false,
-            'default': 16, // needs to be much larger, or else we will get "stuck" a lot...
+            'default': 64, // needs to be much larger, or else we will get "stuck" a lot...
             // i.e. store up to 4 complete pieces in RAM
             // this actually needs to be a multiple of each piece chunk size..
             'type': 'int'
