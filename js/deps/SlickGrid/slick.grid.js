@@ -561,6 +561,7 @@ if (typeof Slick === "undefined") {
             .attr("title", m.toolTip || "")
             .data("column", m)
             .addClass(m.headerCssClass || "")
+            .addClass(m.headerColumnCssClass || "")
             .appendTo($headers);
 
         if (options.enableColumnReorder || m.sortable) {

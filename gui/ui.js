@@ -14,8 +14,13 @@ function UI(opts) {
         return val
     }
     function fracToPercent(val) {
-        if (val === undefined || val === null || isNaN(val)) { return '' }
-        return (val * 100).toFixed(1) + '%';
+        if (val === undefined || val === null || val == 0 || isNaN(val)) { return '' }
+        if (val < .01) {
+            return (val * 100).toFixed(1) + '%';
+        } else {
+            return (val * 100).toFixed(0) + '%';
+        }
+
     }
     function priority(val) {
         return val == 0 ? 'Skip' : ''
@@ -59,72 +64,72 @@ function UI(opts) {
         'torrent': [
             {id: "name", name: "Name", displayFunc: displayTorrentName, width:400, sortable:true},
             {id: "state", name: "Status", sortable:true},
-            {id:'downspeed', name: "Down Speed", width:90, formatVal: byteUnitsSec },
-            {id: "complete", name: "% Complete", formatVal: fracToPercent},
-            {id: "bytes_received", name: "Downloaded", formatVal: byteUnits, width:100},
-            {id: "size", name: "Total Size", formatVal: byteUnits, width: 100, sortable:true},
+            {id:'downspeed', name: "Down Speed", width:90, formatVal: byteUnitsSec, type:'number'},
+            {id: "complete", name: "Complete", formatVal: fracToPercent, type:'number'},
+            {id: "bytes_received", name: "Downloaded", formatVal: byteUnits, width:100, type:'number'},
+            {id: "size", name: "Total Size", formatVal: byteUnits, width: 100, sortable:true, type:'number'},
             {id:'eta', name: "ETA", formatVal: formatValETA, width:65},
-            {id: "numpeers", formatVal: intDontShowZero, width: 50, name: "Peers"},
-            {id: "bytes_sent", name: "Uploaded", formatVal: byteUnits},
-            {id:'upspeed', name:"Up Speed", formatVal: byteUnitsSec},
-            {id: 'downloaded', name:"Saved", formatVal:byteUnits},
+            {id: "numpeers", formatVal: intDontShowZero, width: 50, name: "Peers", type:'number'},
+            {id: "bytes_sent", name: "Uploaded", formatVal: byteUnits, type:'number'},
+            {id:'upspeed', name:"Up Speed", formatVal: byteUnitsSec, type:'number'},
+            {id: 'downloaded', name:"Saved", formatVal:byteUnits, type:'number'},
             {id: "added", name:"Added On", width:185,sortable:true},
-            {id: "numswarm", name: "Swarm", hidden:false}
+            {id: "numswarm", name: "Swarm", hidden:false, type:'number'}
         ],
         'peers':[
-            {id:"socketId", name: "Socket", width:45},
+            {id:"socketId", name: "Socket", width:50, type:'number'},
             {name:"Address", id:"address", width:125},
             {name:"Client", id:'peerClientName', formatVal: formatClientName, width:125},
             {id:"state", name: "State", width:90},
-            {id:"complete", name: "% Complete", formatVal: fracToPercent},
-            {id:"bytes_sent", name: "Bytes Sent"},
-            {id:"bytes_received", name: "Bytes Received"},
-            {id:'downspeed', name: "Down Speed", width:90, formatVal: byteUnitsSec },
+            {id:"complete", name: "Complete", formatVal: fracToPercent, type:'number'},
+            {id:"bytes_sent", name: "Sent", type:'number', formatVal: byteUnits},
+            {id:"bytes_received", name: "Received", type:'number', formatVal: byteUnits},
+            {id:'downspeed', name: "Down Speed", width:90, formatVal: byteUnitsSec, type:'number'},
             //{id:'upspeed', formatVal: byteUnitsSec},
-            {id:'requests', name:"Req", width:50},
-            {id:'responses', name:"Resp", width:50},
-            {id:'outstanding', name:"Outstanding", width:50},
+            {id:'requests', name:"Req", width:50, type:'number'},
+            {id:'responses', name:"Resp", width:50, type:'number'},
+            {id:'outstanding', name:"Outstanding", width:50, type:'number'},
 //            {id:'limit', name:"Limit", width:50, sortable:false},
             {id:"last_message_sent", name: "Last Sent"},
             {id:"last_message_received", name: "Last Received", width:120},
-            {id:'timeouts'},
-            {id:"amChoked"},
-            {id:"peerChoked"}
+            {id:'timeouts', name:"Timeouts", type:'number'},
+            {id:"amChoked", type:'number'},
+            {id:"peerChoked", type:'number'}
         ],
         'swarm':[
-            {attr:"host", width:110, sortable:true},
-            {attr:"port", sortable:true},
-            {id:"connected_ever", name: "Ever Connected", sortable:true},
+            {attr:"host", name:"Host", width:110, sortable:true},
+            {attr:"port", name:"Port", sortable:true, type:'number'},
+            {id:"connected_ever", name: "Ever Connected", sortable:true, type:'number'},
             {id:'connectionResult', sortable:true, width:300}
         ],
         'trackers':[
             {attr:'url', name:"URL", width:200, sortable:true},
-            {id:'announces'},
-            {id:'errors'},
-            {id:'timeouts'},
-            {id:'seeders'},
-            {id:'leechers'},
+            {id:'announces', name:"Announces", type:'number'},
+            {id:'errors', name:"Errors", type:'number'},
+            {id:'timeouts', name:"Timeouts", type:'number'},
+            {id:'seeders', name:"Seeders", type:'number'},
+            {id:'leechers', name:"Leechers", type:'number'},
             {id:'lasterror', width:400}
         ],
         'diskio':[
-            {id:'jobId', width:55},
-            {id:'type', width:150},
-            {id:'state', width:120},
-            {id:'pieceNum', width:70},
-            {id:'fileNum', width:60},
-            {id:'size', width:80},
-            {id:'progress',width:65},
-            {id:'fileOffset', width:120},
-            {id:'pieceOffset'},
+            {id:'jobId', width:55, type:'number'},
+            {id:'type', name:"Type", width:150},
+            {id:'state', name:"State", width:120},
+            {id:'pieceNum', name:"Piece", width:70, type:'number'},
+            {id:'fileNum', name:"File", width:60, type:'number'},
+            {id:'size', name:"Size", width:80, type:'number'},
+            {id:'progress',name:"Progress", width:75, type:'number'},
+            {id:'fileOffset', width:120, type:'number'},
+            {id:'pieceOffset', type:'number'},
             {id:'torrent'}
         ],
         'files':[
-            {attr:'num', name:"Number", width:60, sortable:true},
+            {attr:'num', name:"Number", width:60, sortable:true, type:'number'},
             {attr:'name', name:"Name", width:400, sortable:true},
-            {attr:'size', name:"Size", formatVal:byteUnits, width:100, sortable:true},
-            {id:'complete', name:"Complete", formatVal: fracToPercent, sortable:true},
+            {attr:'size', name:"Size", formatVal:byteUnits, width:100, sortable:true, type:'number'},
+            {id:'complete', name:"Complete", formatVal: fracToPercent, sortable:true, type:'number'},
             {name:"Action" , width:115, displayFunc: fileAction},
-            {id:"priority", formatVal: priority, sortable:true
+            {id:"priority", name:"Priority", formatVal: priority, sortable:true
 /*
   ,editor: Slick.Editors.SelectCellEditor,
              options:"Normal,Skip",
@@ -133,21 +138,21 @@ function UI(opts) {
              },
              name:'Priority',*/
             },
-            {id:'downloaded', name:"Downloaded", formatVal:byteUnits, width:100},
+            {id:'downloaded', name:"Downloaded", formatVal:byteUnits, width:100, type:'number'},
             {attr:'path', name:"Path", formatVal: pathFormat, width:400, sortable:true},
             {id:'streaming', name:"Stream"},
-            {id:'leftPiece'},
-            {id:'rightPiece'}
+            {id:'leftPiece', type:'number'},
+            {id:'rightPiece', type:'number'}
         ],
         'pieces':[
-            {attr:'num'},
-            {attr:'size', formatVal:byteUnits},
-            {attr:'haveData'},
-            {id:'requests', name:"Req", width:50},
-            {id:'responses', name:"Resp", width:50},
-            {id:'timeouts'},
-            {attr:'haveDataPersisted'},
-            {attr:'numChunks'}
+            {attr:'num', name:"Piece", type:'number'},
+            {attr:'size', name:"Size", formatVal:byteUnits, type:'number'},
+            {attr:'haveData', type:'number'},
+            {id:'requests', name:"Req", width:50, type:'number'},
+            {id:'responses', name:"Resp", width:50, type:'number'},
+            {id:'timeouts', name:"Timeouts", type:'number'},
+            {attr:'haveDataPersisted', name:"Saved", width:90, type:'number'},
+            {attr:'numChunks', width:75, type:'number'}
         ]
     }
 

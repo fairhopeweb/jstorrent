@@ -216,8 +216,10 @@ HTTPTracker.prototype = {
                 } else {
                     this.set_error('no peers in response',data,evt)
                     if (data['failure reason']) {
-                        app.createNotification({details:"HTTP Tracker error, reason given: \"" + data['failure reason'] + '\". If this is a private torrent, please contact the site administrator and ask them if they can unblock JSTorrent',
-                                                priority:2})
+                        if (this.torrent.isPrivate()) {
+                            app.createNotification({details:"HTTP Tracker error, reason given: \"" + data['failure reason'] + '\". If this is a private torrent, please contact the site administrator and ask them if they can unblock JSTorrent',
+                                                    priority:2})
+                        }
                     }
                 }
             }

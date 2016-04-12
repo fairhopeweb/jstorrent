@@ -46,6 +46,11 @@ function SlickCollectionTable(opts) {
     this.columnNumberByAttribute = {}
 
     for (var i=0; i<this.columns.length; i++) {
+        if (this.columns[i].type) {
+            this.columns[i].headerColumnCssClass = 'colheadertype-' + this.columns[i].type
+            this.columns[i].cssClass = 'coltype-' + this.columns[i].type
+        }
+        
         if (! this.columns[i].name) {
             // set column title to just be the ID if no name is given
             this.columns[i].name = this.columns[i].id || this.columns[i].attr
@@ -57,11 +62,6 @@ function SlickCollectionTable(opts) {
             this.columns[i].id = (this.columns[i].attr || this.columns[i].name) // slickgrid REALLY wants there to be an id, otherwise selecting the cell dont work properly
         }
     }
-
-
-
-
-
 
     var grid = new Slick.Grid("#" + this.domid, collectiondata, this.columns, options);
     grid.setSelectionModel(new Slick.RowSelectionModel());

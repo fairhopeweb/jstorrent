@@ -15,6 +15,37 @@
   background: linear-gradient(#999 0%, #999 8%, #dddeee 12%, #dddeee 90%, white 100%);
 }
 
+.coltype-number {
+    text-align:right;
+}
+.colheadertype-number {
+    text-align:right;
+}
+.colheadertype-number span.slick-column-name {
+    padding-right:2px;
+}
+.slick-header-columns {
+    font-size:0.9em;
+}
+.colheadertype-number span.slick-sort-indicator {
+    position:absolute;
+    margin-left:2px;
+    left:0px;
+}
+.slick-sort-indicator {
+    position:absolute;
+    margin-right:2px;
+    right:0px;
+}
+
+.slick-header-column.ui-state-default {
+    padding:0px;
+    padding-left:4px;
+}
+
+
+
+
 #torrentGrid {
     padding-bottom:10px;
 }
@@ -95,20 +126,6 @@ body {
 }
       .torrentlist { background:#eff; }
 
-    .slick-header-columns {
-    font-size:0.9em;
-    }
-
-    .slick-sort-indicator {
-        position:absolute;
-        margin-right:2px;
-        right:0px;
-    }
-    
-.slick-header-column.ui-state-default {
-    padding:0px;
-    padding-left:4px;
-}
 
 #ui-wrapper {
 }

@@ -1,6 +1,4 @@
-- align number columns on right
 - web server leaving ports open ? after many ctrl-r it runs out of retries on listen
-- ONLY SHOW UNREGISTERED TORRENT for PRIVATE torrents.
 - track how many people click start without torrent onboarding ?
 - have unpacked users check for latest version string from web ? Also report whether update_url in manifest
 - right click to remove tracker
