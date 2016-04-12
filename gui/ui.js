@@ -290,7 +290,7 @@ UI.prototype = {
                                                             });
 
                 if (this.detailtype == 'files') {
-                    console.clog(L.UI, 'set torrent detail view')
+                    //console.clog(L.UI, 'set torrent detail view')
                     if (torrent.get('metadata') && ! torrent.infodict) {
                         torrent.loadMetadata(function(result){
                             console.clog(L.UI, 'initailized torrent metadata',result)
@@ -378,8 +378,8 @@ MessagesView.prototype = {
         this.elt[0].appendChild(div)
         var obj = $('#detailGrid')[0]
         //ORIGINALCONSOLE.log.call(console, obj.scrollTop, obj.scrollHeight - obj.offsetHeight)
-        if( (obj.scrollHeight - obj.offsetHeight) - obj.scrollTop < 30) {
-            obj.scrollTop = obj.scrollHeight
+        if( (obj.scrollHeight - obj.offsetHeight) - obj.scrollTop < 50) {
+            obj.scrollTop = obj.scrollHeight + 1000
         }
     },
     render: function() {

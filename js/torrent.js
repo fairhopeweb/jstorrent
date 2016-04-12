@@ -397,7 +397,7 @@ Torrent.prototype = {
                     this.metadata.encoding.toLowerCase() == 'utf8') {
                     this.metadata_isutf8 = true
                     this.metadata = bdecode(ui82str(new Uint8Array(buffer)),{utf8:true})
-                    console.clog(L.TORRENT,'utf-8 torrent', this.metadata)
+                    //console.clog(L.TORRENT,'utf-8 torrent', this.metadata)
                 }
             }
         } catch(e) {
@@ -1626,7 +1626,7 @@ Torrent.prototype = {
         //console.log('torrent frame!')
 
         //if (! this.isEndgame && this.get('complete') > 0.97) {  // this works really crappy for large torrents
-        if (! this.isEndgame && this.infodict && this.getFirstUnrequestedPiece() === null) {
+        if (! this.isEndgame && this.infodict && this.getFirstUnrequestedPiece() === null && ! this.isComplete()) {
             this.isEndgame = true
             console.log("ENDGAME ON")
         }
