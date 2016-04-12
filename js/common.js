@@ -345,14 +345,15 @@ function pad(s, padwith, len) {
 
     function formatValETA(val) {
         var parts = []
-        if (val === undefined || val == 0) { return '' }
+        if (val === undefined || val == 0 || ! val || !isFinite(val)) { return '' }
         for (var i=ssz.length-1;i>=0;i--) {
             if (val > ssz[i]) {
                 parts.push( Math.floor(val / ssz[i]) + sunits[i] )
                 val = val % ssz[i]
             }
         }
-        return parts.join(' ')
+        //return parts.join(' ')
+        return parts[0]
     }
     window.formatValETA = formatValETA
 

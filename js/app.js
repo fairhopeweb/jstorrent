@@ -884,18 +884,25 @@ App.prototype = {
                                             }
                                         ],
                                         acceptsAllTypes: false,
-                                        acceptsMultiple: false },
+                                        acceptsMultiple: true },
                                        this.on_select_torrent.bind(this) )
     },
-    on_select_torrent: function(result) {
+    on_select_torrent: function(results) {
         var lasterr = chrome.runtime.lastError
         if (lasterr) {
-            console.clog(L.UI,'user canceled selection?',lasterr,'result',result)
+            console.clog(L.UI,'user canceled selection?',lasterr,'result',results)
         }
         // XXX - sometimes not working???
-        if (result) {
-            var entry = result[0]
-            this.client.addTorrentFromEntry(entry)
+        if (results) {
+            console.log('got torrents',results)
+            var q = Array.prototype.slice.call(results)
+            function addone() {
+                if (q.length > 0) {
+                    var entry = q.pop()
+                    this.client.addTorrentFromEntry(entry, addone)
+                }
+            }
+            addone()
         }
     },
     add_from_url: function(url) {

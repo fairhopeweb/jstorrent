@@ -77,7 +77,7 @@ function UI(opts) {
             {id: "complete", name: "Complete", formatVal: fracToPercent, type:'number'},
             {id: "bytes_received", name: "Downloaded", formatVal: byteUnits, width:100, type:'number'},
             {id: "size", name: "Total Size", formatVal: byteUnits, width: 100, sortable:true, type:'number'},
-            {id:'eta', name: "ETA", formatVal: formatValETA, width:65},
+            {id:'eta', name: "ETA", formatVal: formatValETA, width:50, type:'number'},
             {id: "numpeers", formatVal: intDontShowZero, width: 50, name: "Peers", type:'number'},
             {id: "bytes_sent", name: "Uploaded", formatVal: byteUnits, type:'number'},
             {id:'upspeed', name:"Up Speed", formatVal: byteUnitsSec, type:'number'},

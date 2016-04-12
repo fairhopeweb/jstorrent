@@ -281,8 +281,9 @@ Client.prototype = {
             debugger
         }
     },
-    addTorrentFromEntry: function(entry) {
+    addTorrentFromEntry: function(entry, callback) {
         // XXX - this is not saving the torrent file to the downloads directory, so on next load, it cannot load the metadata
+        if (callback === undefined) { callback = function(){} }
         var t = new jstorrent.Torrent({entry:entry,
                                        itemClass:jstorrent.Torrent,
                                        parent:this.torrents,
@@ -295,15 +296,17 @@ Client.prototype = {
                                                        this.app.highlightTorrent(result.torrent.hashhexlower)
                                                        result.torrent.save()
                                                        this.torrents.save()
+                                                       callback()
                                                    }.bind(this))
-
                                                } else {
                                                    this.app.highlightTorrent(result.torrent.hashhexlower)
                                                    this.trigger('error','already had this torrent',result.torrent.hashhexlower)
+                                                   callback()
                                                }
                                            } else {
                                                console.error('error initializing torrent from entry', result)
                                                this.trigger('error',result)
+                                               callback()
                                            }
                                        },this)
                                       })

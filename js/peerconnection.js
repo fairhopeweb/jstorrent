@@ -33,7 +33,7 @@ function PeerConnection(opts) {
     this.amInterested = false
     this.amChoked = true
     this.readThrottled = false
-
+    this._cancel_connect = false
     this.peerInterested = false
     this.peerChoked = true
     this.set('peerChoked',true)
@@ -197,7 +197,12 @@ PeerConnection.prototype = {
         this.set('state','closing')
         this.connected = false
         this.maybeClearConnectTimeout()
-        chrome.sockets.tcp.close(this.sockInfo.socketId, this.onClose.bind(this,reason))
+        if (! this.sockInfo) {
+            // connection was closed while we were creating the socket
+            this._cancel_connect = true
+        } else {
+            chrome.sockets.tcp.close(this.sockInfo.socketId, this.onClose.bind(this,reason))
+        }
     },
     maybeClearConnectTimeout: function() {
         if (this.connect_timeout_callback) {
@@ -236,12 +241,16 @@ PeerConnection.prototype = {
         chrome.sockets.tcp.create({}, _.bind(this.oncreate, this))
     },
     oncreate: function(sockInfo) {
-        this.sockInfo = sockInfo;
+        this.sockInfo = sockInfo
         this.set('socketId',sockInfo.socketId)
         peerSockMap[this.sockInfo.socketId] = this
-        //this.log('peer oncreate')
-        this.connect_timeout_callback = setTimeout( _.bind(this.on_connect_timeout, this), this.connect_timeout_delay )
-        chrome.sockets.tcp.connect( sockInfo.socketId, this.peer.host, this.peer.port, _.bind(this.onconnect, this) )
+        if (this._cancel_connect) {
+            this.close('cancelled connect')
+        } else {
+            //this.log('peer oncreate')
+            this.connect_timeout_callback = setTimeout( _.bind(this.on_connect_timeout, this), this.connect_timeout_delay )
+            chrome.sockets.tcp.connect( sockInfo.socketId, this.peer.host, this.peer.port, _.bind(this.onconnect, this) )
+        }
     },
     onconnect: function(connectInfo) {
         this.maybeClearConnectTimeout()
