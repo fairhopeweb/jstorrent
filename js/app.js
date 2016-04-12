@@ -471,7 +471,7 @@ App.prototype = {
         var row = this.client.torrents.keyeditems[hashhexlower]
         if (this.UI) {
             this.UI.torrenttable.grid.scrollRowIntoView(row);
-            this.UI.torrenttable.grid.flashCell(row, 0, 500);
+            this.UI.torrenttable.grid.flashRow(row, 300, 8);
         }
     },
     pulsate: function() {

@@ -39,8 +39,9 @@ body {
     margin:0;
     padding:0;
 }
+
   .slick-cell.flashing {
-    background: 1px solid rgba(130,201,255,1) !important;
+    background-color: 1px solid rgba(130,201,255,1) !important;
   }
   .slick-cell, .slick-headerrow-column {
       border-right: 1px solid #efefef;
@@ -65,12 +66,17 @@ body {
 
 .slick-row { backgroud: white; } 
 
-
+.ui-widget-content { background: none }
 
       .hover { background: #abc;
 /*box-shadow: 10px 10px 5px #888888;*/
  }
-.selected {
+
+      .rowflashing {
+          background-color: rgba(255,187,132,0.2);
+      }
+
+      .selected {
     background-color: rgba(130,201,255,0.5);
 }
       .torrentlist { background:#eff; }

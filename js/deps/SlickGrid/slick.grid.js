@@ -78,6 +78,7 @@ if (typeof Slick === "undefined") {
       topPanelHeight: 25,
       formatterFactory: null,
       editorFactory: null,
+      rowFlashingCssClass: "rowflashing",
       cellFlashingCssClass: "flashing",
       selectedCellCssClass: "selected",
       multiSelect: true,
@@ -2115,6 +2116,25 @@ if (typeof Slick === "undefined") {
       return cellCssClasses[key];
     }
 
+      function flashRow(row, speed, times) {
+          times = times || 4
+          speed = speed || 100;
+          if (rowsCache[row]) {
+              var $row = $(rowsCache[row].rowNode)
+              function toggleRowClass(times) {
+                  if (!times) {
+                      return;
+                  }
+                  setTimeout(function () {
+                          $row.toggleClass(options.rowFlashingCssClass)
+                      toggleRowClass(times - 1);
+                  },
+                             speed);
+              }
+              toggleRowClass(times);
+          }
+      }
+      
     function flashCell(row, cell, speed) {
       speed = speed || 100;
       if (rowsCache[row]) {
@@ -3395,6 +3415,7 @@ if (typeof Slick === "undefined") {
       "getHeaderRowColumn": getHeaderRowColumn,
       "getGridPosition": getGridPosition,
       "flashCell": flashCell,
+      "flashRow": flashRow,
       "addCellCssStyles": addCellCssStyles,
       "setCellCssStyles": setCellCssStyles,
       "removeCellCssStyles": removeCellCssStyles,
