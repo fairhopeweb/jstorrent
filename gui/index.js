@@ -140,30 +140,22 @@ function onready() {
 
 function click_detail_torrent(tab, evt) {
     $('#detail-tabs li').removeClass('active')
+    $('#detail-' + tab).parent().addClass('active')
+
     var torrent = UI.get_selected_torrent()
     if (torrent) {
         UI.set_detail(tab, torrent)
-        $('#detail-' + tab).parent().addClass('active')
-    } else {
+    } else if (tab == 'messages') {
+        UI.set_detail(tab, torrent)
+    } else {        
         console.warn('no torrent selected')
     }
 }
-function click_detail_other(tab, evt) {
-    $('#detail-tabs li').removeClass('active')
-    UI.set_detail(tab)
-    $('#detail-' + tab).parent().addClass('active')
-}
-
 function bind_events() {
-    var torrenttabs = ['info','files','peers','swarm','trackers','pieces','diskio'] 
-    var othertabs = ['messages']
+    var torrenttabs = ['info','files','peers','swarm','trackers','pieces','diskio','messages'] 
     torrenttabs.forEach(function(tab) {
 	$('#detail-' + tab).click( click_detail_torrent.bind(this, tab) )
     });
-    othertabs.forEach(function(tab) {
-	$('#detail-' + tab).click( click_detail_other.bind(this, tab) )
-    });
-
 
     window.onfocus = function() {
         $('#top-titlebar').removeClass("blur")

@@ -90,7 +90,9 @@
     <div style="clear:both"></div>
     <div>
       <div class="my-navbar-header">
-        <h5 style="padding:0px; margin:0px;"><a id="webstorelink" href="https://chrome.google.com/webstore/detail/jstorrent/anhdpjpojoipgpmfanmedjghaligalgb" target="_blank"><img style="width:185px; height:50px" src="/JS-LOGO-2x.png" alt="JSTorrent" /></a><span id="title-lite" style="display:none">Lite</span></h5>
+        <h5 style="padding:0px; margin:0px;"><a id="webstorelink" href="https://chrome.google.com/webstore/detail/jstorrent/anhdpjpojoipgpmfanmedjghaligalgb" target="_blank">
+            <img style="width:198px; height:50px" src="/js-mini-logo-2x.png" alt="JSTorrent" />
+          </a><span id="title-lite" style="display:none">Lite</span></h5>
       </div>
 
       <ul class="nav navbar-nav">
@@ -129,33 +131,33 @@
     <div class="btn-toolbar">
 
       <div class="btn-group">
-        <button id="button-start" type="button" class="btn btn-default">
+        <a id="button-start" type="button" class="btn btn-default">
           <span class="glyphicon glyphicon-play"></span>
           Start
-        </button>
+        </a>
 
-        <button id="button-stop" type="button" class="btn btn-default">
+        <a id="button-stop" type="button" class="btn btn-default">
           <span class="glyphicon glyphicon-stop"></span>
           Stop
-        </button>
+        </a>
 
-        <button id="button-remove" type="button" class="btn btn-default">
+        <a id="button-remove" type="button" class="btn btn-default">
           <span class="glyphicon glyphicon-trash"></span>
           Remove
-        </button>
+        </a>
 
 
       </div>
 
       <div class="btn-group">
-        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+        <a type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
           More Actions
           <span class="caret"></span>
-        </button>
+        </a>
         <ul class="dropdown-menu">
           <!--li><a id="re-check" href="#">Re-check Torrent Files</a></li--><!-- not working well enough -->
-          <li><a id="reset-state" href="#">Reset Torrent State</a></li>
-          <li><a id="get-share-url" href="#">Get URL for sharing</a></li>
+          <li><a id="reset-state">Reset Torrent State</a></li>
+          <li><a id="get-share-url">Get URL for sharing</a></li>
 
           <!--li><a href="#">Delete Files</a></li>
               <li><a href="#">Delete Files and Torrent</a></li>
@@ -165,20 +167,20 @@
 
       <div class="btn-group">
 
-        <button id="button-help" type="button" class="btn btn-default">
+        <a id="button-help" type="button" class="btn btn-default">
           <span class="glyphicon glyphicon-book"></span>
           Help
-        </button>
+        </a>
 
         <!--button id="button-sponsor" type="button" class="btn btn-default">
             <span class="glyphicon glyphicon-heart-empty"></span>
             Sponsor
         </button-->
 
-        <button id="button-options" type="button" class="btn btn-default">
+        <a id="button-options" type="button" class="btn btn-default">
           <span class="glyphicon glyphicon-cog"></span>
-          Options
-        </button>
+          Settings
+        </a>
 
       </div>
 
@@ -194,21 +196,21 @@
 <ul class="nav nav-tabs" id="detail-tabs">
 
   <li>
-    <a href="#" id="detail-info">
+    <a id="detail-info">
       <span class="glyphicon glyphicon-th"></span>
       Info
     </a>
   </li>
 
   <li class="active">
-    <a href="#" id="detail-files">
+    <a id="detail-files">
       <span class="glyphicon glyphicon-floppy-save"></span>
       Files
     </a>
   </li>
 
   <li>
-    <a href="#" id="detail-peers">
+    <a id="detail-peers">
       <span class="glyphicon glyphicon-user"></span>
       Peers
     </a>
@@ -216,35 +218,35 @@
 
 
   <li>
-    <a href="#" id="detail-swarm">
+    <a id="detail-swarm">
       <span class="glyphicon glyphicon-cloud"></span>
       Swarm
     </a>
   </li>
 
   <li>
-    <a href="#" id="detail-trackers">
+    <a id="detail-trackers">
       <span class="glyphicon glyphicon-magnet"></span>
       Trackers
     </a>
   </li>
 
   <li>
-    <a href="#" id="detail-pieces">
+    <a id="detail-pieces">
       <span class="glyphicon glyphicon-transfer"></span>
       Pieces
     </a>
   </li>
 
   <li>
-    <a href="#" id="detail-messages">
+    <a id="detail-messages">
     <span class="glyphicon glyphicon-warning-sign"></span>
     Messages
     </a>
   </li>
 
   <li>
-    <a href="#" id="detail-diskio">
+    <a id="detail-diskio">
     <span class="glyphicon glyphicon-hdd"></span>
     DiskIO
     </a>

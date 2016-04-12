@@ -1,3 +1,8 @@
+- right click to remove tracker
+- closing choked connections needs to account not for whole swarm size, but actually valid swarm size
+- bridges when no incomplete pieces after seek area, remove bridges. also when long delay temp. turn on endgame?
+- show ETA in progress bar notification
+- record/report average download speed per torrent
 - when window is minimized, show app status in a notification
 - store .torrent files in local sandbox persistent storage (option)
 - store total bytes received in swarm list, and persist it for a while? (resume)

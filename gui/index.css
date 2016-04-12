@@ -64,13 +64,21 @@ body {
       .hover { background: #abc;
 /*box-shadow: 10px 10px 5px #888888;*/
  }
-      .selected { border: 1px solid blue; }
+.selected {
+    background-color: rgba(130,201,255,0.5);
+}
       .torrentlist { background:#eff; }
 
     .slick-header-columns {
     font-size:0.9em;
     }
 
+    .slick-sort-indicator {
+        position:absolute;
+        margin-right:2px;
+        right:0px;
+    }
+    
 .slick-header-column.ui-state-default {
     padding:0px;
     padding-left:4px;

@@ -1475,6 +1475,12 @@ Torrent.prototype = {
         this.set('downspeed',0)
         this.set('eta',0)
 
+        this.peers.items.forEach( function(peer) {
+            if (peer.connected) {
+                peer.sendMessage("UNCHOKE")
+            }
+        })
+
         var a = this.client.get('activeTorrents')
         this.client.activeTorrents.remove(this)
         delete a[this.hashhexlower]

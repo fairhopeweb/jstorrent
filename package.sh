@@ -14,13 +14,14 @@ zip "package-$VER.zip" manifest.json \
     TODO.txt \
     js-*.png \
     cws_32.png \
-    JS-LOGO-2x.png \
+    js-mini-logo-2x.png \
     js/*.js \
     js/deps/*.js \
     js/deps/SlickGrid/*.js \
     js/deps/SlickGrid/slick.grid.css \
     js/deps/SlickGrid/css/smoothness/jquery-ui-1.8.16.custom.css \
     js/deps/SlickGrid/css/smoothness/images/*.png \
+    js/deps/SlickGrid/images/sort-*.gif. \
     js/deps/SlickGrid/plugins/slick.rowselectionmodel.js \
     js/deps/SlickGrid/lib/jquery.event.drag-2.2.js \
     js/deps/bootstrap-dist/css/bootstrap.min.css \

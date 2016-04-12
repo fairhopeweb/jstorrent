@@ -306,8 +306,12 @@ function pad(s, padwith, len) {
 (function() {
     var units = ['B','kB','MB','GB','TB']
     var idxmax = units.length - 1
+    var roundings_sz = [0,0,1,3,3]
+    var roundings_rate = [0,0,1,3,3]
 
-    function byteUnitsGeneric(roundOpt, val) {
+    // TODO format MB with a decimal depending on torrent size
+    
+    function byteUnitsGeneric(roundings, val) {
         // TODO - this is dumb, dont divide, just do comparison. more efficient
         if (val === undefined || val == 0) { return '' }
         var idx = 0
@@ -315,15 +319,15 @@ function pad(s, padwith, len) {
             val = val/1024
             idx++
         }
-        var round = (idx==0) ? 0 : roundOpt
+        var round = roundings[idx]
         return val.toFixed(round) + ' ' + units[idx]
     }
 
-    var byteUnits = byteUnitsGeneric.bind(undefined, 2)
+    var byteUnits = byteUnitsGeneric.bind(null, roundings_sz)
     window.byteUnits = byteUnits
 
     function byteUnitsSec(val) {
-        var v = byteUnitsGeneric(0,val)
+        var v = byteUnitsGeneric(roundings_rate, val)
         if (v) {
             return v + '/s'
         } else {
@@ -369,6 +373,23 @@ function parseUri(str) {
     });
 
     return parts;
+}
+
+function debugSockets() {
+    chrome.sockets.tcp.getSockets( function(socketInfos) {
+        var d = {}
+        for (var i=0; i<socketInfos.length; i++) {
+            d[socketInfos[i].socketId] = socketInfos[i]
+        }
+        console.log('current tcp sockets',d)
+    })
+    chrome.sockets.udp.getSockets( function(socketInfos) {
+        var d = {}
+        for (var i=0; i<socketInfos.length; i++) {
+            d[socketInfos[i].socketId] = socketInfos[i]
+        }
+        console.log('current udp sockets',d)
+    })
 }
 
 window.onerror = function(message, url, line) {

@@ -65,6 +65,7 @@ function App(opts) {
 
             evt.preventDefault()
             evt.stopPropagation()
+
         }
     }.bind(this))
 
@@ -865,6 +866,10 @@ App.prototype = {
                                        this.on_select_torrent.bind(this) )
     },
     on_select_torrent: function(result) {
+        var lasterr = chrome.runtime.lastError
+        if (lasterr) {
+            console.log('user canceled selection?',lasterr,'result',result)
+        }
         // XXX - sometimes not working???
         if (result) {
             var entry = result[0]

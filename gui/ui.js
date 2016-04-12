@@ -59,16 +59,16 @@ function UI(opts) {
         'torrent': [
             {id: "name", name: "Name", displayFunc: displayTorrentName, width:400, sortable:true},
             {id: "state", name: "Status", sortable:true},
+            {id:'downspeed', name: "Down Speed", width:90, formatVal: byteUnitsSec },
+            {id: "complete", name: "% Complete", formatVal: fracToPercent},
             {id: "bytes_received", name: "Downloaded", formatVal: byteUnits, width:100},
             {id: "size", name: "Total Size", formatVal: byteUnits, width: 100, sortable:true},
-            {id: "complete", name: "% Complete", formatVal: fracToPercent},
-            {id:'downspeed', name: "Down Speed", width:90, formatVal: byteUnitsSec },
-            {id:'eta', name: "ETA", formatVal: formatValETA, width:60},
-            {id: "numpeers", formatVal: intDontShowZero, name: "Peers"},
+            {id:'eta', name: "ETA", formatVal: formatValETA, width:65},
+            {id: "numpeers", formatVal: intDontShowZero, width: 50, name: "Peers"},
             {id: "bytes_sent", name: "Uploaded", formatVal: byteUnits},
             {id:'upspeed', name:"Up Speed", formatVal: byteUnitsSec},
             {id: 'downloaded', name:"Saved", formatVal:byteUnits},
-            {id: "added", width:185,sortable:true},
+            {id: "added", name:"Added On", width:185,sortable:true},
             {id: "numswarm", name: "Swarm", hidden:false}
         ],
         'peers':[
@@ -243,6 +243,7 @@ UI.prototype = {
     set_detail: function(type, torrent) {
         // fix to not redraw messages pane.
         //console.clog(L.UI,'set detail',type,torrent)
+        //if (! torrent && type != 'messages') { return }
 
         if (this.detailtype == 'messages' && type == 'messages') {return} // dont need to redraw
         
@@ -361,6 +362,7 @@ MessagesView.prototype = {
     },
     onNewLog: function(args) {
         var div = document.createElement('div')
+        div.style['border-top'] = '1px solid #eee'
         if (args.length > 0 && typeof args[0] == 'string' && args[0].startsWith('%c')) {
             var span = document.createElement('span')
             span.setAttribute('style',args[1])
