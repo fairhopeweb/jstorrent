@@ -200,12 +200,12 @@ Torrent.prototype = {
         }
     },
     resetState: function() {
-        console.log(this.get_key(),'resetState')
+        console.clog(L.TORRENT,this.get_key(),'resetState')
         var url = this.get('url')
         var client = this.client
         if (url) {
             this.remove( function() {
-                console.log('removed, adding')
+                console.clog(L.TORRENT,'removed, adding')
                 client.add_from_url(url)
             }, {dontannounce:true})
         } else {
@@ -214,7 +214,7 @@ Torrent.prototype = {
             if (this._opts.id) {
                 var id = this._opts.id
                 this.remove( function() {
-                    console.log('removed, adding')
+                    console.clog(L.TORRENT,'removed, adding')
                     this.client.add_from_id(id, null) // might want to include optional metadata like the name.
                 }.bind(this), {dontannounce:true})
             } else {
@@ -229,7 +229,7 @@ Torrent.prototype = {
         
     },
     resetStateOld: function() {
-        console.log('reset torrent state')
+        console.clog(L.TORRENT,'reset torrent state')
         if (this.started) { return }
         // resets torrent to 0% and, if unable to load metadata, clears that, too.
         //this.stop()
@@ -303,7 +303,7 @@ Torrent.prototype = {
 
     },
     initializeFromWeb: function(url, callback, opts) {
-        console.log('torrent initialize from web',url)
+        console.clog(L.TORRENT,'torrent initialize from web',url)
 
         if (url.length == 40) {
             // initialize from info infohash!
@@ -355,7 +355,7 @@ Torrent.prototype = {
             xhr.responseType = 'arraybuffer'
             xhr.onload = _.bind(function(evt) {
                 var headers = xhr.getAllResponseHeaders()
-                console.log('loaded url',url, headers)
+                console.clog(L.TORRENT,'loaded url',url, headers)
                 this.initializeFromBuffer(evt.target.response, callback, opts)
             },this)
             xhr.onerror = function(evt) {
@@ -470,7 +470,7 @@ Torrent.prototype = {
     registerRangeRequest: function(range, handler) {
         var bridge = new Bridge({start:range[0],end:range[1],handler:handler,torrent:this,file:handler.file})
         this.bridges[bridge.id] = bridge
-        console.log('bridges now',this.bridges)
+        console.clog(L.STREAM,'bridges now',this.bridges)
         if (this.get('state') == 'stopped') { this.start() }
         return bridge
     },
@@ -586,7 +586,7 @@ Torrent.prototype = {
             this.pieceBlacklist = {}
             return
         }
-        console.log('recalculatePieceBlacklist')
+        console.clog(L.TORRENT,'recalculatePieceBlacklist')
         var needPiece
 
         for (var i=0; i<this.numPieces; i++) {
@@ -717,7 +717,7 @@ Torrent.prototype = {
         }
     },
     saveMetadata: function(callback) {
-        console.log('saving torrent metadata',this)
+        console.clog(L.TORRENT,'saving torrent metadata',this)
         var filename = this.getMetadataFilename()
         // save metadata (i.e. .torrent file) to disk
         var storage = this.getStorage()
@@ -863,7 +863,7 @@ Torrent.prototype = {
         return null
     },
     persistPieceLater: function(piece) {
-        console.log('persistPieceLater',piece.num)
+        console.clog(L.TORRENT,'persistPieceLater',piece.num)
         this.pieceCache.add(piece)
         var pieceNum = piece.num
         piece.destroy()
@@ -925,7 +925,7 @@ Torrent.prototype = {
         }
         
         if (! foundmissing) {
-            console.log('%cTORRENT DONE!','color:#0f3')
+            console.clog(L.TORRENT,'%cTORRENT DONE!','color:#0f3')
             this.set('state','complete')
 
             // TODO -- turn this into progress notification type

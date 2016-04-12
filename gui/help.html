@@ -5,15 +5,24 @@
 <!--script src="https://wallet.google.com/inapp/lib/buy.js"></script-->
 <script src="help.js"></script>
 <link rel="stylesheet" href="help.css"></link>
+  <link rel="stylesheet" href="../js/deps/bootstrap-dist/css/bootstrap.min.css" type="text/css"/>
+
 </head>
 <body>
 
-<div>
-  <img style="width:198px; height:50px" src="/js-mini-logo-2x.png" alt="JSTorrent" />
-  <span style="position:relative; top:-16px; font-size:110%; font-weight:bold"> - Help</span>
-</div>
-<hr />
+<nav class="navbar navbar-default" role="navigation">
+  <div class="navbar-header">
 
+    <div>
+      <img style="width:198px; height:50px" src="/js-mini-logo-2x.png" alt="JSTorrent" />
+      <span style="position:relative; top:4px; font-size:110%; font-weight:bold; padding-left:8px"> Help</span>
+    </div>
+
+
+    <!--h4 style="padding:0.5em; padding-left:1em">JSTorrent Options</h4-->
+  </div>
+</nav>
+<div style="padding:8px">
 Thank you for using JSTorrent, a torrent client for Google Chrome.
 
 Having difficulty understanding how to use JSTorrent?
@@ -29,6 +38,27 @@ Having difficulty understanding how to use JSTorrent?
     </span>
   </li>
 
+    <li>
+    <span class="question">
+      How does this work?
+    </span>
+    <span class="answer">
+      <p>
+      Find a torrent file on the web, right click in your browser and
+      select "<em>Copy link address</em>", now come back to JSTorrent,
+      paste it into the address bar on top, and click
+      "<em>Add</em>". Then your torrent download will begin!</p>
+
+      <p>Or, simply download a ".torrent" file, and then either drag
+      it into the window or just click on it in the "Files" app.</p>
+
+      <p>To make it easier, there is a <a href="https://chrome.google.com/webstore/detail/jstorrent-contextmenu-ext/bnceafpojmnimbnhamaeedgomdcgnbjk?hl=en" target="_blank">chrome extension</a> that adds a right click menu that will do this automatically!</p>
+
+      <p>You can also visit <a href="http://jstorrent.com/magnet" target="_blank">JSTorrent.com</a> to setup JSTorrent as your magnet link handler.
+    </span>
+  </li>
+
+
 
   <li>
     <span class="question">
@@ -36,7 +66,7 @@ Having difficulty understanding how to use JSTorrent?
     </span>
     <span class="answer">
       <p>JSTorrent actually starts out with NO ACCESS to any files on your
-      computer. You have to actually tell it which folder(s) it has
+      computer. You have to tell it which folder(s) it has
       access to. This is a security feature! Most desktop software
       actually has full access to your computer. Cool, huh?</p>
     </span>
@@ -75,32 +105,12 @@ The file probably has the AC3 codec, which ChromeOS does not decode. Try to get 
     </span>
     <span class="answer">
 <p>
-      On ChromeOS, it is indeed possible. However, saving your files to Google Drive is not a very good idea. It means you will be downloading to your local computer, and then re-uploading to Google Drive, which means at least a 2x slowdown. Plus, it will sync multiple times as the file is being downloaded, so it actually results in about a 10x slowdown. In addition, there are errors in keeping the Google Drive download directory restored across restarts. So, in short, save to the internal or external disk.
+      On ChromeOS, it is indeed possible. However, saving your files to Google Drive is not a very good idea. It means you will be downloading to your local computer, and then re-uploading to Google Drive, which results in at least a 2x slowdown. Plus, it will sync multiple times as the file is being downloaded, so it results in about a 10x slowdown. In addition, there are errors in keeping the Google Drive download directory restored across restarts. So, in short, save to the internal or external disk.
 </p>
     </span>
   </li>
 
 
-
-  <li>
-    <span class="question">
-      How does this work?
-    </span>
-    <span class="answer">
-      <p>
-      Find a torrent file on the web, right click in your browser and
-      select "<em>Copy link address</em>", now come back to JSTorrent,
-      paste it into the address bar on top, and click
-      "<em>Add</em>". Then your torrent download will begin!</p>
-
-      <p>Or, simply download a ".torrent" file, and then either drag
-      it into the window or just click on it in the "Files" app.</p>
-
-      <p>To make it easier, there is a <a href="https://chrome.google.com/webstore/detail/jstorrent-contextmenu-ext/bnceafpojmnimbnhamaeedgomdcgnbjk?hl=en" target="_blank">chrome extension</a> that adds a right click menu that will do this automatically!</p>
-
-      <p>You can also visit <a href="http://jstorrent.com/magnet" target="_blank">JSTorrent.com</a> to setup JSTorrent as your magnet link handler.
-    </span>
-  </li>
 
   <li>
     <span class="question">
@@ -204,7 +214,7 @@ You can skip downloading files or choose to download only a single file by right
       I have a feature suggestion...
     </span>
     <span class="answer">
-      <p>      I would love to hear about it. Please share it on the <a target="_blank" href="http://google.com/+JSTorrent">Google+ JSTorrent community page</a>. Or you can share it on our <a href="http://jstorrent.uservoice.com" target="_blank">Suggestions Page</a>, or the <a target="_blank" href="http://reddit.com/r/JSTorrent">JSTorrent SubReddit</a>
+      <p>      We would love to hear about it. Please share it on the <a target="_blank" href="http://google.com/+JSTorrent">Google+ JSTorrent community page</a>. Or you can share it on our <a href="http://jstorrent.uservoice.com" target="_blank">Suggestions Page</a>, or the <a target="_blank" href="http://reddit.com/r/JSTorrent">JSTorrent SubReddit</a>
       </p>
     </span>
   </li>
@@ -223,12 +233,10 @@ You can skip downloading files or choose to download only a single file by right
       Why is it so slow?
     </span>
     <span class="answer">
-<p>      JSTorrent is not as mature as other programs. ChromeOS is a new
-      platform and while a bit slower than other platforms, it offers
-      enhanced security and ease of use. JSTorrent is unable to access
-      your private files and data, unlike other torrent clients. As
-      ChromeOS matures, and you continue to use and support JSTorrent,
-      the speeds will increase.</p>
+
+      <p>You can increase the download speed by adjusting the number of connections in the settings. This will use more system resources, but will give you faster speeds.
+
+      </p>
     </span>
   </li>
 
@@ -237,8 +245,7 @@ You can skip downloading files or choose to download only a single file by right
       I don't understand the options on the options page
     </span>
     <span class="answer">
-<p>      That's OK, You probably don't need to know what they all
-      mean. Try asking on the <a target="_blank" href="http://google.com/+JSTorrent">Google+ JSTorrent community page</a> or the <a target="_blank" href="http://reddit.com/r/JSTorrent">JSTorrent SubReddit</a></p>
+<p>      That's OK. The default settings are configured to work for most users. If you have specific questions, try asking on the <a target="_blank" href="http://google.com/+JSTorrent">Google+ JSTorrent community page</a> or the <a target="_blank" href="http://reddit.com/r/JSTorrent">JSTorrent SubReddit</a></p>
     </span>
   </li>
 
@@ -266,5 +273,6 @@ You can skip downloading files or choose to download only a single file by right
 
 
 </ul>
+</div>
 </body>
 </html>

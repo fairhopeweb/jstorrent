@@ -44,10 +44,14 @@ function onresizewindow() {
     var totalchrome = toph + tabh
     var width = $(window).width()
     var height = $(window).height() - titlebarh
+
+    var torrentHeight = Math.floor((height - totalchrome) * 0.4)
+    var detailHeight = height - torrentHeight - totalchrome
+    
     $("#torrentGrid")[0].style.width = width
     $("#detailGrid")[0].style.width = width
-    $("#torrentGrid")[0].style.height = Math.floor((height - totalchrome) * 0.4)
-    $("#detailGrid")[0].style.height = Math.ceil((height - totalchrome) * 0.6)
+    $("#torrentGrid")[0].style.height = torrentHeight
+    $("#detailGrid")[0].style.height = detailHeight
     if (app && app.UI && app.UI.detailtable) { app.UI.detailtable.resizeCanvas() }
     if (app && app.UI && app.UI.torrenttable) { app.UI.torrenttable.grid.resizeCanvas() }
 }
@@ -147,8 +151,9 @@ function click_detail_torrent(tab, evt) {
         UI.set_detail(tab, torrent)
     } else if (tab == 'messages') {
         UI.set_detail(tab, torrent)
-    } else {        
-        console.warn('no torrent selected')
+    } else {
+        UI.set_detail(tab, null)
+        //console.warn('no torrent selected')
     }
 }
 function bind_events() {

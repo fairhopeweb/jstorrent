@@ -255,6 +255,19 @@ UI.prototype = {
         }
 
         var domid = 'detailGrid'
+        if (! torrent && type != 'messages') {
+            // maybe render "this is broken"
+            if (app.client.torrents.items.length == 0) {
+                $('#' + domid).html('<div style="padding:1em"><p>'+
+                                    chrome.i18n.getMessage("noTorrentSelected")+ '</p><p> ' +
+                                    chrome.i18n.getMessage("showHelpStart")+
+                                    "</p></div>")
+            } else {
+                $('#' + domid).html('<p style="padding:1em">No torrent selected.</p>')
+            }
+            return
+
+        }
 
         if (type == 'diskio') {
             if (torrent.getStorage()) {
@@ -411,7 +424,8 @@ GeneralInfoView.prototype = {
         $('#'+this.opts.domid).show()
 
         if (! this.torrent) {
-            $('#'+this.opts.domid).html("<p>No Torrent selected</p>")
+                $('#'+this.opts.domid).html("<p>No Torrent selected</p>")
+
 /*        } else if (! this.torrent.infodict && this.torrent.get('metadata')) {
             $('#'+this.opts.domid).html("Loading...")
             //$('#'+this.opts.domid).fadeOut()

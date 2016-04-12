@@ -15,6 +15,16 @@
   background: linear-gradient(#999 0%, #999 8%, #dddeee 12%, #dddeee 90%, white 100%);
 }
 
+#torrentGrid {
+    padding-bottom:10px;
+}
+#detailGrid {
+    padding-bottom:5px
+}
+#detail-tabs {
+
+}
+
 #top-titlebar-close {
   float:right;
   -webkit-app-region: no-drag;
@@ -72,6 +82,10 @@ body {
 /*box-shadow: 10px 10px 5px #888888;*/
  }
 
+      .btn-toolbar { padding-left: 10px;
+                     padding-bottom: 4px;
+                   } 
+      
       .rowflashing {
           background-color: rgba(255,187,132,0.2);
       }

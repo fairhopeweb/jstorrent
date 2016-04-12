@@ -127,7 +127,7 @@ function Options(opts) {
             'visible':true,
             'help':'This option lets you stream files before they are complete by clicking \'Stream\' in the Files tab',
             'type': 'bool',
-            'name': 'Enable web server (port 8543)'
+            'name': 'Enable web server'
         },
         'debug_dht': {
             'visible': false,

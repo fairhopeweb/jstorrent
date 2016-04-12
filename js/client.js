@@ -366,7 +366,7 @@ Client.prototype = {
         // adds a torrent from a text input url
         app.analytics.sendEvent("Torrent", "Add", "URL")
         // parse url
-        console.log('client add by url',url)
+        console.clog(L.APP,'client add by url',url)
 
         // valid url?
         var torrent = new jstorrent.Torrent({url:url,

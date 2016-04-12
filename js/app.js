@@ -409,7 +409,7 @@ App.prototype = {
         var openable = file.openable()
 
         if (action == 'action-open') {
-            if (streamable) {
+            if (false && streamable) {
                 var bugurl = 'https://bugs.chromium.org/p/chromium/issues/detail?id=328803'
                 var url = jstorrent.constants.jstorrent_web_base + '/bug/#id=' + 'openFile&folder=' + encodeURIComponent(file.torrent.getStorage().entry.fullPath)
                     + '&name=' + encodeURIComponent(file.get('name'))
@@ -790,11 +790,24 @@ App.prototype = {
             this.notifyNoDownloadsLeft()
             return
         }
+
+        // if we have never added a torrent before (new install) do something special
+        if (this.client.torrents.items.length == 0) {
+            this.showHelpStart()
+        }
+        
         app.analytics.sendEvent("Toolbar", "Click", "Start")
         var torrents = this.UI.get_selected_torrents()
         for (var i=0; i<torrents.length; i++) {
             torrents[i].start()
         }
+    },
+    showHelpStart: function() {
+        app.analytics.sendEvent("Toolbar", "Click", "StartNoTorrents")
+        this.createNotification({message:"Find a Torrent File",
+                                 id:"help-start",
+                                 priority: 2,
+                                 details:chrome.i18n.getMessage("showHelpStart")})
     },
     toolbar_stop: function() {
         app.analytics.sendEvent("Toolbar", "Click", "Stop")
