@@ -1,5 +1,6 @@
 2016-04-11
-- update styles
+- back background permission optional permission
+- update styles, colors
 - tweak peer selection / disconnection logic
 - make request update check when loading options page
 - check for online status in some cases

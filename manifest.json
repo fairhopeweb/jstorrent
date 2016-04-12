@@ -47,10 +47,10 @@
         "https://*/",
         "identity",
         "browser",
-        "background",
         {"mediaGalleries":["read"]}
     ],
     "optional_permissions": [
+        "background"
     ],
     "oauth2": {
         "client_id": "432934632994-20rclui1m8od0p2g09vfbrdnk93gbraa.apps.googleusercontent.com",

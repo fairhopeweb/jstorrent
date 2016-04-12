@@ -61,7 +61,11 @@ WindowManager.prototype = {
                            height: 610,
                            minWidth: 780,
                            minHeight: 200 },
-            frame:{color:'#1687d0'},
+            frame:{type:'chrome',
+                   color:'#2191ed',
+                   activeColor:'#2191ed',
+                   inactiveColor: '#82c9ff'
+                  },
             resizable: true,
             id: MAINWIN
         }
