@@ -944,8 +944,8 @@ App.prototype = {
                                 );
     },
     options_window_opened: function(optionsWindow) {
-        optionsWindow.outerBounds.width = 360
-        optionsWindow.outerBounds.height = 480
+        optionsWindow.outerBounds.width = 365
+        optionsWindow.outerBounds.height = 485
         optionsWindow.show()
         this.stopPulsateOptions()
         app.analytics.sendAppView("OptionsView")
@@ -1056,6 +1056,11 @@ App.prototype = {
             }
         },this),2000)
         var disk = new jstorrent.Disk({entry:entry, parent: this.client.disks})
+        chrome.fileSystem.getDisplayPath(entry, function(displaypath) {
+            if (displaypath.startsWith('/special/drive')) {
+                this.createNotification({message:"Google Drive Warning",details:"Saving to Google Drive will slow down your download speed significantly."})
+            }
+        }.bind(this))
         this.client.disks.add(disk)
         this.client.disks.setAttribute('default',disk.get_key())
         this.client.disks.save()

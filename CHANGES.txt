@@ -1,4 +1,5 @@
 2016-04-11
+- show warning when selecting google drive folder as save path
 - back background permission optional permission
 - update styles, colors
 - tweak peer selection / disconnection logic
