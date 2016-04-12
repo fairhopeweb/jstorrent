@@ -232,7 +232,7 @@ Client.prototype = {
         console.log('onBatchTimeout',keys)
     },
     onTorrentAdd: function(torrent) {
-        console.log('Torrent added',torrent)
+        console.clog(L.TORRENT,'Torrent added',torrent)
         // cant do this, because metadata has not been saved yet... (when loading torrent from launch entry)
         if (torrent.autostart === false) { return }
 

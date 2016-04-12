@@ -361,7 +361,7 @@ function checkForUpdateMaybe() {
         var lastcheck = d['lastUpdateCheck']
         var willcheck = false
         if (lastcheck) {
-            if (Date.now() - lastcheck > 1000 * 60 * 60) {
+            if (Date.now() - lastcheck > 1000 * 60 * 20) {
                 willcheck = true
             }
         } else {

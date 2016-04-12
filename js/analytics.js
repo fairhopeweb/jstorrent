@@ -70,7 +70,7 @@ function Analytics(opts) {
         }
         this.tracker = new FakeTracker
     } else {
-        console.log("Setup analytics",this.service)
+        console.clog(L.EVENT,"Setup analytics",this.service)
         this.service = analytics.getService(service);
         this.service.getConfig().addCallback(_.bind(this.initAnalyticsConfig,this));
         this.tracker = this.service.getTracker(id);
@@ -87,6 +87,7 @@ Analytics.prototype = {
     sendEvent: function(a,b,c,d) {
         try {
             this.tracker.sendEvent(a,b,c,d)
+            console.clog(L.EVENT,a||'',b||'',c||'',d||'')
         } catch(e){console.warn('GA sendEvent fail')}
     },
     sendAppView: function(s) {

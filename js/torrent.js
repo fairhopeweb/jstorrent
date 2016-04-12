@@ -2,7 +2,7 @@ function Bridge(opts) {
     this.id = Bridge.ctr++
     this.start = opts.start
     this.startPiece = Math.floor( opts.start / opts.torrent.pieceLength )
-    console.log(this.id,'new bridge with startpiece',this.startPiece)
+    console.clog(L.STREAM,this.id,'new bridge with startpiece',this.startPiece)
     this.end = opts.end
     this.handler = opts.handler
     this.file = opts.file
@@ -13,12 +13,12 @@ function Bridge(opts) {
 Bridge.ctr = 0
 var Bridgeproto = {
     notneeded: function() {
-        console.log('bridge.notneeded')
+        console.clog(L.STREAM,'bridge.notneeded')
         this.handler.request.connection.stream.onclose = null
         delete this.torrent.bridges[this.id]
     },
     onhandlerclose: function() {
-        console.log('bridge.onhandlerclose')
+        console.clog(L.STREAM,'bridge.onhandlerclose')
         this.file.set('streaming',false)
         console.warn("REMOVE BRIDGE",this.id)
         // called when the handler connection is closed
@@ -26,7 +26,7 @@ var Bridgeproto = {
         delete this.torrent.bridges[this.id]
     },
     requestfinished: function() {
-        console.log('bridge.requestfinished')
+        console.clog(L.STREAM,'bridge.requestfinished')
         this.file.set('streaming',false)
         console.warn("REMOVE BRIDGE",this.id)
         this.handler.request.connection.stream.onclose = null // only if current?
@@ -156,7 +156,7 @@ function Torrent(opts) {
     }
 
     if (opts.entry || (opts.url && ! this.magnet_info)) {
-        console.log('inited torrent without hash known yet!')
+        console.clog(L.TORRENT,'inited torrent without hash known yet!')
     } else {
         console.assert(this.hashhexlower)
 	console.assert(this.hashbytes)
@@ -1421,7 +1421,7 @@ Torrent.prototype = {
                 // if we start a torrent and there are no trackers, then it has no chance...
                 this.addPublicTrackers()
             }
-            app.analytics.sendEvent("Torrent", "Tracker","Announce",this.trackers.length)
+            //app.analytics.sendEvent("Torrent", "Tracker","Announce",this.trackers.length)
             for (var i=0; i<this.trackers.length; i++) {
                 this.trackers.get_at(i).announce('started')
             }
@@ -1453,14 +1453,15 @@ Torrent.prototype = {
     },
     afterTrackerAnnounceResponses: function() {
         // bucketize this
-        var arr = jstorrent.constants.announceSizeBuckets
-        var bucket = arr[ bisect_left(arr, this.swarm.length) ]
-        var tstr = this.isPrivate() ? 'TrackerPrivate' : 'TrackerPublic'
-
-        if (bucket === undefined) {
-            app.analytics.sendEvent("Torrent", tstr,"SwarmSize(>"+arr[arr.length-1]+")")
-        } else {
-            app.analytics.sendEvent("Torrent", tstr,"SwarmSize(<="+bucket+")")
+        if (false) {
+            var arr = jstorrent.constants.announceSizeBuckets
+            var bucket = arr[ bisect_left(arr, this.swarm.length) ]
+            var tstr = this.isPrivate() ? 'TrackerPrivate' : 'TrackerPublic'
+            if (bucket === undefined) {
+                app.analytics.sendEvent("Torrent", tstr,"SwarmSize(>"+arr[arr.length-1]+")")
+            } else {
+                app.analytics.sendEvent("Torrent", tstr,"SwarmSize(<="+bucket+")")
+            }
         }
         // called after all tracker announce responses
         if (! this.isPrivate() && this.haveNoSeeders() && ! jstorrent.options.disable_trackers) {
@@ -1572,7 +1573,7 @@ Torrent.prototype = {
             this.set('state','stopped')
             // TODO -- clear the entry from storage? nah, just put it in a trash bin
             this.save( function() {
-                console.log('torrent.remove().timeout(200).save(...')
+                console.clog(L.TORRENT,'torrent.remove().timeout(200).save(...')
                 setTimeout( function() {
                     if (callback) { callback() }
                 }, 200)
@@ -1628,7 +1629,7 @@ Torrent.prototype = {
         //if (! this.isEndgame && this.get('complete') > 0.97) {  // this works really crappy for large torrents
         if (! this.isEndgame && this.infodict && this.getFirstUnrequestedPiece() === null && ! this.isComplete()) {
             this.isEndgame = true
-            console.log("ENDGAME ON")
+            console.clog(L.TORRENT,"ENDGAME ON")
         }
 
         if (this.thinkCtr % 40 == 0) {

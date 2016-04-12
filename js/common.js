@@ -2,13 +2,17 @@
 var L = {
     INIT: { name: 'INIT', color: '#cef', show: true },
     UI: { name: 'UI', color: '#ce0', show: true },
+    APP: { name: 'APP', color: 'darkgreen', show: true },
     TRACKER: { name: 'TRACKER', color: '#3e8', show: true },
     TORRENT: { name: 'TORRENT', color: '#0ae', show: true },
     DISKIO: { name: 'DISKIO', color: 'orange', show: true },
+    DISK: { name: 'DISK', color: 'darkblue', show: true },
+    STREAM: { name: 'STREAM', color: 'orange', show: true },
     POWER: { name: 'POWER', color: 'blue', show: true },
     PEER: { name: 'PEER', color: '#082', show: true },
     SYSTEM: { name: 'SYSTEM', color: '#236', show: true },
-    DEV: { name: 'DEV', color: '#622', show: DEVMODE }
+    DEV: { name: 'DEV', color: '#622', show: DEVMODE },
+    EVENT: { name: 'EVENT', color: '#ddd', show: DEVMODE }
 }
 
 if (! String.prototype.endsWith) {

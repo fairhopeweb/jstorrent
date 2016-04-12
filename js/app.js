@@ -56,10 +56,10 @@ function App(opts) {
     this.updateRemainingDownloadsDisplay()
 
     $('#url-btn').click( function(evt) {
-        console.log('url-btn click')
+        console.clog(L.UI,'url-btn click')
         var url = $('#url').val()
         if (! url) {
-            console.log('add button clicked with no URL entered, popup select file dialog')
+            console.clog(L.UI,'add button clicked with no URL entered, popup select file dialog')
             this.select_torrent()
             // open file chooser...
 
@@ -88,10 +88,10 @@ App.prototype = {
         console.clog(L.SYSTEM, 'idle state changed',info, ', online:',this.onLine())
     },
     webappOnStop: function(info) {
-        console.log('webapp stopped',info)
+        console.clog(L.APP,'webapp stopped',info)
     },
     webappOnStart: function(info) {
-        console.log('webapp started',info)
+        console.clog(L.APP,'webapp started',info)
     },
     close: function() {
         // app wants to close
@@ -166,7 +166,6 @@ App.prototype = {
     },
     onContextMenuNoItem: function(grid, info, evt) {
         window.contextMenuContextItem = info
-        console.log('oncontextmenunoitem',info)
         chrome.contextMenus.removeAll()
         if (info.collection.itemClass == jstorrent.Tracker) {
             var opts = {
@@ -179,7 +178,7 @@ App.prototype = {
         return true
     },
     onContextMenu: function(grid, item, evt) {
-        console.log('oncontextmenu',item)
+        console.clog(L.UI,'Context Menu with:',item)
         chrome.contextMenus.removeAll()
         if (item.itemClass == jstorrent.Torrent) {
             if (jstorrent.options.allow_report_torrent_bug) {
@@ -212,12 +211,11 @@ App.prototype = {
         return true
     },
     onContextMenuCreate: function(c) {
-        console.log('created contextmenu', c)
-
+        console.clog(L.UI,'created contextmenu', c)
     },
     onContextMenuClick: function(c) {
         chrome.contextMenus.removeAll(function(){})
-        console.log('contextmenuclick',c,c.menuItemId)
+        console.clog(L.UI,'contextmenu click',c,c.menuItemId)
         var item = window.contextMenuContextItem
         window.contextMenuContextItem = null
         if (c.menuItemId == 'reportTorrentIssue') {
@@ -247,7 +245,7 @@ App.prototype = {
                 file.torrent.setFilePriority(file.num, 0, file.getPriority())
             }
         } else if (c.menuItemId == 'add-custom-tracker') {
-            console.log('add custom tracker now...')
+            console.clog(L.UI,'add custom tracker now...')
             app.createWindowCustomTracker(item)
         }
     },
@@ -364,7 +362,7 @@ App.prototype = {
     },
     notifyNoDownloadsLeft: function() {
         function onclick(idx) {
-            console.log('notification clicked',idx)
+            console.clog(L.UI,'notification clicked',idx)
             if (idx == 1) {
                 this.open_upsell_page()
             } else {
@@ -386,11 +384,11 @@ App.prototype = {
         var file = collection.items[info.row]
         var column = UI.coldefs.files[info.cell]
         if (type == 'files') {
-            console.log('clicked in files',file, info.cell)
+            console.clog(L.UI,'clicked in files',file, info.cell)
             if (column.name == 'Action') {
                 // clicking on file action (like Play)
 
-                console.log('clicked on file action',file)
+                console.clog(L.UI,'clicked on file action',file)
 
                 var elt = evt.target
                 var ctr = 0
@@ -448,7 +446,7 @@ App.prototype = {
 
     },
     handle_dblclick: function(type, collection, evt, info) {
-        console.log('dblclick',type,collection, evt, info)
+        console.clog(L.UI,'dblclick',type,collection, evt, info)
         var item = collection.items[info.row]
         if (type == 'peers') {
             if (item) {
@@ -511,7 +509,7 @@ App.prototype = {
     },
     checkIsExtensionInstalled: function(callback) {
         chrome.runtime.sendMessage(jstorrent.constants.cws_jstorrent_extension, {command:'checkInstalled'}, function(response) {
-            console.log('checked if extension installed:',response,chrome.runtime.lastError)
+            console.clog(L.APP,'checked if extension installed:',response,chrome.runtime.lastError)
             var present = false
             if (response && response.installed) {
                 present = true
@@ -571,7 +569,7 @@ App.prototype = {
         }
     },
     onTorrentComplete: function(torrent) {
-        console.log('onTorrentComplete')
+        console.clog(L.TORRENT,'onTorrentComplete')
         var id = torrent.hashhexlower
 
         // no way to cause the progress notification to come to
@@ -718,7 +716,7 @@ App.prototype = {
         this.UI = UI
     },
     handleDrop: function(evt) {
-        console.log('handleDrop')
+        console.clog(L.UI,'handleDrop')
         //app.analytics.sendEvent("MainWindow", "Drop")
         // handle drop in file event
         var files = evt.dataTransfer.files, file, item
@@ -727,7 +725,7 @@ App.prototype = {
         if (files) {
             for (var i=0; i<files.length; i++) {
                 file = files[i]
-                console.log('drop found file (but use FileEntry instead)',file)
+                //console.log('drop found file (but use FileEntry instead)',file)
                 // check if ends in .torrent, etc...
             }
         }
@@ -844,7 +842,7 @@ App.prototype = {
                                  ],
                                  onClick: _.bind(this.openReviewPage,this),
                                  onButtonClick: _.bind(function(idx) {
-                                     console.log('button clicked',idx)
+                                     console.clog(L.UI,'button clicked',idx)
                                      if (idx == 0) {
                                          this.openReviewPage()
                                      } else {
@@ -868,7 +866,7 @@ App.prototype = {
     on_select_torrent: function(result) {
         var lasterr = chrome.runtime.lastError
         if (lasterr) {
-            console.log('user canceled selection?',lasterr,'result',result)
+            console.clog(L.UI,'user canceled selection?',lasterr,'result',result)
         }
         // XXX - sometimes not working???
         if (result) {
@@ -899,7 +897,7 @@ App.prototype = {
                                              {title:"Don't show this message again"}
                                                   ],
                                          onButtonClick: _.bind(function(idx) {
-                                             console.log('button clicked',idx)
+                                             console.clog(L.UI,'button clicked',idx)
                                              if (idx == 0) {
                                                  var url = jstorrent.constants.cws_jstorrent_extension_url
                                                  chrome.browser.openTab({url:url})
@@ -913,7 +911,7 @@ App.prototype = {
         },this))
     },
     external_storage_attached: function(storageInfo) {
-        console.log('external storage attached',storageInfo)
+        console.clog(L.DISK,'external storage attached',storageInfo)
         setTimeout( function() {
             for (var i=0; i<this.client.disks.items.length; i++) {
                 // check if new disk available
@@ -925,13 +923,13 @@ App.prototype = {
         }.bind(this), 2000 ); // XXX bug it takes like some time after storage event before disk avail?
     },
     external_storage_detached: function(storageInfo) {
-        console.log('external storage detached',storageInfo)
+        console.clog(L.DISK,'external storage detached',storageInfo)
         // TODO -- maybe check disks and invalidate
     },
     focus_or_open_options: function() {
         if (this.options_window) { 
             this.options_window.focus();
-            console.log('options already open'); return;
+            console.clog(L.UI,'options already open'); return;
         }
 
         this.options_window_opening = true
@@ -1014,7 +1012,7 @@ App.prototype = {
     focus_or_open_help: function() {
         if (this.help_window) { 
             this.help_window.focus();
-            console.log('help already open'); return;
+            console.clog(L.UI,'help already open'); return;
         }
 
         this.help_window_opening = true
