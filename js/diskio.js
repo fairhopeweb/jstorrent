@@ -1138,11 +1138,10 @@
                         app.fileMetadataCache.invalidate(entry)
                         job.set('state','onwriteerror')
                         job.set('error',evt.target.error.name)
-                        console.error('writer error',evt, evt.target.error.name)
+                        console.error('writer error',evt, evt.target.error)
                         oncallback({error:evt.target.error.name,evt:evt})
                     }
                     writer.seek(fileOffset)
-                    //console.log('writer.Write')
                     job.set('state','writing') // hangs in this state too!
                     maybeTimeout( function() {
                         writer.write(new Blob([buftowrite]))

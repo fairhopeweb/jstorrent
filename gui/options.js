@@ -4,8 +4,8 @@ var app = null
 
 function bind_events() {
     $('[data-toggle="tooltip"]').tooltip({'delay': { show: 50, hide: 200 }})
-    $('#button-choose-download').prop('disabled', false);
-    $('#button-setup-magnet').prop('disabled',false)
+    $//('#button-choose-download').prop('disabled',false)
+    $//('#button-setup-magnet').prop('disabled',false)
     $('#button-setup-magnet').click( function(evt) {
         chrome.browser.openTab({url:'http://jstorrent.com/magnet/'})
         evt.preventDefault()
@@ -43,13 +43,11 @@ function bind_events() {
 
 function OptionDisplay(opts) {
     this.opts = opts
-    this.el = null
 }
 OptionDisplay.prototype = {
-    getDOM: function() {
+    getHTML: function() {
         if (this.opts.meta.enabled === false) { return }
         if (this.opts.meta.visible === false) { return }
-
 
         var s = 'Unsupported Option Type: ' + this.opts.meta.type + ' - ' + this.opts.key
         if (this.opts.meta.type == 'bool') {
@@ -64,7 +62,7 @@ OptionDisplay.prototype = {
                 '</label>' + 
                 '</div>';
         } else if (this.opts.meta.type == 'int') {
-            s = '<div class="input"><label><input style="width:30px" type="text" value="'+this.opts.val+'"></input><span data-toggle="tooltip" title="'+this.opts.meta.help+'"> ' + this.getName() + '</span></label></div>'
+            s = '<div class="input"><label><input id="numconns" size="3" type="number" min="1" max="200" value="'+this.opts.val+'"></input><span data-toggle="tooltip" title="'+this.opts.meta.help+'"> ' + this.getName() + '</span></label></div>'
         } else {
             debugger
         }
@@ -78,15 +76,33 @@ OptionDisplay.prototype = {
             //s+='<div style="display:none" class="mytooltip">'+this.opts.meta.help+'</div>'
             // fix this later...
         }
-
-        var el = $(s)
-        this.el = el
-        $('input', el).change( _.bind(this.inputChanged, this) )
-
-        return el
+        return s
+        //var el = $(s)
+        //this.el = el
+        //return el
     },
     getName: function() {
         return this.opts.meta.name || this.opts.key
+    },
+    onInput: function(evt) {
+        var rawval = evt.target.value
+        var val = parseInt(rawval)
+        console.log('got new intval',val,'from',rawval)
+        if (! isNaN(val)) {
+            this.opts.options.set(this.opts.key, val)
+            var resetval = null
+            if (val < 1) {
+                resetval = 1
+            }
+            if (val > 200) {
+                resetval = 200
+            }
+            if (resetval) {
+                evt.target.value = resetval
+                this.opts.options.set(this.opts.key, resetval)
+            }
+        } else {
+        }
     },
     inputChanged: function(evt) {
         if (this.opts.meta.type == 'bool') {
@@ -116,6 +132,8 @@ OptionDisplay.prototype = {
 function OptionsView(opts) {
     this.opts = opts
     this.options = opts.options
+    this.elid = opts.elid
+    this.el = document.getElementById(this.elid)
 
     var keys = this.options.keys() // sort ?
 
@@ -132,17 +150,27 @@ function OptionsView(opts) {
                                    options: this.options,
                                    meta: this.options.app_options[keys[i]],
                                    val: this.options.get(keys[i]) } )
-        var curdom = cur.getDOM()
+        curdom = cur.getHTML()
         if (curdom) {
-            this.opts.el.append( curdom )
-            curdom.hover( function(h) {
+            var span = document.createElement('span')
+            span.innerHTML = curdom
+            this.el.appendChild(span)
+            var $el = $(span)
+            $el.hover( function(h) {
                 // fix this later
                 if (h.type == 'mouseenter') {
-                    $('.mytooltip',curdom).show()
+                    $('.mytooltip',$el).show()
                 } else {
-                    $('.mytooltip',curdom).hide()
+                    $('.mytooltip',$el).hide()
                 }
             })
+
+            //$('input', el).change( _.bind(this.inputChanged, this) )
+            if (cur.opts.meta.type == 'int') {
+                document.getElementById("numconns").addEventListener('input', cur.onInput.bind(cur) )
+            } else {
+                $('input[type=checkbox]', $el).change( cur.inputChanged.bind(cur) )
+            }
         }
     }
 }
@@ -150,7 +178,7 @@ function OptionsView(opts) {
 var pulsateInterval = null
 
 function onready() {
-    console.log("This is Options window")
+    console.log("This is Options window(onready)")
 
     if (chrome.runtime.id == jstorrent.constants.jstorrent_lite) {
         $("#full_version_upsell").show()
@@ -165,9 +193,12 @@ function onready() {
         )
     }
 
-    chrome.runtime.getBackgroundPage( function(bg) {
-        window.app = bg.app()
-        bg.checkForUpdateMaybe()
+    getBackgroundAndApp( function(bg, app, tries) {
+        window.app = app
+        console.log('got bg and app',bg, app, 'after',tries,'tries')
+        setTimeout( function() {
+            bg.checkForUpdateMaybe()
+        }, 2000 )
         window.options = app.options
 
         if (app.client.disks.items.length == 0) {
@@ -177,11 +208,37 @@ function onready() {
             updateLocation()
         }
 
-        window.optionsDisplay = new OptionsView({el: $('#auto_options'),
+        window.optionsDisplay = new OptionsView({elid: 'auto_options',
                                                  options: window.app.options,
                                                  app: window.app})
                                                  
         bind_events()
+    })
+}
+
+function getBackgroundAndApp(callback) {
+    var timeout
+    var tries = 0
+    chrome.runtime.getBackgroundPage(function(bg){
+
+        function dotry() {
+            tries++
+            var app
+            try {
+                app = bg.app()
+            } catch(e){
+                console.warn(e)
+            }
+
+            if (app) {
+                callback(bg, app, tries)
+            } else {
+                console.log('still no app ...',tries)
+                timeout = setTimeout(dotry, 100)
+            }
+        }
+
+        dotry()
     })
 }
 

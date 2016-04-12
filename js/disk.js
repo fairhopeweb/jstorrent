@@ -1,12 +1,12 @@
 function Disk(opts) {
     jstorrent.Item.apply(this, arguments)
     this.__name__ = arguments.callee.name
-    this.diskio = new jstorrent.DiskIO({disk:this})
+    this.diskio = null
     this.client = opts.client || opts.parent.parent
     this.app = opts.app
     this.concurrentBroken = 0
     this.think_interval = null
-
+    this.ready = false
     this.test_tick_timeout = 30000 // when to say disk is broken
     //this.test_tick_timeout = 2000 // when to say disk is broken
     this.test_tick = this.test_tick_timeout * 2
@@ -57,10 +57,19 @@ function Disk(opts) {
         this.onentry()
         this.key = null
     }
+    this.on('ready', this.onReady.bind(this))
 }
 Disk.__name__ = 'Disk'
 jstorrent.Disk = Disk
 Disk.prototype = {
+    isGoogleDrive: function() {
+        return this.get('entrydisplaypath').startsWith('/special/drive')
+    },
+    onReady: function() {
+        if (this.ready) { console.warn('was already ready!'); return }
+        this.ready = true
+        this.diskio = new jstorrent.DiskIO({disk:this})
+    },
     restoreFromKey: function() {
         console.clog(L.INIT,'restoring disk with id',this.key)
         chrome.fileSystem.restoreEntry(this.key, _.bind(function(entry) {
@@ -106,6 +115,9 @@ Disk.prototype = {
             chrome.fileSystem.getDisplayPath(this.entry, function(displaypath) {
                 //console.log(this.key,'got display path',displaypath)
                 this.set('entrydisplaypath',displaypath)
+                if (this.isGoogleDrive()) {
+                    app.warnGoogleDrive()
+                }
                 this.trigger('ready') // XXX only after ALL disks are ready
             }.bind(this))
         }

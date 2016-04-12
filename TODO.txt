@@ -1,3 +1,9 @@
+- filewriter already has file size/length
+- with diskio problems of any type, clear all cache and retry
+- problem with entryCache entry.filesystem name being chrome-extension_.... vs retainstr
+- mediagalleries api query encoding.
+- show warning for trying to play wmv/xvid etc
+- add button sometimes didnt select torrent / start torrent
 - seeding, not clearing pieces out of cache!
 - store graph of download progress for debugging (bytes/s, # conns, etc)
 - lazy load disks and dont show notification if torrent not active/loaded

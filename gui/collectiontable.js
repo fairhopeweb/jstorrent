@@ -171,7 +171,7 @@ SlickCollectionTable.prototype = {
         // show the error somewhere...
         console.clog(L.UI, 'show error message in me',this)
         // TODO -- make prettier
-        $("#"+this.domid).text(message)
+        $("#"+this.domid).html('<div style="margin: 1em">' + message + "</p>")
     },
     destroy: function() {
         // destroy

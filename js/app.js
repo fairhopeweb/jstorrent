@@ -955,8 +955,9 @@ App.prototype = {
             this.options_window.focus();
             console.clog(L.UI,'options already open'); return;
         }
-
+        
         this.options_window_opening = true
+        console.log('creating options window')
         chrome.app.window.create( 'gui/options.html', 
                                   { 
                                       id: "options",
@@ -966,6 +967,10 @@ App.prototype = {
                                 );
     },
     options_window_opened: function(optionsWindow) {
+        if (! optionsWindow) {
+            console.warn('options_window_opened',arguments)
+            return
+        }
         optionsWindow.outerBounds.width = 365
         optionsWindow.outerBounds.height = 485
         optionsWindow.show()
@@ -1078,14 +1083,12 @@ App.prototype = {
             }
         },this),2000)
         var disk = new jstorrent.Disk({entry:entry, parent: this.client.disks})
-        chrome.fileSystem.getDisplayPath(entry, function(displaypath) {
-            if (displaypath.startsWith('/special/drive')) {
-                this.createNotification({message:"Google Drive Warning",details:"Saving to Google Drive will slow down your download speed significantly."})
-            }
-        }.bind(this))
         this.client.disks.add(disk)
         this.client.disks.setAttribute('default',disk.get_key())
         this.client.disks.save()
+    },
+    warnGoogleDrive: function() {
+        this.createNotification({message:"Google Drive Warning",details:"Saving to Google Drive will slow down your download speed significantly. If it gives an error, try restarting JSTorrent."})
     },
     notify: function(msg,prio) {
         if (prio === undefined) { prio = 0 }

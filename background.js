@@ -7,11 +7,18 @@ var extensionId = "bnceafpojmnimbnhamaeedgomdcgnbjk"
 
 function app() {
     if (chrome.app && chrome.app.window.get) {
-        var mw = chrome.app.window.get(MAINWIN)
-        if (mw) {
-            if (mw.contentWindow) {
-                return mw.contentWindow.app
-            }
+        var mw
+        
+        if (true) {
+            var mw = chrome.app.window.get(MAINWIN)
+        } else {
+            var mw = chrome.app.window.getAll().filter( function(w) { return w.id == MAINWIN } )
+            if (mw.length > 0)
+                mw = mw[0]
+        }
+
+        if (mw && mw.contentWindow) {
+            return mw.contentWindow.app
         }
     }
 }
@@ -277,7 +284,7 @@ function fetchVersion() {
             var remoteversion = evt.target.response.trim()
             var curver = chrome.runtime.getManifest().version
             console.log('comparing server version',remoteversion,'to my version',curver)
-            if (compareVersion(remoteversion, curver) < 0) {
+            if (compareVersion(curver, remoteversion) < 0) {
                 doShowUpdateAvailableDEV()
             }
         }

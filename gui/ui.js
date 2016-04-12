@@ -15,13 +15,22 @@ function UI(opts) {
     }
     function fracToPercent(val) {
         if (val === undefined || val === null || val == 0 || isNaN(val)) { return '' }
-        if (val < .01) {
+        if (val == 1) {
+            return '100%'
+        } else if (val < .01) {
             return (val * 100).toFixed(1) + '%';
+        } else if (val > 0.99) {
+            var rounded = (val * 100).toFixed(1)
+            if (rounded == '100.0') {
+                return '99.9%'
+            } else {
+                return rounded + '%';
+            }
         } else {
             return (val * 100).toFixed(0) + '%';
         }
-
     }
+    window.fracToPercent = fracToPercent
     function priority(val) {
         return val == 0 ? 'Skip' : ''
     }

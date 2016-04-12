@@ -52,9 +52,21 @@ File.getStoragePath = function(torrent) {
 jstorrent.File = File
 File.prototype = {
     openBlobInTab: function() {
-        this.getPlayableSRCForVideo( function(url) { // blob url
-            var msg = {command:'openWindow',url:url}
-            chrome.runtime.sendMessage(msg)
+        // show warning for xvid, wmv, etc
+        this.getEntryFile2(function(file) {
+            chrome.mediaGalleries.getMetadata( file, {}, function(metadata) {
+                console.log('got file media metadata',metadata)
+                if (metadata.rawTags.length == 0) {
+                    // show error, this wont work
+                    app.createNotification({message:"Chrome can't play this",
+                                            details:"Try using VLC video player instead."})
+                } else {
+                    var url = (window.URL || window.webkitURL).createObjectURL(file)
+                    var msg = {command:'openWindow',url:url}
+                    chrome.runtime.sendMessage(msg)
+                    
+                }
+            })
         })
     },
     onComplete: function() {
@@ -269,6 +281,14 @@ File.prototype = {
     },
     getCachedMetadata: function() {
         return this.torrent.client.app.fileMetadataCache.getByFile(this)
+    },
+    getEntryFile2: function(callback) {
+        this.getEntry( function(entry) {
+            function onfile(file) {
+                callback(file)
+            }
+            entry.file( onfile, onfile )
+        }.bind(this), {create:false} )
     },
     getEntryFile: function(callback) {
         console.assert(false) // dont call this

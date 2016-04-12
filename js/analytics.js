@@ -85,12 +85,13 @@ jstorrent.Analytics = Analytics
 
 Analytics.prototype = {
     sendEvent: function(a,b,c,d) {
+        console.clog(L.EVENT,a||'',b||'',c||'',d||'')
         try {
             this.tracker.sendEvent(a,b,c,d)
-            console.clog(L.EVENT,a||'',b||'',c||'',d||'')
         } catch(e){console.warn('GA sendEvent fail')}
     },
     sendAppView: function(s) {
+        console.clog(L.EVENT,'AppView',s||'')
         try {
             this.tracker.sendAppView(s)
         } catch(e){console.warn("GA sendAppView fail")}

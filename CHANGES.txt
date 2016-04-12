@@ -1,4 +1,6 @@
 2016-04-12
+- add warning about saving to google drive
+- fix race condition in options page
 - fix bug with large torrents where it would stop downloading/hang
 - update notifications and styles
 

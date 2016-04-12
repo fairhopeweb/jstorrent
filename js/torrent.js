@@ -1429,6 +1429,9 @@ Torrent.prototype = {
         this.client.activeTorrents.add(this)
         this.client.set('activeTorrents', a)
         this.client.trigger('activeTorrentsChange', this)
+        if (this.getStorage().isGoogleDrive()) {
+            app.warnGoogleDrive()
+        }
 
         if (! jstorrent.options.disable_trackers) {
             if (this.trackers.length == 0) {
