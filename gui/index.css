@@ -40,9 +40,15 @@ body {
     padding:0;
 }
   .slick-cell.flashing {
-    border: 1px solid blue !important;
+    background: 1px solid rgba(130,201,255,1) !important;
   }
-
+  .slick-cell, .slick-headerrow-column {
+      border-right: 1px solid #efefef;
+      
+  }
+  .slick-cell.selected {
+      border-right:0px;
+  }
 
     .cell-selection {
       border-right-color: silver;

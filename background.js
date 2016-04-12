@@ -305,7 +305,7 @@ function doShowUpdateNotification(details, history) {
                                   iconUrl: "js-128.png",
                                   message:msg,
                                   buttons:[
-                                      {title:"Read more details", iconUrl:"cws_32.png"}
+                                      {title:"View changes", iconUrl:"cws_32.png"}
                                   ]
                                 }, function(id) {
                                     console.log('created notification with id',id,chrome.runtime.lastError)
