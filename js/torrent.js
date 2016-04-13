@@ -906,8 +906,6 @@ Torrent.prototype = {
             // warning - this needs to come before .newPiece is called
             this.pieceDoneUpdateFileComplete(result.piece)
             //console.log('persisted piece!')
-            this.unflushedPieceDataSize -= result.piece.size
-            //console.log('--decrement unflushedPieceDataSize', this.unflushedPieceDataSize)
             this.maybePersistPieceCache()
             this._attributes.bitfield[result.piece.num] = 1
 

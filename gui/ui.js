@@ -350,6 +350,12 @@ function MessagesView(opts) {
     $('#detailGrid')[0].style.overflow = 'auto'
     $('#detailGrid')[0].style.padding = '4px'
     $('#detailGrid')[0].style['-webkit-user-select'] = 'initial'
+
+    var obj = $('#detailGrid')[0]
+    obj.scrollTop = obj.scrollHeight + 1000
+
+
+    
 }
 MessagesView.prototype = {
     // XXX how many methods must we define?

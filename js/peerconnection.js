@@ -410,7 +410,6 @@ PeerConnection.prototype = {
         // XXX -- in endgame mode, make sure all the fastest effective players get everything
         if (app.options.get('debug_dht')) { return }
 
-        //console.log('couldRequestPieces')
         if (this.outstandingPieceChunkRequestCount > this._attributes.limit) {
             return
         }
@@ -420,8 +419,6 @@ PeerConnection.prototype = {
             return
         }
 
-        // called when everything is ready and we could request
-        // torrent pieces!
         var curPiece, payloads
         var allPayloads = []
 
@@ -765,8 +762,6 @@ PeerConnection.prototype = {
         // does not send size, inherent in message. could be smaller than chunk size though!
         var data = new Uint8Array(msg.payload, 5+8)
         console.assert(data.length <= jstorrent.protocol.chunkSize)
-        this.torrent.unflushedPieceDataSize += data.byteLength
-        //console.log('++increment unflushedPieceDataSize', this.torrent.unflushedPieceDataSize)
         if (! this.torrent.pieces.containsKey(pieceNum)) {
             // we didn't ask for this piece
             //console.log('handle piece, but piece not extant') // happens after a timeout and the piece finishes from another peer
