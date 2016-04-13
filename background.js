@@ -209,7 +209,7 @@ function onAppLaunchMessage(launchData) {
         }
     })
 }
-
+/*
 var BLOBS = []
 function getBlobURL(entry, callback) {
     function onfile(file) {
@@ -219,7 +219,7 @@ function getBlobURL(entry, callback) {
         callback(url)
     }
     entry.file(onfile,onfile)
-}
+}*/
 
 function setup_uninstall() {
     try {
@@ -537,21 +537,26 @@ chrome.runtime.onSuspend.addListener( function(evt) {
     }
     console.log('onSuspend',evt)
     // maybe try to stop it?
-    triggerKeepAwake()
+    // triggerKeepAwake()
 })
 
 function triggerKeepAwake() {
     // creating a notification also works?
     // HACK: make an XHR to cause onSuspendCanceled event
     console.log('triggerKeepAwake')
-    var xhr = new XMLHttpRequest
-    xhr.open("GET","http://127.0.0.1:" + (localOptions.port || 8000) + '/dummyUrlPing')
-    function onload(evt) {
-        console.log('triggerKeepAwake XHR loaded',evt)
+    if (false) {
+        var xhr = new XMLHttpRequest
+        xhr.open("GET","http://127.0.0.1:8000" + '/dummyUrlPing')
+        function onload(evt) {
+            console.log('triggerKeepAwake XHR loaded',evt)
+        }
+        xhr.onerror = onload
+        xhr.onload = onload
+        xhr.send()
+    } else {
+        // this keeps it alive consistently as long as you down close the notification (chromeos)
+        chrome.notifications.create('keepawake',{priority:2,title:"jstorrent",message:"keepawake!",iconUrl:'/js-128.png',type:'basic'})
     }
-    xhr.onerror = onload
-    xhr.onload = onload
-    xhr.send()
 }
 
 
