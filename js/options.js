@@ -14,7 +14,8 @@ function Options(opts) {
         'show_progress_notifications': {
             'default':true,
             'name':'Show notifications for download progress',
-            'type':'bool'
+            'type':'bool',
+            'visible':false,
         },
         'show_extension_notification': {
             'description': 'Whether to display a link to install the JSTorrent Helper Extension when adding a torrent',

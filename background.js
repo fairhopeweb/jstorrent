@@ -338,6 +338,7 @@ function doShowUpdateAvailableDEV(details) {
     chrome.notifications.onButtonClicked.addListener( onButtonClick )
 }
 function doShowUpdateAvailable(details) {
+    // even though priority 2 it's not showing up in foreground on CrOS (maybe because created in background page?)
     var msg = "An update is available and will be installed the next time you restart " + chrome.i18n.getMessage("extName")
     chrome.notifications.create('update-available',
                                 { title:chrome.i18n.getMessage("extName") + " Update",

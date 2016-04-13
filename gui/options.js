@@ -78,7 +78,6 @@ OptionDisplay.prototype = {
         }
         return s
         //var el = $(s)
-        //this.el = el
         //return el
     },
     getName: function() {
@@ -105,6 +104,7 @@ OptionDisplay.prototype = {
         }
     },
     inputChanged: function(evt) {
+        console.log('input changed',evt)
         if (this.opts.meta.type == 'bool') {
 
             if ($('input',this.el).is(':checked')) {
@@ -156,6 +156,7 @@ function OptionsView(opts) {
             span.innerHTML = curdom
             this.el.appendChild(span)
             var $el = $(span)
+            cur.el = $el
             $el.hover( function(h) {
                 // fix this later
                 if (h.type == 'mouseenter') {

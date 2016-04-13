@@ -1,9 +1,11 @@
 function Notification(opts) {
+    // TODO - check permissions
     jstorrent.Item.apply(this, arguments)
     this.id = opts.id
     this.onClick = opts.onClick || this.defaultOnClick
     this.onButtonClick = opts.onButtonClick || this.defaultOnButtonClick
     this.data = opts.data
+    this.app = opts.parent
     this.closeOnClick = true
     var message = opts.message || jstorrent.constants.manifest.name
     if (typeof message != 'string') {
@@ -74,10 +76,20 @@ Notification.prototype = {
         return this.id
     },
     show: function() {
-        if (jstorrent.options.disable_notifications) return
-        var notification = chrome.notifications.create(this.id, this.notificationOpts, function(id) {
-            //console.log('created notification with id',id)
-        })
+        if (jstorrent.options.disable_notifications) {
+            console.log("notifications were disabled in jstorrent.options",this.notificationOpts)
+            return
+        }
+        
+        chrome.notifications.getPermissionLevel( function(p) {
+            if (p == "granted") {
+                var notification = chrome.notifications.create(this.id, this.notificationOpts, function(id) {
+                    //console.log('created notification with id',id)
+                })
+            } else {
+                console.log('notification suppressed by user',p,this.notificationOpts)
+            }
+        }.bind(this))
     },
     handleClick: function() {
         this.onClick()
