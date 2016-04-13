@@ -1,3 +1,4 @@
+- secretly play mp4 in background to get range request, or parse mp4 box headers and dl that right away
 - search opensubtitles on file (right click?)
 - filewriter already has file size/length
 - with diskio problems of any type, clear all cache and retry
