@@ -16,6 +16,7 @@ function App(opts) {
     this.accept_languages = null
     this.options_window = null
     this.help_window = null
+    this._suspend_canceled = false
     this.options = new jstorrent.Options({app:this}); // race condition, options not yet fetched...
     //this.dht = new jstorrent.DHT // not ready yet!
     this.webapp = null
@@ -101,14 +102,15 @@ App.prototype = {
         if (this.webapp) {
             this.webapp.stop()
         }
-        this.unminimize()
         window.close()
     },
     runtimeMessage: function(msg) {
         console.warn('runtime message!',msg)
-        if (msg == 'onSuspend') {
+        if (msg == 'onSuspendCanceled') {
+            this._suspend_canceled = true
+        } else if (msg == 'onSuspend') {
             console.error("APP ABOUT TO CRASH!! EEE!!!")
-
+            debugger
 
             if (this.client.get('numActiveTorrents') == 0) {
                 app.analytics.sendEvent('runtime','onSuspend','noActiveTorrents')
@@ -116,14 +118,22 @@ App.prototype = {
                                         priority:2,
                                         details:"ChromeOS terminates an app that is not kept in the foreground. Since no torrents are active, the app will automatically close."})
                 setTimeout( function() {
+                    if (this._suspend_canceled) {
+                        console.log('suspend canceled, wont close window')
+                        return
+                    }
                     window.close()
-                }, 6000 )
+                }.bind(this), 6000 )
             } else {
                 app.analytics.sendEvent('runtime','onSuspend','ActiveTorrents',this.client.get('numActiveTorrents'))
                 app.createNotification({message:"JSTorrent Suspended",
                                         priority:2,
                                         details:"ChromeOS terminates an app that is not kept in the foreground. Sorry about the inconvenience. You can prevent the suspend event by keeping the JSTorrent window visible on your screen. The app will now restart so your downloads can continue."})
                 setTimeout( function() {
+                    if (this._suspend_canceled) {
+                        console.log('suspend canceled, wont close window')
+                        return
+                    }
                     chrome.runtime.reload() // reloading app
                 }, 6000 )
             }
@@ -132,7 +142,6 @@ App.prototype = {
             if (this.webapp) {
                 this.webapp.stop()
             }
-            this.unminimize()
         }
     },
     maybeStartWebApp: function() {

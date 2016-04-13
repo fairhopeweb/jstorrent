@@ -160,7 +160,7 @@ File.prototype = {
     },
     streamable: function() {
         var ext = this.name.toLowerCase()
-        if (WSC.MIMECATEGORIES) {
+        if (window.WSC && WSC.MIMECATEGORIES) {
             for (var i=0; i<WSC.MIMECATEGORIES.video.length; i++) {
                 if (ext.endsWith('.' + WSC.MIMECATEGORIES.video[i]) ) {
                     return {type:'video'}
