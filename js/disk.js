@@ -179,6 +179,10 @@ Disk.prototype = {
     },
     ensureFilesMetadata: function(files,callback) {
         // ensures a list of files have metadata in cache
+        if (! this.ready) {
+            callback({error:'disk missing'})
+            return
+        }
         var need = []
         var state = {responses:0}
         var onresponse = function(result) {

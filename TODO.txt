@@ -1,3 +1,4 @@
+- show "loading..." for files pane (can take a while to initialize file objects)
 - check external storage detaching handling workin ... 
 - diskio so messy. checkShouldBail? what a mess. redo everything
 - secretly play mp4 in background to get range request, or parse mp4 box headers and dl that right away

@@ -189,6 +189,7 @@ File.prototype = {
     },
     readBytes: function(start, size, callback, opts) {
         var storage = this.torrent.getStorage()
+        if (! storage.ready) { callback({error:'disk missing'}); return }
         console.assert(size > 0)
         storage.diskio.getContentRange({file:this,
                                         fileNum:this.num,
@@ -370,9 +371,14 @@ File.prototype = {
     getEntry: function(callback, opts) {
         // XXX this is not calling callback in some cases!
         // gets file entry, recursively creating directories as needed...
-        var filesystem = this.torrent.getStorage().entry
-        var path = this.path.slice()
-        recursiveGetEntry(filesystem, path, callback, opts)
+        var storage = this.torrent.getStorage()
+        if (storage.ready) { 
+            var filesystem = storage.entry
+            var path = this.path.slice()
+            recursiveGetEntry(filesystem, path, callback, opts)
+        } else {
+            callback({error:'disk missing'})
+        }
     }
 }
 for (var method in jstorrent.Item.prototype) {

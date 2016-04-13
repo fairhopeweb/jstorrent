@@ -512,15 +512,20 @@ debugger
     },
     getData: function(offset, size, callback) {
         //var filesSpan = this.getSpanningFilesInfo(offset, size)
-        this.torrent.getStorage().diskio.readPiece({piece:this, 
-                                                    pieceOffset:offset,
-                                                    size:size}, function(result) {
-            if (result && result.error) {
-                callback(result)
-            } else {
-                callback(result.data)
-            }
-        })
+        var storage = this.torrent.getStorage()
+        if (storage && storage.ready) {
+            storage.diskio.readPiece({piece:this, 
+                                      pieceOffset:offset,
+                                      size:size}, function(result) {
+                                          if (result && result.error) {
+                                              callback(result)
+                                          } else {
+                                              callback(result.data)
+                                          }
+                                      })
+        } else {
+            callback({error:"disk missing"})
+        }
     },
     getEntry: function(callback) {
         if (! this.torrent.multifile) {
@@ -529,10 +534,14 @@ debugger
             callback({error:true})
             return
         }
-
-        var filesystem = this.torrent.getStorage().entry
-        var path = [jstorrent.File.getStoragePath(this.torrent)].concat( this.getSecretStoragePlace() )
-        recursiveGetEntry(filesystem, path, callback)
+        var storage = this.torrent.getStorage()
+        if (storage && storage.ready) {
+            var filesystem = storage.entry
+            var path = [jstorrent.File.getStoragePath(this.torrent)].concat( this.getSecretStoragePlace() )
+            recursiveGetEntry(filesystem, path, callback)
+        } else {
+            callback({error:'disk missing'})
+        }
     },
     getSecretStoragePlace: function() {
 debugger

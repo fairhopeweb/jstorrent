@@ -7,6 +7,7 @@ function App(opts) {
     this.id = 'app01' // device ID...
     if (chrome.system && chrome.system.storage) {
         // these dont work on mac. neet to poll chrome.system.storage.getInfo instead.
+        chrome.system.storage.getInfo( this.external_storage_info.bind(this) )
         chrome.system.storage.onAttached.addListener( _.bind(this.external_storage_attached, this) )
         chrome.system.storage.onDetached.addListener( _.bind(this.external_storage_detached, this) )
     }
@@ -952,6 +953,9 @@ App.prototype = {
 
             }
         },this))
+    },
+    external_storage_info: function(info) {
+        console.clog(L.DISK,'got external storage info',info)
     },
     external_storage_attached: function(storageInfo) {
         console.clog(L.DISK,'external storage attached',storageInfo)

@@ -699,7 +699,7 @@ Torrent.prototype = {
         // xxx this is failing when disk is not attached!
         var _this = this
         if (this.get('metadata')) {
-            if (this.infodict && false) { // force load again for fun
+            if (this.infodict && false) { // force load again for fun (helps checking bad torrent storage)
                 callback({torrent:this})
             } else {
                 var storage = this.getStorage()
@@ -726,7 +726,7 @@ Torrent.prototype = {
         // save metadata (i.e. .torrent file) to disk
         var storage = this.getStorage()
         var _this = this
-        if (! storage) {
+        if (! storage || ! storage.ready) {
             this.error('disk missing')
             if (callback) {
                 callback({error:'disk missing'})
@@ -1074,7 +1074,7 @@ Torrent.prototype = {
         //console.log('persistPiece (now)',piece.num)
         // saves this piece to disk, and update our bitfield.
         var storage = this.getStorage()
-        if (storage) {
+        if (storage && storage.ready) {
             storage.diskio.writePiece({piece:piece}, _.bind(this.persistPieceResult,this))
         } else {
             this.error('Storage missing')
@@ -1090,7 +1090,7 @@ Torrent.prototype = {
         }
 
         var storage = this.client.disks.get(disk)
-        if (storage) { 
+        if (storage && storage.ready) { // only save disk if it's ready
             if (! this.get('disk')) {
                 this.set('disk',storage.get_key())
                 this.save()
@@ -1345,7 +1345,8 @@ Torrent.prototype = {
 
         this.starting = true
         this.think_interval = setInterval( _.bind(this.newStateThink, this), this.thinkIntervalTime )
-        if (! this.getStorage()) {
+        var storage = this.getStorage()
+        if (! storage || ! storage.ready ) {
             this.error('Disk Missing')
             return
         }
@@ -1370,6 +1371,12 @@ Torrent.prototype = {
         if (this.autostart === false) {
             return
         }
+        if (! this.getStorage().ready) {
+            // redundant. checking on .start()
+            this.error("Storage not attached. Change your Default Directory in the options.")
+            return
+        }
+        
         
         this.set('state','started')
         this.trigger('started')
@@ -1651,7 +1658,8 @@ Torrent.prototype = {
 
         if (this.thinkCtr % 4800 == 0) {
             // every 5 minute
-            this.getStorage().diskio.checkStalled()
+            var storage = this.getStorage()
+            if (storage && storage.ready) { storage.diskio.checkStalled() }
         }
         
         if (this.thinkCtr % 80 == 0) {
