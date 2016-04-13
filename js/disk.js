@@ -4,6 +4,7 @@ function Disk(opts) {
     this.diskio = null
     this.client = opts.client || opts.parent.parent
     this.app = opts.app
+    this.brandnew = opts.brandnew
     this.concurrentBroken = 0
     this.think_interval = null
     this.ready = false
@@ -115,7 +116,7 @@ Disk.prototype = {
             chrome.fileSystem.getDisplayPath(this.entry, function(displaypath) {
                 //console.log(this.key,'got display path',displaypath)
                 this.set('entrydisplaypath',displaypath)
-                if (this.isGoogleDrive()) {
+                if (this.brandnew && this.isGoogleDrive()) {
                     app.warnGoogleDrive()
                 }
                 this.trigger('ready') // XXX only after ALL disks are ready

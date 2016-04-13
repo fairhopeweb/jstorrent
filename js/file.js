@@ -55,16 +55,21 @@ File.prototype = {
         // show warning for xvid, wmv, etc
         this.getEntryFile2(function(file) {
             chrome.mediaGalleries.getMetadata( file, {}, function(metadata) {
+                // we lose window.onerror handling here
+                
                 console.log('got file media metadata',metadata)
                 if (metadata.rawTags.length == 0) {
                     // show error, this wont work
                     app.createNotification({message:"Chrome can't play this",
                                             details:"Try using VLC video player instead."})
                 } else {
+                    app.createNotification({message:chrome.i18n.getMessage("PlayFileWarningTitle"),
+                                            id:'play-file-warning',
+                                            details:chrome.i18n.getMessage("PlayFileWarningDetails")})
+
                     var url = (window.URL || window.webkitURL).createObjectURL(file)
                     var msg = {command:'openWindow',url:url}
                     chrome.runtime.sendMessage(msg)
-                    
                 }
             })
         })

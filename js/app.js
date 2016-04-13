@@ -418,9 +418,6 @@ App.prototype = {
                     var msg = {command:'openWindow',url:url}
                     chrome.runtime.sendMessage(msg)
                 } else {
-                    this.createNotification({message:chrome.i18n.getMessage("PlayFileWarningTitle"),
-                                             id:'play-file-warning',
-                                             details:chrome.i18n.getMessage("PlayFileWarningDetails")})
                     file.openBlobInTab()
                 }
             } else {
@@ -1089,7 +1086,7 @@ App.prototype = {
                 chrome.notifications.clear("notifyselected",function(){})
             }
         },this),2000)
-        var disk = new jstorrent.Disk({entry:entry, parent: this.client.disks})
+        var disk = new jstorrent.Disk({entry:entry, parent: this.client.disks, brandnew: true})
         this.client.disks.add(disk)
         this.client.disks.setAttribute('default',disk.get_key())
         this.client.disks.save()
