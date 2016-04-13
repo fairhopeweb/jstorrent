@@ -1143,8 +1143,6 @@
 
                 entry.createWriter( function(writer) {
                     job.set('state','gotwriter')
-                    //return XXX removeme
-                    return
                     if (this.checkShouldBail(job)) { writer.abort(); return }
                     writer.onwrite = function(evt) {
                         app.fileMetadataCache.updateSize(entry, fileOffset + buftowrite.byteLength)
