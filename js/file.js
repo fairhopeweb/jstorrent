@@ -60,11 +60,15 @@ File.prototype = {
                                         details:this.get('name')})
                 return
             }
+            if (! this.streamable()) {
+                var url = (window.URL || window.webkitURL).createObjectURL(file)
+                var msg = {command:'openWindow',url:url}
+                chrome.runtime.sendMessage(msg)
+            }
             chrome.mediaGalleries.getMetadata( file, {}, function(metadata) {
                 // we lose window.onerror handling here
-                
                 console.log('got file media metadata',metadata)
-                if (metadata.rawTags.length == 0) {
+                if (metadata.mimeType.startsWith('video') && metadata.rawTags.length == 0) {
                     // show error, this wont work
                     app.createNotification({message:"Chrome can't play this \"" + this.get_extension() + "\" file.",
                                             details:"Look instead for mp4 files with x264 encoding"})

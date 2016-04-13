@@ -407,10 +407,10 @@ App.prototype = {
         var streamable = file.streamable()
         var complete = file.isComplete()
         var openable = file.openable()
+        this.analytics.sendEvent('FileAction',action)
 
         if (action == 'action-open') {
             if (streamable) {
-
                 if (false) {
                     var bugurl = 'https://bugs.chromium.org/p/chromium/issues/detail?id=328803'
                     var url = jstorrent.constants.jstorrent_web_base + '/bug/#id=' + 'openFile&folder=' + encodeURIComponent(file.torrent.getStorage().entry.fullPath)
