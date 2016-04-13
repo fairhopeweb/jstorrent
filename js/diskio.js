@@ -285,7 +285,7 @@
         this.set('pieceOffset', opts.pieceOffset)
         this.set('pieceNum', opts.piece.num)
         this.set('torrent',opts.piece.torrent.hashhexlower)
-        this.set('jobId', DiskIO.jobctr++)
+        this.set('jobId', (DiskIO.jobctr++)%10000000)
         this._subjobs = []
         this.filesSpanInfo = opts.piece.getSpanningFilesInfo(opts.pieceOffset, opts.size)
     }
@@ -339,9 +339,9 @@
         this.set('state','idle')
         this.set('pieceNum', piece.num)
         this.set('torrent',piece.torrent.hashhexlower)
-        this.set('jobId', DiskIO.jobctr++)
+        this.set('jobId', (DiskIO.jobctr++)%10000000)
         this.filesSpanInfo = piece.getSpanningFilesInfo()
-
+        this._stallCheckId = null
         this._subjobs = []
 
         this.filesMetadataLength = 0
@@ -398,6 +398,26 @@
     //DiskIO.getentrytimeout = 5000
 
     var DiskIOProto = {
+        checkStalled: function() {
+            // check if the current job has been there for the past few cycles...
+            if (this.items.length > 0) {
+                var job = this.get_at(0)
+                var newId = job.get('jobId')
+                if (this._stallCheckId) {
+                    if (this._stallCheckId == newId) {
+                        console.clog(L.DISKIO,'job looks stalled somehow. try to kill it')
+                        job.onfinished({error:'stalled?', job:job})
+                        this.shift()
+                        this.queueActive = false
+                        this.doQueue()
+                    }
+                } else {
+                    this._stallCheckId = newId
+                }
+            } else {
+                this._stallCheckId = null
+            }
+        },
         doQueue: function() {
             if (this.queueActive || this.items.length == 0) {
                 return
@@ -879,7 +899,7 @@
             }
             var shouldBail = this.checkTorrentStopped(job) || this.checkJobTimeout(job)
             //var shouldBail = this.checkJobTimeout(job)
-            if (shouldBail) { console.warn('shouldbail!') }
+            if (shouldBail) { console.warn('shouldbail!') } // what about our callback?
             return shouldBail
         },
         checkJobTimeout: function(job) {
@@ -1243,7 +1263,6 @@
             this.doQueue()
         },
         cancelTorrentJobs: function(torrent, callback) {
-
             console.warn('cancelTorrentJobs')
             // cancel all active jobs for a give torrent
             var toremove = []
@@ -1257,6 +1276,7 @@
                     }
                 }
             }
+
             var cur
             while (cur = toremove.pop()) {
                 this.items.splice(this.items.indexOf(cur),1)

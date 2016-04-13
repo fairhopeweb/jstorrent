@@ -1,3 +1,4 @@
+// add this file to your "blackbox" e.g. blackboxing, making devtools not show logs as coming from here
 // TODO in production mode, dont log anything unless it's clog
 /*
 console.log = function() {

@@ -886,7 +886,7 @@ Torrent.prototype = {
         var imax = this.pieces.items.length
         for (var i=0; i<imax; i++) {
             piece = this.pieces.items[i]
-            if (piece.data) { sz += piece.byteLength }
+            if (piece.data) { sz += piece.data.byteLength }
         }
         this.unflushedPieceDataSize = sz
     },
@@ -1601,7 +1601,7 @@ Torrent.prototype = {
         this.tickTime = Date.now()
         
         // misnomer, this is actually a regular interval triggered function
-        this.thinkCtr = (this.thinkCtr + 1) % 2048 // overflow condition?
+        this.thinkCtr = (this.thinkCtr + 1) % 40320
 
         /* 
 
@@ -1648,6 +1648,12 @@ Torrent.prototype = {
             console.clog(L.TORRENT,"ENDGAME ON")
         }
 
+
+        if (this.thinkCtr % 4800 == 0) {
+            // every 5 minute
+            this.disk.diskio.checkStalled()
+        }
+        
         if (this.thinkCtr % 80 == 0) {
             // every 20 seconds
             this.updateUnflushedPieceSize()
