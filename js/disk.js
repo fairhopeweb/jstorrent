@@ -64,7 +64,7 @@ Disk.__name__ = 'Disk'
 jstorrent.Disk = Disk
 Disk.prototype = {
     isGoogleDrive: function() {
-        return this.get('entrydisplaypath').startsWith('/special/drive')
+        return this.ready && this.get('entrydisplaypath').startsWith('/special/drive')
     },
     onReady: function() {
         if (this.ready) { console.warn('was already ready!'); return }
@@ -74,10 +74,10 @@ Disk.prototype = {
     restoreFromKey: function() {
         console.clog(L.INIT,'restoring disk with id',this.key)
         chrome.fileSystem.restoreEntry(this.key, _.bind(function(entry) {
-            console.clog(L.INIT,'restored',this.key)
+            var lasterror = chrome.runtime.lastError
             // remove this.
-            if (!entry) {
-                console.error('unable to restore entry - (was the folder removed?)', this._opts.id)
+            if (!entry || lasterror) {
+                console.warn('unable to restore entry - (was the folder removed?)', this._opts.id, 'lasterr',lasterror,'entry',entry)
                 //app.notify("Unable to load disk: "+this.key+". Was it removed?")
                 var parts = this._opts.id.split(':')
                 parts.shift()
@@ -166,7 +166,9 @@ Disk.prototype = {
                               )
     },
     cancelTorrentJobs: function(torrent) {
-        this.diskio.cancelTorrentJobs(torrent)
+        if (this.diskio) {
+            this.diskio.cancelTorrentJobs(torrent)
+        }
     },
     get_key: function() {
         if (this.entry && this.entry.name == 'crxfs') { this.key == 'crxfs'; return this.key }

@@ -703,7 +703,7 @@ Torrent.prototype = {
                 callback({torrent:this})
             } else {
                 var storage = this.getStorage()
-                if (storage) {
+                if (storage && storage.ready) {
                     storage.diskio.getWholeContents( {torrent:this.hashhexlower, path:[this.getMetadataFilename()]}, function(result) {
                         if (result.error) {
                             console.warn(result)

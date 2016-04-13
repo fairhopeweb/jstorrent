@@ -231,8 +231,10 @@ Client.prototype = {
         // TODO -- implement
         console.log('onBatchTimeout',keys)
     },
-    onTorrentAdd: function(torrent, source) {
-        console.clog(L.TORRENT,'Torrent added',torrent)
+    onTorrentAdd: function(torrent) {
+        if (torrent._opts.initializedBy != 'collection.fetch') {
+            console.clog(L.TORRENT, 'Torrent added',torrent)
+        }
         // cant do this, because metadata has not been saved yet... (when loading torrent from launch entry)
         if (torrent.autostart === false) { return }
 

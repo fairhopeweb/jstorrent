@@ -288,13 +288,14 @@ UI.prototype = {
         }
 
         if (type == 'diskio') {
-            if (torrent.getStorage()) {
+            var storage = torrent.getStorage()
+            if (storage && storage.ready) {
                 this.detailtable = new SlickCollectionTable({collection: torrent.getStorage().diskio,
                                                              domid: domid,
                                                              columns: this.coldefs[type]
                                                             });
             } else {
-                // no storage...
+                $('#' + domid).html('<p style="padding:1em">Disk not attached.</p>')
             }
         } else if (type == 'messages') {
             // logger pane
@@ -325,7 +326,7 @@ UI.prototype = {
                     if (torrent.get('metadata') && ! torrent.infodict) {
                         torrent.loadMetadata(function(result){
                             console.clog(L.UI, 'initailized torrent metadata',result)
-                            if (result.error) {
+                            if (result.error && this.detailtable) {
                                 this.detailtable.showError(result.error)
                             }
                         }.bind(this)) // this should initialize the files
@@ -363,6 +364,7 @@ function MessagesView(opts) {
 }
 MessagesView.prototype = {
     // XXX how many methods must we define?
+    showError: function(){},
     resizeCanvas: function(){},
     destroy: function() {
         this.elt.html('')
