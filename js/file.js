@@ -64,6 +64,7 @@ File.prototype = {
                 var url = (window.URL || window.webkitURL).createObjectURL(file)
                 var msg = {command:'openWindow',url:url}
                 chrome.runtime.sendMessage(msg)
+                return
             }
             chrome.mediaGalleries.getMetadata( file, {}, function(metadata) {
                 // we lose window.onerror handling here
