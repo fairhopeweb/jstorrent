@@ -536,7 +536,25 @@ chrome.runtime.onSuspend.addListener( function(evt) {
         a.runtimeMessage('onSuspend')
     }
     console.log('onSuspend',evt)
+    // maybe try to stop it?
+    triggerKeepAwake()
 })
+
+function triggerKeepAwake() {
+    // creating a notification also works?
+    // HACK: make an XHR to cause onSuspendCanceled event
+    console.log('triggerKeepAwake')
+    var xhr = new XMLHttpRequest
+    xhr.open("GET","http://127.0.0.1:" + (localOptions.port || 8000) + '/dummyUrlPing')
+    function onload(evt) {
+        console.log('triggerKeepAwake XHR loaded',evt)
+    }
+    xhr.onerror = onload
+    xhr.onload = onload
+    xhr.send()
+}
+
+
 chrome.runtime.onSuspendCanceled.addListener( function(evt) {
     var a = app()
     if (a) {

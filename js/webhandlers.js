@@ -1,5 +1,5 @@
 (function() {
-    if (! (WSC.BaseHandler && WSC.WebApplication)) { // if web-server-chrome available
+    if (! (window.WSC && WSC.BaseHandler && WSC.WebApplication)) { // if web-server-chrome available
         return
     }
     function PackageHandler() {
