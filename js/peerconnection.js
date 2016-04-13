@@ -898,14 +898,19 @@ PeerConnection.prototype = {
             var slicelen = Math.min( d.total_size - slicea,
                                      jstorrent.protocol.chunkSize )
             // TODO -- assert pieceRequested/slicea in bounds
-            var slicebuf = new Uint8Array(this.torrent.infodict_buffer, slicea, slicelen)
-            var newbuf = new Uint8Array(slicelen)
-            newbuf.set( slicebuf )
-            //console.log('sending metadata payload', code, d)
-            this.sendMessage("UTORRENT_MSG",
-                             [new Uint8Array([code]).buffer,
-                              new Uint8Array(bencode(d)).buffer,
-                              newbuf.buffer])
+            if (slicea > 0 && slicea < this.torrent.infodict_buffer.byteLength) {
+                if (slicelen < 0) {
+                    return // weird, some peers sending bad infodict message requests
+                }
+                var slicebuf = new Uint8Array(this.torrent.infodict_buffer, slicea, slicelen)
+                var newbuf = new Uint8Array(slicelen)
+                newbuf.set( slicebuf )
+                //console.log('sending metadata payload', code, d)
+                this.sendMessage("UTORRENT_MSG",
+                                 [new Uint8Array([code]).buffer,
+                                  new Uint8Array(bencode(d)).buffer,
+                                  newbuf.buffer])
+            }
         } else {
             //debugger
         }
