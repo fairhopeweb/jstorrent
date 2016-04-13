@@ -136,9 +136,12 @@ App.prototype = {
         }
     },
     maybeStartWebApp: function() {
-        if (this.opts && this.opts.tab) {
+        if (! window.WSC) {
+            console.warn('no js/web-server-chrome folder?')
+            // require a specific WSC version?
+        } else if (this.opts && this.opts.tab) {
             // dont start server for browser tab instance
-        } else if (WSC.WebApplication && this.options.get('web_server_enable')) { // temporarily disabled, too buggy
+        } else if (WSC.WebApplication && this.options.get('web_server_enable')) {
             // :-( options not yet loaded
             // let this work without submodule
             var wopts = {}
