@@ -28,6 +28,9 @@ function Notification(opts) {
         message: opts.details,
         iconUrl: "/js-128.png"
     }
+    if (opts.contextMessage) {
+        this.notificationOpts.contextMessage = opts.contextMessage
+    }
 
     if (opts.buttons) {
         this.notificationOpts.buttons = opts.buttons

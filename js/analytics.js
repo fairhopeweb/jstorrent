@@ -66,7 +66,8 @@ function Analytics(opts) {
         function FakeTracker() {}
         FakeTracker.prototype = {
             sendAppView: function(){},
-            sendEvent: function(){}
+            sendEvent: function(){},
+            send: function(){}
         }
         this.tracker = new FakeTracker
     } else {

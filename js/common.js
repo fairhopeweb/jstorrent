@@ -14,6 +14,40 @@ var L = {
     DEV: { name: 'DEV', color: '#622', show: DEVMODE },
     EVENT: { name: 'EVENT', color: '#ddd', show: DEVMODE }
 }
+function reportAverageDownloadSpeed(secs, bytes) {
+    var bytessec = bytes/secs
+    console.clog(L.TORRENT, 'a new, uninterrupted torrent finished in',formatValETA(secs), 'avg rate', byteUnitsSec(bytessec))
+    var i = 0
+    var arr = [0,1,5,10,25,50,75,100,150,200,300,400,600,800,1000,1200,1500,1800,2200,2500,3000,3500,4000,5000,6000,8000,10000]
+    kbs = bytessec / 1024
+    var ratebucket = arr[ bisect_left(arr, kbs) ]
+    //console.log('got rate bucket',ratebucket)
+    if (ratebucket === undefined) {
+        ratebucket = arr[arr.length-1]
+    }
+    var mbytes = bytes / 1024 / 1024
+    var szbucket = arr[ bisect_left(arr, mbytes) ]
+    //console.log('got size bucket',szbucket)
+    if (szbucket === undefined) {
+        szbucket = arr[arr.length-1]
+    }
+    var szbucketstr = 'MB<' + pad( szbucket.toString(), '0', arr[arr.length-1].toString().length )
+    var ratebucketstr = 'KBs<' + pad( ratebucket.toString(), '0', arr[arr.length-1].toString().length )
+    app.analytics.sendEvent('TorrentComplete',szbucketstr,ratebucketstr)
+    //console.log('buckets',szbucketstr, ratebucketstr)
+}
+function reportFileDownload(file) {
+    var ext = file.get_extension()
+    var arr = [0,1,5,10,25,50,75,100,150,200,300,400,600,800,1000,1200,1500,1800,2200,2500,3000,3500,4000,5000,6000,8000,10000]
+    var mbytes = file.size / 1024 / 1024
+    var szbucket = arr[ bisect_left(arr, mbytes) ]
+    //console.log('got size bucket',szbucket)
+    if (szbucket === undefined) {
+        szbucket = arr[arr.length-1]
+    }
+    var szbucketstr = 'MB<' + pad( szbucket.toString(), '0', arr[arr.length-1].toString().length )
+    app.analytics.sendEvent('FileComplete',ext,szbucketstr)
+}
 
 if (! String.prototype.endsWith) {
     String.prototype.endsWith = function(substr) {
@@ -299,7 +333,7 @@ function pad(s, padwith, len) {
         if (s.length == len) {
             return s
         } else if (s.length < len) {
-            s = padwith + s
+            s = padwith + "" + s
         } else if (s.length > len) {
             console.assert(false)
             return

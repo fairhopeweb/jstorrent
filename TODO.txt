@@ -1,3 +1,4 @@
+- search opensubtitles on file (right click?)
 - filewriter already has file size/length
 - with diskio problems of any type, clear all cache and retry
 - problem with entryCache entry.filesystem name being chrome-extension_.... vs retainstr

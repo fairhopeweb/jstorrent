@@ -580,11 +580,20 @@ App.prototype = {
         console.clog(L.TORRENT,'onTorrentComplete')
         var id = torrent.hashhexlower
 
+        if (torrent.session_start_time) {
+            // todo - compute average rate and report
+            var elapsed = (Date.now() - torrent.session_start_time) / 1000
+            reportAverageDownloadSpeed( elapsed, torrent.size )
+            /*
+              app.analytics.tracker.send( analytics.EventBuilder.builder().category('TorrentTime').value(mbsec).dimension ... ? */
+
+            // put into buckets
+        }
+        app.analytics.sendEvent("Torrent", "Completed", undefined, torrent.size)
+        
         // no way to cause the progress notification to come to
         // foreground, so delete it and create a new one
-
         if (this.notifications.get(id)) {
-            // remove the progress notification
             chrome.notifications.clear(id, function(){})
         }
         if (this.options.get('show_progress_notifications')) {
@@ -718,12 +727,17 @@ App.prototype = {
     onClientError: function(evt, e) {
         this.sessionState['haderror'] = true
         // display a popup window with the error information
-        this.createNotification({details:e, priority:1})
+        if (e && e.error == "Invalid torrent file") {
+            app.analytics.sendEvent("Torrent", "Error", "bdecode")
+            this.createNotification({message:"Invalid Torrent File", details:"We had trouble decoding the .torrent file. Check that it is valid, or use a magnet link instead.", priority:1})
+        } else {
+            this.createNotification({details:e, priority:1})
+        }
     },
     set_ui: function(UI) {
         this.UI = UI
     },
-    handleDrop: function(evt) {
+    handleDrop: function(evt) { // handle_drop
         console.clog(L.UI,'handleDrop')
         //app.analytics.sendEvent("MainWindow", "Drop")
         // handle drop in file event
@@ -765,7 +779,7 @@ App.prototype = {
         }
         var url = evt.dataTransfer.getData('text/uri-list')
         if (url) {
-            this.client.app.add_from_url(url)
+            this.add_from_url(url)
         }
     },
     suspend: function() {

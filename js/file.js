@@ -54,14 +54,20 @@ File.prototype = {
     openBlobInTab: function() {
         // show warning for xvid, wmv, etc
         this.getEntryFile2(function(file) {
+            if (! file || file.error) {
+                app.createNotification({message:"Could not open file",
+                                        contextMessage:(file && file.error),
+                                        details:this.get('name')})
+                return
+            }
             chrome.mediaGalleries.getMetadata( file, {}, function(metadata) {
                 // we lose window.onerror handling here
                 
                 console.log('got file media metadata',metadata)
                 if (metadata.rawTags.length == 0) {
                     // show error, this wont work
-                    app.createNotification({message:"Chrome can't play this",
-                                            details:"Try using VLC video player instead."})
+                    app.createNotification({message:"Chrome can't play this \"" + this.get_extension() + "\" file.",
+                                            details:"Look instead for mp4 files with x264 encoding"})
                 } else {
                     app.createNotification({message:chrome.i18n.getMessage("PlayFileWarningTitle"),
                                             id:'play-file-warning',
@@ -71,8 +77,8 @@ File.prototype = {
                     var msg = {command:'openWindow',url:url}
                     chrome.runtime.sendMessage(msg)
                 }
-            })
-        })
+            }.bind(this))
+        }.bind(this))
     },
     onComplete: function() {
         console.log('file complete event',this)
@@ -80,6 +86,7 @@ File.prototype = {
         if (UI.detailtype == 'files' && UI.detailtable) {
             UI.detailtable.on_change(this,null,null,'Action') // update action on this
         }
+        reportFileDownload(this)
         //this.trigger('change','actions')
     },
     intersectsPiece: function(piece) {
@@ -289,10 +296,14 @@ File.prototype = {
     },
     getEntryFile2: function(callback) {
         this.getEntry( function(entry) {
-            function onfile(file) {
-                callback(file)
+            if (entry.error) {
+                callback(entry)
+            } else {
+                function onfile(file) {
+                    callback(file)
+                }
+                entry.file( onfile, onfile )
             }
-            entry.file( onfile, onfile )
         }.bind(this), {create:false} )
     },
     getEntryFile: function(callback) {
@@ -371,6 +382,8 @@ function recursiveGetEntry(filesystem, path, callback, opts) {
         if (path.length == 0) {
             if (e.isFile) {
                 callback(e)
+            } else if (e.name == "NotFoundError") {
+                callback({error:e.name, message:e.message})
             } else {
                 callback({error:'file exists'})
             }

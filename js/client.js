@@ -231,15 +231,16 @@ Client.prototype = {
         // TODO -- implement
         console.log('onBatchTimeout',keys)
     },
-    onTorrentAdd: function(torrent) {
+    onTorrentAdd: function(torrent, source) {
         console.clog(L.TORRENT,'Torrent added',torrent)
         // cant do this, because metadata has not been saved yet... (when loading torrent from launch entry)
         if (torrent.autostart === false) { return }
 
-        if (this.app.options.get('new_torrents_auto_start')) {
-            if (torrent._opts.initializedBy != 'collection.fetch') {
+        if (torrent._opts.initializedBy != 'collection.fetch') {
+            if (this.app.options.get('new_torrents_auto_start')) {
                 torrent.start()
             }
+            torrent.session_start_time = Date.now()
         }
     },
     onReady: function() {
@@ -304,7 +305,7 @@ Client.prototype = {
                                                    callback()
                                                }
                                            } else {
-                                               console.error('error initializing torrent from entry', result)
+                                               // bdecode error
                                                this.trigger('error',result)
                                                callback()
                                            }

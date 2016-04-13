@@ -289,7 +289,7 @@ var CollectionProto = {
 
                         if (item.onRestore) { _.defer(item.onRestore.bind(item)) }
                         console.assert(item.get_key() == itemKeys[i])
-                        this.add(item)
+                        this.add(item, 'collection.fetch')
                     }
                     if (callback) { callback() }
                 },this))

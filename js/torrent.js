@@ -53,6 +53,7 @@ function Torrent(opts) {
     this.hashbytes = null
     this.bridges = {}
     this.magnet_info = null
+    this.session_start_time = null
     this.initializedFromEntry = null
     this.initializedFromBuffer = null
     // the idea behind endgame is that when we are very near to
@@ -937,7 +938,6 @@ Torrent.prototype = {
         }
         
         if (! foundmissing) {
-            console.clog(L.TORRENT,'%cTORRENT DONE!','color:#0f3')
             this.set('state','complete')
 
             // TODO -- turn this into progress notification type
@@ -951,7 +951,6 @@ Torrent.prototype = {
                 }
             });
 
-            app.analytics.sendEvent("Torrent", "Completed", undefined, this.size)
         }
 
         var dld = this.getDownloaded()
@@ -1537,6 +1536,7 @@ Torrent.prototype = {
         })
     },
     stop: function(info) {
+        this.session_start_time = null
         this.stopinfo = info
         this.starting = false
         this.isEndgame = false
