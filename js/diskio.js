@@ -399,6 +399,7 @@
 
     var DiskIOProto = {
         checkStalled: function() {
+            console.clog(L.DISKIO,'check for stalled jobs')
             // check if the current job has been there for the past few cycles...
             if (this.items.length > 0) {
                 var job = this.get_at(0)
@@ -406,14 +407,16 @@
                 if (this._stallCheckId) {
                     if (this._stallCheckId == newId) {
                         console.clog(L.DISKIO,'job looks stalled somehow. try to kill it')
-                        job.onfinished({error:'stalled?', job:job})
+                        job.set('state','error')
+                        if (job.onfinished) { job.onfinished({error:'stalled?', job:job}) }
+                        //if (job._opts.callback) { job._opts.callback({error:'stalled?'}) }
                         this.shift()
                         this.queueActive = false
                         this.doQueue()
                     }
-                } else {
-                    this._stallCheckId = newId
                 }
+                this._stallCheckId = newId
+
             } else {
                 this._stallCheckId = null
             }
@@ -1140,6 +1143,8 @@
 
                 entry.createWriter( function(writer) {
                     job.set('state','gotwriter')
+                    //return XXX removeme
+                    return
                     if (this.checkShouldBail(job)) { writer.abort(); return }
                     writer.onwrite = function(evt) {
                         app.fileMetadataCache.updateSize(entry, fileOffset + buftowrite.byteLength)

@@ -1651,7 +1651,7 @@ Torrent.prototype = {
 
         if (this.thinkCtr % 4800 == 0) {
             // every 5 minute
-            this.disk.diskio.checkStalled()
+            this.getStorage().diskio.checkStalled()
         }
         
         if (this.thinkCtr % 80 == 0) {
