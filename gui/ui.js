@@ -43,9 +43,13 @@ function UI(opts) {
         var streamable = val.streamable()
         var openable = val.openable()
         var findapps = val.shouldfindapps()
+        var is_mkv = val.get_extension() == 'mkv'
 
         var parts = []
-        if (val.isComplete()) {
+        if (is_mkv && app.webapp) {
+            // mkv are not opening inline for some reason. use the stream page instead.
+            parts.push('<a class="action-stream" href="#"><span class="glyphicon glyphicon-play"></span>Stream(beta)</a>')
+        } else if (val.isComplete()) {
             if (streamable) {
                 // detect if chromecast extension?
                 parts.push('<a class="action-open" href="#"><span class="glyphicon glyphicon-play"></span>Play</a>')

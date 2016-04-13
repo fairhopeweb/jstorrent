@@ -162,7 +162,7 @@ File.prototype = {
         var ext = this.name.toLowerCase()
         if (WSC.MIMECATEGORIES) {
             for (var i=0; i<WSC.MIMECATEGORIES.video.length; i++) {
-                if (ext.endsWith('.' + WSC.MIMECATEGORIES.video[i])) {
+                if (ext.endsWith('.' + WSC.MIMECATEGORIES.video[i]) ) {
                     return {type:'video'}
                 }
             }
