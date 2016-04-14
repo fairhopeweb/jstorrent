@@ -21,7 +21,7 @@ zip "package-$VER.zip" manifest.json \
     js/deps/SlickGrid/slick.grid.css \
     js/deps/SlickGrid/css/smoothness/jquery-ui-1.8.16.custom.css \
     js/deps/SlickGrid/css/smoothness/images/*.png \
-    js/deps/SlickGrid/images/sort-*.gif. \
+    js/deps/SlickGrid/images/sort-*.gif \
     js/deps/SlickGrid/plugins/slick.rowselectionmodel.js \
     js/deps/SlickGrid/lib/jquery.event.drag-2.2.js \
     js/deps/bootstrap-dist/css/bootstrap.min.css \

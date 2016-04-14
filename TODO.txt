@@ -1,3 +1,4 @@
+- clicking on update message should launch app
 - createObjectURL / revoke not letting background page go inactive. file bug
 - show "loading..." for files pane (can take a while to initialize file objects)
 - check external storage detaching handling workin ... 
