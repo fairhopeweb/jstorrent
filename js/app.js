@@ -57,7 +57,7 @@ function App(opts) {
     },this))
 
     this.updateRemainingDownloadsDisplay()
-
+/*
     $('#url-btn').click( function(evt) {
         console.clog(L.UI,'url-btn click')
         var url = $('#url').val()
@@ -65,13 +65,13 @@ function App(opts) {
             console.clog(L.UI,'add button clicked with no URL entered, popup select file dialog')
             this.select_torrent()
             // open file chooser...
-
             evt.preventDefault()
             evt.stopPropagation()
-
+        } else {
+            onadd()
         }
     }.bind(this))
-
+*/
     if (this.isLite()) {
         $('#download-remain-container').show()
         $('#title-lite').show()

@@ -79,8 +79,7 @@ function onappready() {
 */
 
     document.getElementById("add-form").addEventListener('submit', onadd)
-
-
+    document.getElementById('url-btn').addEventListener('click',onadd)
 
     window.UI = new UI({client:client})
     window.app.set_ui(UI)
