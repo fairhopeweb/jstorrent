@@ -1,3 +1,8 @@
+- stop downloading! ( endgame ) if we have downloaded and hashchecked all pieces
+- adjust allowed per torrent memory cache
+- add queue function, set default to 1 for low ram devices.
+- if piece sizes are quite small (64KB!!! WTF) need to coalesce
+
 - clicking on update message should launch app
 - createObjectURL / revoke not letting background page go inactive. file bug
 - show "loading..." for files pane (can take a while to initialize file objects)
