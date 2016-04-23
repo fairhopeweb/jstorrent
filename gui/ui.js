@@ -384,14 +384,19 @@ MessagesView.prototype = {
         } else if (arg.simpleSerializer) {
             return arg.simpleSerializer()
         } else {
-            try {
-                var s = JSON.stringify(arg)
-                if (s.length < 1000) {
-                    return s
-                } else {
+            if (DEVMODE) {
+                try {
+                    var s = JSON.stringify(arg)
+                    if (s.length < 1000) {
+                        return s
+                    } else {
+                        return arg
+                    }
+                } catch(e) {
                     return arg
                 }
-            } catch(e) {
+            } else {
+                // dont json serialize in prod
                 return arg
             }
        }

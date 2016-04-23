@@ -53,10 +53,7 @@ function Client(opts) {
     this.set('bytes_sent',0) // todo - persist these?
     this.set('bytes_received',0)
     this.on('change', _.bind(this.onChange, this))
-    this.on('activeTorrentsChange', _.bind(function(){
-        // a torrent stopped, completed, or started...
-        this.set('numActiveTorrents', _.keys(this.get('activeTorrents')).length)
-    },this))
+    this.on('activeTorrentsChange', this.onActiveTorrentsChange.bind(this))
 
     var _loadedTorrents = false
     var loadTorrents =  function() {
@@ -116,6 +113,23 @@ function Client(opts) {
 }
 
 Client.prototype = {
+    onActiveTorrentsChange: function() {
+        // a torrent stopped, completed, or started... (or settings changed)
+        var numactive = _.keys(this.get('activeTorrents')).length
+        this.set('numActiveTorrents', numactive)
+        if (numactive < this.app.options.get('active_torrents_limit')) {
+            this.tryStartQueuedTorrent()
+        }
+    },
+    tryStartQueuedTorrent: function() {
+        for (var i=0; i<this.torrents.items.length; i++) {
+            var t = this.torrents.items[i]
+            if (t.get('state') == 'queued') {
+                t.start()
+                break
+            }
+        }
+    },
     countBytes: function(type, val) {
         var k = 'bytes_' + type
         this.set(k, this.get(k) + val)

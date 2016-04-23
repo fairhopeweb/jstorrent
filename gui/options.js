@@ -62,7 +62,7 @@ OptionDisplay.prototype = {
                 '</label>' + 
                 '</div>';
         } else if (this.opts.meta.type == 'int') {
-            s = '<div class="input"><label><input id="numconns" size="3" type="number" min="1" max="200" value="'+this.opts.val+'"></input><span data-toggle="tooltip" title="'+this.opts.meta.help+'"> ' + this.getName() + '</span></label></div>'
+            s = '<div class="input"><label><input id="'+this.opts.key+'" size="3" type="number" min="1" max="200" value="'+this.opts.val+'"></input><span data-toggle="tooltip" title="'+this.opts.meta.help+'"> ' + this.getName() + '</span></label></div>'
         } else {
             debugger
         }
@@ -86,7 +86,7 @@ OptionDisplay.prototype = {
     onInput: function(evt) {
         var rawval = evt.target.value
         var val = parseInt(rawval)
-        console.log('got new intval',val,'from',rawval)
+        console.log(this.opts.key, 'got new intval',val,'from',rawval)
         if (! isNaN(val)) {
             this.opts.options.set(this.opts.key, val)
             var resetval = null
@@ -168,7 +168,7 @@ function OptionsView(opts) {
 
             //$('input', el).change( _.bind(this.inputChanged, this) )
             if (cur.opts.meta.type == 'int') {
-                document.getElementById("numconns").addEventListener('input', cur.onInput.bind(cur) )
+                document.getElementById(cur.opts.key).addEventListener('input', cur.onInput.bind(cur) )
             } else {
                 $('input[type=checkbox]', $el).change( cur.inputChanged.bind(cur) )
             }

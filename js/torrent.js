@@ -98,6 +98,7 @@ function Torrent(opts) {
     this.numFiles = null
     // this._attributes.bitfield = null // use _attributes.bitfield for convenience for now...
     this.bitfieldFirstMissing = null // first index where a piece is missing
+    this.numPiecesDownloaded = 0
 
     this.settings = new jstorrent.TorrentSettings({torrent:this})
 
@@ -788,6 +789,14 @@ Torrent.prototype = {
             }
         }
     },
+    canEnterEndgame: function() {
+        // if diskio queue is rather large, dont enter endgame
+        var storage = this.getStorage()
+        if (storage && storage.ready && storage.diskio.items.length < 4) {
+            return true
+        }
+        return false
+    },
     isComplete: function() {
         return this.get('complete') == 1
     },
@@ -1340,7 +1349,20 @@ Torrent.prototype = {
     start: function(reallyStart, opts) {
         //if (reallyStart === undefined) { return }
         if (this.started || this.starting) { return } // some kind of edge case where starting is true... and everything locked up. hmm
+        if (this.isComplete()) {
+            this.set('state','complete')
+            this.save()
+            return
+        }
+        
+        if (this.client.get('numActiveTorrents') >= this.client.app.options.get('active_torrents_limit')) {
+            this.set('state','queued')
+            this.save()
+            return
+        }
+
         this.set('state','starting')
+        this.addToActives()
         app.analytics.sendEvent("Torrent", "Start")
 
         this.starting = true
@@ -1425,14 +1447,26 @@ Torrent.prototype = {
         }
         this.newStateThink()
     },
-    onStarted: function() {
-        app.analytics.sendEvent("Torrent", "onStarted")
-        //console.log('torrent.onStarted')
+    addToActives: function() {
         var a = this.client.get('activeTorrents')
         a[this.hashhexlower] = true
         this.client.activeTorrents.add(this)
         this.client.set('activeTorrents', a)
         this.client.trigger('activeTorrentsChange', this)
+    },
+    removeFromActives: function() {
+        var a = this.client.get('activeTorrents')
+        if (this.client.activeTorrents.contains(this)) {
+            this.client.activeTorrents.remove(this)
+        }
+        delete a[this.hashhexlower]
+        this.client.set('activeTorrents', a)
+        this.client.trigger('activeTorrentsChange', this)
+    },
+    onStarted: function() {
+        app.analytics.sendEvent("Torrent", "onStarted")
+        //console.log('torrent.onStarted')
+
         if (this.getStorage().isGoogleDrive()) {
             app.warnGoogleDrive()
         }
@@ -1503,12 +1537,7 @@ Torrent.prototype = {
                 //peer.sendMessage("UNCHOKE")
             }
         })
-
-        var a = this.client.get('activeTorrents')
-        this.client.activeTorrents.remove(this)
-        delete a[this.hashhexlower]
-        this.client.set('activeTorrents', a)
-        this.client.trigger('activeTorrentsChange', this)
+        this.removeFromActives()
 
         for (var i=0; i<this.trackers.length; i++) {
             this.trackers.get_at(i).announce('complete')
@@ -1516,13 +1545,7 @@ Torrent.prototype = {
     },
     onStopped: function() {
         //console.log('torrent.onStopped') // could be previously "complete"
-        var a = this.client.get('activeTorrents')
-        if (this.client.activeTorrents.contains(this)) {
-            this.client.activeTorrents.remove(this)
-        }
-        delete a[this.hashhexlower]
-        this.client.set('activeTorrents', a)
-        this.client.trigger('activeTorrentsChange', this)
+        this.removeFromActives()
 
         if (this.stopinfo && this.stopinfo.dontannounce) {
             return
@@ -1650,7 +1673,7 @@ Torrent.prototype = {
         //console.log('torrent frame!')
 
         //if (! this.isEndgame && this.get('complete') > 0.97) {  // this works really crappy for large torrents
-        if (! this.isEndgame && this.infodict && this.getFirstUnrequestedPiece() === null && ! this.isComplete()) {
+        if (! this.isEndgame && this.infodict && this.getFirstUnrequestedPiece() === null && ! this.isComplete() && this.canEnterEndgame()) {
             this.isEndgame = true
             console.clog(L.TORRENT,"ENDGAME ON")
         }

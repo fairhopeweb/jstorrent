@@ -92,7 +92,8 @@ function PeerConnection(opts) {
         this.connect_timeout_delay = 1000 // BUG THIS BLOCKS MAIN THREAD
     } else {
         //this.connect_timeout_delay = 10000
-        this.connect_timeout_delay = 3000
+        //this.connect_timeout_delay = 3000 // maybe too short
+        this.connect_timeout_delay = 6000
     }
     this.connect_timeout_callback = null
     this.connecting = false

@@ -43,12 +43,17 @@ function Options(opts) {
             'type':'bool',
             'description':'whether to show a dialog when adding a new torrent'
         },
-
         'exit_on_download_complete': {
             'default': false,
             'enabled': false,
             'type':'bool',
             'description':'whether to exit when downloads have completed'
+        },
+        'active_torrents_limit': {
+            'name': 'Active torrents limit',
+            'help': 'Limit the number of active torrents. Additional torrents will be queued',
+            'default': 2,
+            'type':'int'
         },
         'maxconns': {
             'name': 'Connections Per Torrent',
@@ -185,6 +190,9 @@ Options.prototype = {
 
         if (k == 'prevent_sleep' && v == false) {
             chrome.power.releaseKeepAwake()
+        }
+        if (k == 'active_torrents_limit') {
+            this.app.client.onActiveTorrentsChange()
         }
     },
     load: function(callback) {

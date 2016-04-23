@@ -392,6 +392,8 @@
     DiskIO.jobctr = 0
     DiskIO.debugtimeout = 1000
     DiskIO.allowedJobTimeShort = 2000 // most jobs dont need much time
+    //DiskIO.debugtimeout = 4000
+    //DiskIO.allowedJobTimeShort = 8000 // most jobs dont need much time
 
     DiskIO.allowedJobTime = 60000 * 5 // 30 seconds should be enough... ? // 5 minutes
     // writes after large truncates can take a long time, though.
@@ -594,6 +596,7 @@
                     oncallback({error:'createwritererr',evt:evt})
                 }
                 entry.createWriter( function(writer) {
+                    //console.log('got writer',writer)
                     if (this.checkShouldBail(job)) { writer.abort(); return }
                     writer.onwrite = function(evt) {
                         app.fileMetadataCache.updateSizeExact(entry, 0)
@@ -607,6 +610,7 @@
                         }
 
                         entry.createWriter( function(writer2) {
+                            //console.log('got writer2',writer2)
                             if (this.checkShouldBail(job)) { writer2.abort(); return }
                             writer2.onwrite = function(evt2) {
                                 app.fileMetadataCache.updateSize(entry, opts.data.byteLength)
@@ -1142,6 +1146,7 @@
                 }
 
                 entry.createWriter( function(writer) {
+                    //console.log('got writer',writer)
                     job.set('state','gotwriter')
                     if (this.checkShouldBail(job)) { writer.abort(); return }
                     writer.onwrite = function(evt) {

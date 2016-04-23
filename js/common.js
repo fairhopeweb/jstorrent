@@ -133,7 +133,7 @@ jstorrent.options = {
     use_fileentry_cache: true, // speeds up the app diskio
     load_options_on_start: false,
     add_torrents_on_start: false,
-    run_unit_tests: true,
+    run_unit_tests: false,
     disable_trackers: false,
     slow_diskio: false,
     slow_hashcheck: false,
