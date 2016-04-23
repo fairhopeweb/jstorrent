@@ -380,7 +380,7 @@ App.prototype = {
             if (idx == 1) {
                 this.open_upsell_page()
             } else {
-                window.open(jstorrent.constants.cws_jstorrent_url,'_blank')
+                chrome.browser.openTab({url:jstorrent.constants.cws_jstorrent_url})
             }
         }
         this.createNotification({ details:"Sorry, this is the free trial version, and you have used all your free downloads",

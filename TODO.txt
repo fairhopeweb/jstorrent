@@ -1,3 +1,5 @@
+- https://wiki.whatwg.org/wiki/Video_Metrics for media player
+
 - stop downloading! ( endgame ) if we have downloaded and hashchecked all pieces
 - adjust allowed per torrent memory cache
 - add queue function, set default to 1 for low ram devices.

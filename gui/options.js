@@ -62,7 +62,7 @@ OptionDisplay.prototype = {
                 '</label>' + 
                 '</div>';
         } else if (this.opts.meta.type == 'int') {
-            s = '<div class="input"><label><input id="'+this.opts.key+'" size="3" type="number" min="1" max="200" value="'+this.opts.val+'"></input><span data-toggle="tooltip" title="'+this.opts.meta.help+'"> ' + this.getName() + '</span></label></div>'
+            s = '<div class="input"><label><input id="'+this.opts.key+'" size="3" type="number" min="'+this.opts.meta.minval+'" max="'+this.opts.meta.maxval+'" value="'+this.opts.val+'"></input><span data-toggle="tooltip" title="'+this.opts.meta.help+'"> ' + this.getName() + '</span></label></div>'
         } else {
             debugger
         }

@@ -53,12 +53,16 @@ function Options(opts) {
             'name': 'Active torrents limit',
             'help': 'Limit the number of active torrents. Additional torrents will be queued',
             'default': 2,
+            'minval':1,
+            'maxval':5,
             'type':'int'
         },
         'maxconns': {
             'name': 'Connections Per Torrent',
             'help': 'The maximum number of peers to download from. Higher numbers can potentially result in faster downloads, but use more system resources',
             'default': 25,
+            'minval':1,
+            'maxval':200,
             'type':'int'
         },
         'new_torrents_auto_start': {
