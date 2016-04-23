@@ -244,6 +244,13 @@ chrome.runtime.onInstalled.addListener(function(details) {
         var showUpdateNotification = false
         console.log('got previous install info',resp)
 
+        var previous_updates = resp[sk]
+        var changed = false
+        var most_recent_update = null
+        if (previous_updates && previous_updates.length > 0) {
+            most_recent_update = previous_updates[previous_updates.length-1]
+        }
+
         details.date = new Date().getTime()
         details.cur = chrome.runtime.getManifest().version
 
@@ -252,21 +259,29 @@ chrome.runtime.onInstalled.addListener(function(details) {
             chrome.storage.sync.remove("sk")
         }
         
-        if (! resp[sk]) {
+        if (! previous_updates) {
+            console.log('initializing install info')
             resp[sk] = [details]
+            changed = true
+        } else if (most_recent_update && most_recent_update.cur == details.cur) {
+            // previousVersion missing?
         } else if (details.previousVersion == details.cur) {
             // happend because of chrome.runtime.reload probably
         } else {
+            console.log('adding new install info',details)
             resp[sk].push(details)
+            changed = true
             showUpdateNotification = true
         }
 
         if (resp[sk].length > 15) {
             // purge really old entries
+            changed = true
             resp[sk].splice(0,1)
         }
-
-        chrome.storage.local.set(resp, function(){console.log('persisted onInstalled info')})
+        if (changed) {
+            chrome.storage.local.set(resp, function(){console.log('persisted onInstalled info')})
+        }
 
         if (showUpdateNotification) {
             doShowUpdateNotification(details, resp)
