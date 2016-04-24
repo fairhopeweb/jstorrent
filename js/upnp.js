@@ -11,24 +11,46 @@
             console.log('found an internet gateway device',info)
             var device = new GatewayDevice(info)
             this.devices.push( device )
+        },
+        getIP: function(callback) {
+            if (this.devices.length == 0) {
+                callback({error:'no devices'})
+                return
+            }
+            var device = this.devices[0]
+            device.request('hello', callback)
         }
     }
     
     function GatewayDevice(info) {
         this.info = info
-        this.description = info.headers.location
+        this.description_url = info.headers.location
         this.services = [
             'urn:schemas-upnp-org:service:WANIPConnection:1',
             'urn:schemas-upnp-org:service:WANPPPConnection:1'
         ]
     }
     GatewayDevice.prototype = {
+        get: function(url, callback) {
+            var xhr = new WSC.ChromeSocketXMLHttpRequest
+            console.log('opening url',url)
+            xhr.open("GET",url)
+            function onload(evt) {
+                if (evt.target.code == 200) {
+                    var response = new TextDecoder('utf-8').decode(evt.target.response)
+                    var parser = new DOMParser
+                    var parsed = parser.parseFromString(response, "text/xml")
+                    debugger
+                }
+            }
+            xhr.onload = xhr.onerror = xhr.ontimeout = onload
+            xhr.send()
+        },
         get_service: function(name, callback) {
-            var xhr = new XMLHttpRequest
-            debugger
+            this.get(this.description_url, callback)
         },
         request: function(action, callback) {
-
+            this.get_service(name,callback)
         }
     }
     
