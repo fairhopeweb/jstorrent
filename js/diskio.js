@@ -2,7 +2,7 @@
 /*
 // XXX -- createWriter has second argument error callback
 // XXX FileEntry.file() error callback, what is signature?
-  we were using diskiosync.js but realized there is no FileWriterSync
+  we were using diskiosync.js but realized there is no FileWriterSync (there is, but no way to get one from user selected Entry)
 
 
   instead we are going to keep using the async interfaces, but be strict and require that all disk access goes through the DiskIO object.
@@ -19,7 +19,8 @@
         if (jstorrent.options.slow_diskio) {
             setTimeout(fn, t)
         } else {
-            fn()
+            setTimeout(fn, 1)
+            //fn()
         }
     }
 
@@ -610,6 +611,7 @@
                         }
 
                         entry.createWriter( function(writer2) {
+                            console.assert( writer2.length == 0 )
                             //console.log('got writer2',writer2)
                             if (this.checkShouldBail(job)) { writer2.abort(); return }
                             writer2.onwrite = function(evt2) {
@@ -623,15 +625,19 @@
                                 console.error('writer error',evt2)
                                 oncallback({error:evt2})
                             }
+                            /*
+                            writer2.onwritestart = writer2.onabort = writer2.onwriteend = function(evt2) {
+                                console.log('other writer2 event')
+                            }*/
                             writer2.onprogress = function(evt2) {
                                 //console.log('progress',evt)
                                 var pct = Math.floor( 50 * evt2.loaded / evt2.total )
                                 job.set('progress',50+pct)
                             }
                             job.set('state','writing')
+
                             maybeTimeout( function() {
 //                            writer2.seek(0) // need to do this?
-
                                 writer2.write(new Blob([opts.data]))
                             }, DiskIO.debugtimeout)
                         }.bind(this), oncreatewriter2err)

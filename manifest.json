@@ -4,7 +4,7 @@
     "short_name": "__MSG_extName__",
     "description": "__MSG_extDescription__",
     "author": "Kyle Graehl",
-    "version": "2.4.3",
+    "version": "2.4.4",
     "manifest_version": 2,
     "offline_enabled": true,
     "minimum_chrome_version": "33",

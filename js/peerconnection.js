@@ -191,7 +191,10 @@ PeerConnection.prototype = {
         console.clog(L.DEV, 'dropping',reason,'received:',byteUnits(this._attributes.bytes_received), this._attributes)
         this.close(reason)
     },
-    close: function(reason) {
+    close: function(reason, forcelog) {
+        if (forcelog) {
+            console.clog(L.PEER, 'forced disconnect',reason)
+        }
         if (this.get('downspeed') > 1024 * 50) {
             console.clog(L.DEV, 'a good connection is closing',byteUnits(this._attributes.bytes_received), reason)
         }
@@ -229,7 +232,7 @@ PeerConnection.prototype = {
         this.cleanupRequests()
         var lasterr = chrome.runtime.lastError
         if (lasterr) {
-            console.warn('onClose:',(reason.message||reason),'lasterror',lasterr,'result',result) // TODO -- "Socket not found" ?
+            // console.warn('onClose:',(reason.message||reason),'lasterror',lasterr,'result',result) // TODO -- "Socket not found" ?
             // double close, not a big deal. :-\
         } else {
             //console.log('onClose',reason,'result',result,sockid)

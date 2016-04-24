@@ -52,6 +52,7 @@ function Torrent(opts) {
     this.hashhexlower = null
     this.hashbytes = null
     this.bridges = {}
+    this.badPieceCount = 0
     this.magnet_info = null
     this.session_start_time = null
     this.initializedFromEntry = null
@@ -979,6 +980,7 @@ Torrent.prototype = {
         }
     },
     notifyInvalidPiece: function(piece) {
+        this.badPieceCount++
         // when a piece comes back invalid, we delete the piece, and now need to clean up the peers too... ?
         this.peers.each( function(peerconn) {
             for (var key in peerconn.pieceChunkRequests) {

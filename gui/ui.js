@@ -384,7 +384,7 @@ MessagesView.prototype = {
         } else if (arg.simpleSerializer) {
             return arg.simpleSerializer()
         } else {
-            if (DEVMODE) {
+            if (true) {
                 try {
                     var s = JSON.stringify(arg)
                     if (s.length < 1000) {
@@ -410,7 +410,7 @@ MessagesView.prototype = {
         if (args.length > 0 && typeof args[0] == 'string' && args[0].startsWith('%c')) {
             var span = document.createElement('span')
             span.setAttribute('style',args[1])
-            span.innerText = args[0].slice(2,args[0].length)
+            span.innerText = args[0].slice(2,args[0].length) + ' '
             div.appendChild(span)
             var span2 = document.createElement('span')
             span2.style['padding-left'] = '1em'

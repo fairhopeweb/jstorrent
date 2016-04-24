@@ -8,7 +8,7 @@
     }
     UPNP.prototype = {
         onDevice: function(info) {
-            console.log('found an internet gateway device',info)
+            console.clog(L.SSDP, 'found an internet gateway device',info)
             var device = new GatewayDevice(info)
             this.devices.push( device )
         },
@@ -33,13 +33,15 @@
     GatewayDevice.prototype = {
         get: function(url, callback) {
             var xhr = new WSC.ChromeSocketXMLHttpRequest
-            console.log('opening url',url)
+            console.clog(L.SSDP,'query',this.description_url)
             xhr.open("GET",url)
             function onload(evt) {
                 if (evt.target.code == 200) {
                     var response = new TextDecoder('utf-8').decode(evt.target.response)
                     var parser = new DOMParser
                     var parsed = parser.parseFromString(response, "text/xml")
+                    var services = parsed.documentElement.querySelectorAll("serviceList service")
+                    var devices = parsed.documentElement.querySelectorAll("deviceList device")
                     debugger
                 }
             }
@@ -158,10 +160,10 @@
                 return
             }
             chrome.sockets.udp.send(state.sockInfo.socketId, new TextEncoder('utf-8').encode(state.req).buffer, this.multicast, this.port, this.onsend.bind(this))
-            console.log('sending to',this.multicast,this.port)
+            console.clog(L.SSDP, 'sending to',this.multicast,this.port)
         },
         onsend: function(result) {
-            console.log('sent result',result)
+            console.clog(L.SSDP, 'sent result',result)
         }
     }
     jstorrent.UPNP = UPNP

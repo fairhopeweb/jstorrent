@@ -173,8 +173,7 @@ Piece.prototype = {
                     if (valid) {
                         this.onValidPieceInMemory()
                     } else {
-                        console.error('either unable to hash piece due to worker error, or hash mismatch')
-                        console.warn('resetting piece data, not punishing peers...')
+                        console.error('either unable to hash piece due to worker error, or hash mismatch (total bad: '+this._opts.torrent.badPieceCount+')')
                         this.resetData()
                         this._opts.torrent.notifyInvalidPiece(this)
                         this._opts.torrent.pieces.remove(this)
