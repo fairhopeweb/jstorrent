@@ -188,7 +188,7 @@ PeerConnection.prototype = {
     },
     drop: function(reason) {
         // called by torrent.maybeDropShittyConnection
-        console.clog(L.DEV, 'dropping',reason,'received:',byteUnits(this._attributes.bytes_received), this._attributes)
+        // console.clog(L.DEV, 'dropping',reason,'received:',byteUnits(this._attributes.bytes_received), this._attributes)
         this.close(reason)
     },
     close: function(reason, forcelog) {

@@ -20,7 +20,8 @@
             setTimeout(fn, t)
         } else {
             setTimeout(fn, 1)
-            //fn()
+            //fn() // some reason this causes writer.write to swallow exceptions?
+            // might also stop InvalidStateError magically...
         }
     }
 

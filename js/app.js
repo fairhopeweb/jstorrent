@@ -110,6 +110,7 @@ App.prototype = {
             this._suspend_canceled = true
         } else if (msg == 'onSuspend') {
             console.error("APP ABOUT TO CRASH!! EEE!!!")
+            // TODO - clear all notifications
             debugger
 
             if (this.client.get('numActiveTorrents') == 0) {
