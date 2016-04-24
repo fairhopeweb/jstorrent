@@ -7,9 +7,8 @@ function onUDPReceive(info) {
     //console.log('udp receive',info)
     if (trackerSockMap[sockId]) {
         trackerSockMap[sockId].onReadUDP(info)
-
     } else {
-        console.warn('unhandled udp receive',info)
+        //console.warn('unhandled udp receive',info)
     }
     if (window.dhtSockMap && dhtSockMap[sockId]) {
         dhtSockMap[sockId](info)

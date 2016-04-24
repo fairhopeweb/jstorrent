@@ -13,7 +13,7 @@ function Client(opts) {
     this.ready = false
     this.app = opts.app
     this.id = opts.id
-
+    this.upnp = new jstorrent.UPNP({client:this})
     this.activeTorrents = new jstorrent.Collection({__name__: 'Torrents', 
                                                     parent:this, 
                                                     client:this, 

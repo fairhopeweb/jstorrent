@@ -12,7 +12,8 @@ var L = {
     PEER: { name: 'PEER', color: '#082', show: true },
     SYSTEM: { name: 'SYSTEM', color: '#236', show: true },
     DEV: { name: 'DEV', color: '#622', show: DEVMODE },
-    EVENT: { name: 'EVENT', color: '#ddd', show: DEVMODE }
+    EVENT: { name: 'EVENT', color: '#ddd', show: DEVMODE },
+    SSDP: { name: 'SSDP', color: '#ddd', show: DEVMODE }
 }
 function reportAverageDownloadSpeed(secs, bytes) {
     var bytessec = bytes/secs
