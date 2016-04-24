@@ -37,6 +37,7 @@ function Tracker(opts) {
     // double error conditions with timeouts and socket reads
     // returning also
     jstorrent.Item.apply(this, arguments)
+    this.__name__ = arguments.callee.name
     this.torrent = opts.torrent
     this.url = opts.url
     console.assert(this.url)

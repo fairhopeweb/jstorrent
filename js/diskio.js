@@ -257,6 +257,7 @@
 
     function BasicJob(opts) {
         jstorrent.Item.apply(this, arguments)
+        this.__name__ = arguments.callee.name
         this.opts = opts
 
         this.set('state','idle')
@@ -276,6 +277,7 @@
     function PieceReadJob(opts, callback) {
         this.piece = opts.piece
         jstorrent.Item.apply(this, arguments)
+        this.__name__ = arguments.callee.name
         this.onfinished = callback
 
         this.readData = {}
@@ -333,6 +335,7 @@
         var piece = opts.piece
         this.piece = piece
         jstorrent.Item.apply(this, arguments)
+        this.__name__ = arguments.callee.name
         this.opts = opts
         this.onfinished = callback
         this.oncollected = null
@@ -389,6 +392,7 @@
     function DiskIO(opts) {
         this.disk = opts.disk
         jstorrent.BasicCollection.apply(this, arguments)
+        this.__name__ = arguments.callee.name
     }
     DiskIO.jobctr = 0
     DiskIO.debugtimeout = 1000

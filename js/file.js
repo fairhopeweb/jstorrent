@@ -1,6 +1,7 @@
 function File(opts) {
     jstorrent.Item.apply(this, arguments)
     console.assert(typeof opts.num == 'number')
+    this.__name__ = arguments.callee.name
     this.torrent = opts.torrent
     this.num = opts.num
 
