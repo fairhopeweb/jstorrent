@@ -60,7 +60,7 @@
         }
         colon++;
         var raw = x.slice(colon,colon+n);
-        if (opts && opts.utf8 && key != 'pieces') {
+        if (opts && opts.utf8 && key != 'pieces' && key != 'originator') {
             var decoded = td.decode(stringToUint8ArrayWS(raw))
             //var decoded = utf8.parse(stringToUint8Array(raw))
         } else {
@@ -146,7 +146,8 @@
     }
     function encode_string(x, r, stack, cb, opts) {
         var isPieces = stack && stack.length > 0 && stack[stack.length-1] == 'pieces';
-        if (opts && opts.utf8 && ! (isPieces) ) {
+        var isOriginator = stack && stack.length > 0 && stack[stack.length-1] == 'originator';
+        if (opts && opts.utf8 && ! (isPieces || isOriginator) ) {
             //var bytes = utf8.toByteArray(x);
             var bytes = te.encode(x);
         } else {
