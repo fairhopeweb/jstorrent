@@ -12,14 +12,15 @@
     }
     
     function UPNP(opts) {
-        this.ssdp = new SSDP({client:this})
+        this.client = opts.client
+        this.ssdp = new SSDP({client:opts.client})
         this.desiredServices = [
             'urn:schemas-upnp-org:service:WANIPConnection:1',
             'urn:schemas-upnp-org:service:WANPPPConnection:1'
         ]
         this.validGateway = null
         this.interfaces = null
-        this.reset()
+        this.mapping = null
     }
     UPNP.prototype = {
         getInternalAddress: function() {
@@ -56,7 +57,25 @@
                 this.getMappings( function(mappings) {
                     console.clog(L.SSDP,'got current mappings',mappings)
                     // check if already exists nice mapping we can use.
-                })
+                    var internal = this.getInternalAddress()
+                    var mapped = false
+                    for (var i=0; i<mappings.length; i++) {
+                        if (mappings[i].NewInternalClient == internal &&
+                            mappings[i].NewInternalPort == this.client.listenPort &&
+                            mappings[i].NewProtocol == "TCP") {
+                            // found it
+                            console.clog(L.SSDP,'already have port mapped')
+                            mapped = true
+                            this.mapping = mappings[i]
+                            break
+                        }
+                    }
+                    if (! mapped) {
+                        this.addMapping(this.client.listenPort, function(result) {
+                            console.log('add mapping result',result)
+                        })
+                    }
+                }.bind(this))
             }.bind(this))
         },
         onDevice: function(info) {

@@ -14,6 +14,9 @@ function Client(opts) {
     this.app = opts.app
     this.id = opts.id
     this.upnp = new jstorrent.UPNP({client:this})
+    if (DEVMODE) {
+        this.upnp.reset()
+    }
     this.activeTorrents = new jstorrent.Collection({__name__: 'Torrents', 
                                                     parent:this, 
                                                     client:this, 
@@ -109,7 +112,8 @@ function Client(opts) {
     this.on('ready', _.bind(this.onReady, this))
 
     this.listenSock = null
-    this.listenPort = 4289
+    this.listenPort = 4289 // TODO retry on other ports
+    // TODO only setup UPNP after this
     this.listening = false
     this.setupListen()
     this._onAccept = this.onAccept.bind(this)
@@ -119,14 +123,26 @@ function Client(opts) {
 }
 
 Client.prototype = {
+    externalIP: function() {
+        if (this.upnp && this.upnp.validGateway) {
+            return this.upnp.validGateway.device.externalIP
+        }
+    },
+    externalPort: function() {
+        if (this.upnp && this.upnp.validGateway && this.upnp.mapping) {
+            return parseInt(this.upnp.mapping.NewExternalPort)
+        } else {
+            return this.listenPort
+        }
+    },
     onAccept: function(sockInfo) {
-        console.log('incoming connection',sockInfo)
+        //console.log('incoming connection',sockInfo)
         // check if bittorrent connection, dont even know what torrent we're looking at...
         chrome.sockets.tcp.getInfo(sockInfo.clientSocketId, function(info) {
-            console.log('got incoming socket info',info)
+            //console.log('got incoming socket info',info)
             var peer = new jstorrent.Peer({host:info.peerAddress,
                                            torrent:'?',
-                                           port:'?'})
+                                           port:info.peerPort})
             var peerconn = new jstorrent.PeerConnection({sockInfo:sockInfo, peer:peer, client:this})
         }.bind(this))
     },

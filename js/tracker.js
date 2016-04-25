@@ -163,7 +163,7 @@ HTTPTracker.prototype = {
             uploaded: this.torrent.get('uploaded'),
             compact: 1,
             peer_id: ui82str(peeridbytes),
-            port: 6666, // some trackers complain when we send 0 and dont give a response
+            port: this.client.externalPort(), // some trackers complain when we send 0 and dont give a response
             left: this.torrent.get('size') - this.torrent.get('downloaded')
         }
         //console.log('http tracker announce data',data)
@@ -260,19 +260,33 @@ UDPTracker.prototype = {
         this.responses++
 
         this.set_state('on_announce_response')
+        if (readResponse.data.byteLength < 20) {
+            this.set('lasterror','short resp')
+            return
+        }
+        
         var v = new DataView(readResponse.data);
         var resp = v.getUint32(4*0)
         var respTransactionId = v.getUint32(4*1);
         var respInterval = v.getUint32(4*2);
         var leechers = v.getUint32(4*3);
         var seeders = v.getUint32(4*4);
+
+        if( respTransactionId != announceRequest.transactionId ) {
+            this.set('lasterror','bad txid')
+            return
+        }
+
+        var countPeers = (readResponse.data.byteLength - 20)/6
+        if (Math.floor(countPeers) != countPeers) {
+            // unable to parse
+            this.set('lasterror','parseerror')
+            return
+        }
         this.set('leechers',leechers)
         this.set('seeders',seeders)
         this.set('lasterror','')
 
-        console.assert( respTransactionId == announceRequest.transactionId )
-
-        var countPeers = (readResponse.data.byteLength - 20)/6
         //console.log(this.url,'leechers',leechers,'seeders',seeders,'interval',respInterval, 'peers',countPeers)
 
         for (var i=0; i<countPeers; i++) {
@@ -350,27 +364,47 @@ UDPTracker.prototype = {
         ]);
 
         var v = new DataView( payload.buffer );
-        v.setUint32( 0, connectionId[0] )
-        v.setUint32( 4, connectionId[1] )
-        v.setUint32( 12, transactionId )
-        for (var i=0; i<20; i++) {
-            v.setInt8(16+i, this.torrent.hashbytes[i])
+        var i = 0
+        v.setUint32( i, connectionId[0] ); i+=4
+        v.setUint32( i, connectionId[1] ); i+=4
+        "action"; i+=4
+        v.setUint32( i, transactionId ); i+=4
+        for (var j=0; j<20; j++) {
+            v.setInt8(i+j, this.torrent.hashbytes[j])
         }
-        for (var i=0; i<20; i++) {
-            v.setInt8(36+i, this.torrent.client.peeridbytes[i])
+        i+=20
+        for (var j=0; j<20; j++) {
+            v.setInt8(i+j, this.torrent.client.peeridbytes[j])
         }
-
-        v.setUint32(56, this.torrent.get('downloaded'))
-        v.setUint32(56+4, this.torrent.get('size') - this.torrent.get('downloaded'))
-        v.setUint32(56+4*2, this.torrent.get('uploaded'))
+        i+=20
+        // check not larger than Number.MAX_SAFE_INTEGER (8192 TB)
+        // 32 bit (current with setUint32) max is 4GB
+        v.setUint32(i+4, this.torrent.get('downloaded')); i+=8
+        v.setUint32(i+4, this.torrent.get('size') - this.torrent.get('downloaded')); i+=8
+        v.setUint32(i+4, this.torrent.get('uploaded')); i+= 8
         var eventmap = { 'started': 2,
                          'completed': 1,
                          'stopped': 3,
                          'none': 0 }
         if (eventmap[event]) {
-            v.setUint32(56+4*3, eventmap[event])
+            v.setUint32(i, eventmap[event])
         }
-
+        i+=4
+        /*
+        var ext_ip = this.torrent.client.externalIP()
+        if (ext_ip) {
+            var nums = ext_ip.split('.').map( function(v) { parseInt(v) } )
+            for (var j=0;j<4;j++) {
+                v.setUint8(j, nums[j])
+            }
+        }
+        */
+        "ip";i+=4
+        "key";i+=4
+        "numwant";i+=4
+        var ext_port = this.torrent.client.externalPort()
+        v.setUint16(i, ext_port); i+=2
+        //console.log('udp tracker payload',new Uint8Array(payload.buffer))
         return {payload: payload.buffer, transactionId: transactionId};
     },
     get_connection_data: function() {

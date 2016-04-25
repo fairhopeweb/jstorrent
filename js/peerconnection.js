@@ -98,6 +98,7 @@ function PeerConnection(opts) {
     }
     this.connect_timeout_callback = null
     this.connecting = false
+    this.closing = false
     this.connected = false
     this.connect_timeouts = 0
 
@@ -204,8 +205,12 @@ PeerConnection.prototype = {
         this.close(reason)
     },
     close: function(reason, forcelog) {
+        forcelog = true
+        if (this.closing) { return }
+        this.closing = true
         if (forcelog) {
-            console.clog(L.PEER, 'forced disconnect',reason)
+            //console.trace()
+            console.clog(L.SEED, 'disconnect',reason)
         }
         if (this.get('downspeed') > 1024 * 50) {
             console.clog(L.DEV, 'a good connection is closing',byteUnits(this._attributes.bytes_received), reason)
@@ -244,7 +249,7 @@ PeerConnection.prototype = {
         this.cleanupRequests()
         var lasterr = chrome.runtime.lastError
         if (lasterr) {
-            // console.warn('onClose:',(reason.message||reason),'lasterror',lasterr,'result',result) // TODO -- "Socket not found" ?
+            console.clog(L.DEV,'onClose:',(reason.message||reason),'lasterror',lasterr,'result',result) // TODO -- "Socket not found" ?
             // double close, not a big deal. :-\
         } else {
             //console.log('onClose',reason,'result',result,sockid)
@@ -327,7 +332,7 @@ PeerConnection.prototype = {
             break
         }
         if (! payloads) { payloads = [] }
-        //console.log('Sending Message',type)
+        console.clog(L.PEER,'Sending Message',type)
         console.assert(jstorrent.protocol.messageNames[type] !== undefined)
         var payloadsz = 0
         for (var i=0; i<payloads.length; i++) {
@@ -502,7 +507,7 @@ PeerConnection.prototype = {
         
     },
     newStateThink: function() {
-        if (! this.connected) {
+        if (! this.connected || this.closing) {
             return
         }
         if (! this.readThrottled) {
@@ -513,7 +518,7 @@ PeerConnection.prototype = {
 
             if (this.get('complete') == 1) {
                 if (! this.peerInterested) {
-                    this.close('both complete and peer not interested')
+                    //this.close('both complete and peer not interested',true)
                 }
             }
 
@@ -613,7 +618,7 @@ PeerConnection.prototype = {
         if (info.resultCode == -100 || info.resultCode == -101) {
             // conn closed or reset
         } else {
-            console.clog(L.PEER, 'onReceiveError',info, NET_ERRORS_D[info.resultCode])
+            console.clog(L.SEED, 'onReceiveError',info, NET_ERRORS_D[info.resultCode])
         }
         this.close('readerr'+info.resultCode)
     },
@@ -656,8 +661,9 @@ PeerConnection.prototype = {
             return
         }
         //console.log('onread',readResult,readResult.data.byteLength, [ui82str(new Uint8Array(readResult.data))])
-        if (! (this.torrent.started || this.torrent.get('state') == 'seeding')) {
+        if (! (this.torrent.started || this.torrent.canSeed())) {
             this.close('torrent stopped')
+            return
         }
 
         if (readResult.data.byteLength == 0) {
@@ -729,7 +735,7 @@ PeerConnection.prototype = {
         this.handleMessage(data)
     },
     handleMessage: function(msgData) {
-        //console.clog(L.PEER, 'handling message',msgData)
+        console.clog(L.SEED, 'handling message',msgData)
         var method = this['handle_' + msgData.type]
         if (msgData.type != "KEEPALIVE") {
             this.set('last_message_received',msgData.type) // TODO - get a more specific message for piece number
@@ -745,7 +751,7 @@ PeerConnection.prototype = {
     },
     handle_REQUEST: function(msg) {
         if (this.peerChoked) { 
-            //console.log('wont handle request, peer is choked')
+            console.clog(L.PEER,'wont handle request, peer is choked')
             // silently dont handle PIECE requests from choked peers.
             return 
         }
@@ -807,7 +813,7 @@ PeerConnection.prototype = {
     },
     handle_INTERESTED: function() {
         this.peerInterested = true
-        if (this.torrent.isPrivate() || app.options.get('seed_public') || this.peer.host == '127.0.0.1') {
+        if (this.torrent.isPrivate() || app.options.get('seed_public') || jstorrent.options.seed_public_torrents || this.peer.host == '127.0.0.1') {
             this.sendMessage('UNCHOKE') // TODO - under what conditions?
         }
     },
@@ -825,26 +831,28 @@ PeerConnection.prototype = {
         var buf = msg.payload
         this.peerHandshake = jstorrent.protocol.parseHandshake(buf)
         if (! this.peerHandshake) {
-            console.log('invalid handshake',new TextDecoder('utf-8').decode(buf))
+            console.clog(L.SEED,'invalid handshake (probably RC4 encrypted')
+            // see http://wiki.vuze.com/w/Message_Stream_Encryption
             this.close('invalid handshake')
         } else if (this.state == 'incoming') {
-            console.log('incoming connection peer handshake',this.peerHandshake)
+            //console.log('incoming connection peer handshake',this.peerHandshake)
             var hashhexlower = bytesToHashhex(this.peerHandshake.infohash).toLowerCase()
             if (this.client.torrents.containsKey(hashhexlower)) {
                 // have this torrent! yay!
                 var torrent = this.client.torrents.get(hashhexlower)
-                if (! (torrent.started || torrent.get('state') == 'seeding')) {
-                    this.close('torrent not started')
+                if (! (torrent.started || torrent.canSeed())) {
+                    this.close('torrent not active: '+torrent._attributes.name)
                     return
                 }
                 this.torrent = torrent
                 this.peer.torrent = torrent
                 this.torrent.peers.add(this)
+                console.clog(L.SEED, "established new incoming connection",this)
                 this.sendHandshake()
                 this.sendExtensionHandshake()
-                if (this.torrent.has_infodict()) {
+                this.torrent.ensureLoaded( function() {
                     this.sendBitfield()
-                }
+                }.bind(this))
             } else {
                 this.close('dont have this torrent')
             }

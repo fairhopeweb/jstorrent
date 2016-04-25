@@ -11,6 +11,7 @@ var L = {
     POWER: { name: 'POWER', color: 'blue', show: true },
     CLIENT: { name: 'CLIENT', color: 'green', show: true },
     PEER: { name: 'PEER', color: '#082', show: true },
+    SEED: { name: 'SEED', color: '#082', show: DEVMODE },
     SYSTEM: { name: 'SYSTEM', color: '#236', show: true },
     DEV: { name: 'DEV', color: '#622', show: DEVMODE },
     EVENT: { name: 'EVENT', color: '#ddd', show: DEVMODE },
@@ -140,7 +141,7 @@ jstorrent.options = {
     slow_diskio: false,
     slow_hashcheck: false,
     use_piece_cache: false,
-    seed_public_torrents: false, // default off
+    seed_public_torrents: true, // default off
     allow_report_torrent_bug: false,
     reset_on_complete: false, // reset torrent state on torrent completion (testing)
     manual_peer_connect_on_start: {
@@ -149,7 +150,7 @@ jstorrent.options = {
 //        'b91ec066668f2ce8111349ae86cc81941ce48c69': ['127.0.0.1:9090'],
 //        '726ff42f84356c9aeb27dfa379678c89f0e62149': ['127.0.0.1:9090'],
     }
-//    always_add_special_peer: ['127.0.0.1:8030','127.0.0.1:8031','127.0.0.1:8032','127.0.0.1:8033']
+    //    always_add_special_peer: ['127.0.0.1:8030','127.0.0.1:8031','127.0.0.1:8032','127.0.0.1:8033']
 //    manual_infohash_on_start: ['726ff42f84356c9aeb27dfa379678c89f0e62149']
 }
 var bind = Function.prototype.bind
