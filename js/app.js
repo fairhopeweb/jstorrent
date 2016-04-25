@@ -89,6 +89,7 @@ App.prototype = {
     },
     onIdleStateChanged: function(info) {
         console.clog(L.SYSTEM, 'idle state changed',info, ', online:',this.onLine())
+        // TODO - if online status changes from offline to back online, refresh upnp (what else to do?)
     },
     webappOnStop: function(info) {
         console.clog(L.APP,'webapp stopped',info)

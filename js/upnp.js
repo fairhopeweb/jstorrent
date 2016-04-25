@@ -13,21 +13,49 @@
     
     function UPNP(opts) {
         this.ssdp = new SSDP({client:this})
-        this.ssdp.addEventListener('device',this.onDevice.bind(this))
-        this.ssdp.addEventListener('stop',this.onSearchStop.bind(this))
-        this.ssdp.search() // stop searching after a bit.
-        this.devices = []
         this.desiredServices = [
             'urn:schemas-upnp-org:service:WANIPConnection:1',
             'urn:schemas-upnp-org:service:WANPPPConnection:1'
         ]
         this.validGateway = null
+        this.interfaces = null
+        this.reset()
     }
     UPNP.prototype = {
+        getInternalAddress: function() {
+            var gatewayhost = this.validGateway.device.url.hostname
+            var gateparts = gatewayhost.split('.')
+            var match = false
+
+            for (var i=gateparts.length-1;i--;i<1) {
+                var pre = gateparts.slice(0, i).join('.')
+                for (var j=0; j<this.interfaces.length; j++) {
+                    if (this.interfaces[j].prefixLength == 24) {
+                        var iparts = this.interfaces[j].address.split('.')
+                        var ipre = iparts.slice(0,i).join('.')
+                        if (ipre == pre) {
+                            match = this.interfaces[j].address
+                            return match
+                        }
+                    }
+                }
+
+            }
+        },
+        reset: function() {
+            chrome.system.network.getNetworkInterfaces( function(interfaces) {
+                this.interfaces = interfaces
+                this.devices = []
+                this.ssdp.addEventListener('device',this.onDevice.bind(this))
+                this.ssdp.addEventListener('stop',this.onSearchStop.bind(this))
+                this.ssdp.search() // stop searching after a bit.
+            }.bind(this) )
+        },
         onSearchStop: function(info) {
             this.getIP( function() {
                 this.getMappings( function(mappings) {
                     console.log('got current mappings',mappings)
+                    // check if already exists nice mapping we can use.
                 })
             }.bind(this))
         },
@@ -51,6 +79,39 @@
             }
             console.log('found WAN services',infos)
             return infos
+        },
+        addMapping: function(port, callback) {
+            if (! this.validGateway) {
+                callback()
+            } else {
+                function onresult(evt) {
+                    if (evt.target.code == 200) {
+                        var resp = evt.target.responseXML.documentElement.querySelector('AddPortMappingResponse')
+                        if (resp) {
+                            callback(flatParseNode(resp))
+                        } else {
+                            callback({error:'unknown',evt:evt})
+                        }
+                    } else {
+                        // maybe parse out the error all nice?
+                        callback({error:evt.target.code,evt:evt})
+                    }
+                }
+                var externalPort = port
+                var args = [
+                    ['NewEnabled',1],
+                    ['NewExternalPort',externalPort],
+                    ['NewInternalClient',this.getInternalAddress()],
+                    ['NewInternalPort',port],
+                    ['NewLeaseDuration',0],
+                    ['NewPortMappingDescription','JSTorrent (upnp.js)'],
+                    ['NewProtocol','TCP'],
+                    ['NewRemoteHost',""]
+                ]
+                this.validGateway.device.runService(this.validGateway.service,
+                                                    'AddPortMapping',
+                                                    args, onresult)
+            }
         },
         getMappings: function(callback) {
             if (! this.validGateway) {
@@ -111,6 +172,7 @@
     function GatewayDevice(info) {
         this.info = info
         this.description_url = info.headers.location
+        this.url = new URL(this.description_url)
         this.services = []
         this.devices = []
         this.attributes = null
@@ -119,7 +181,7 @@
     GatewayDevice.prototype = {
         runService: function(service, command, args, callback) {
             var xhr = new WSC.ChromeSocketXMLHttpRequest
-            var url = new URL(this.description_url).origin + service.controlURL
+            var url = this.url.origin + service.controlURL
             var body = '<?xml version="1.0"?>' +
                 '<s:Envelope ' +
                 'xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" ' +
@@ -195,8 +257,9 @@
         this.ssdpPort = 1900
         this.boundPort = null
         this.searchdevice = 'urn:schemas-upnp-org:device:InternetGatewayDevice:1'
-        chrome.sockets.udp.onReceive.addListener( this.onReceive.bind(this) )
-        chrome.sockets.udp.onReceiveError.addListener( this.onReceive.bind(this) )
+        this._onReceive = this.onReceive.bind(this)
+        chrome.sockets.udp.onReceive.addListener( this._onReceive )
+        chrome.sockets.udp.onReceiveError.addListener( this._onReceive )
         this.sockMap = {}
         this.lastError = null
         this.searching = false
@@ -258,6 +321,8 @@
             this.searching = false
             this.cleanup()
             this.trigger('stop')
+            chrome.sockets.udp.onReceive.removeListener( this._onReceive )
+            chrome.sockets.udp.onReceiveError.removeListener( this._onReceive )
         },
         search: function(opts) {
             if (this.searching) { return }
