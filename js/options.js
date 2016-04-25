@@ -49,6 +49,15 @@ function Options(opts) {
             'type':'bool',
             'description':'whether to exit when downloads have completed'
         },
+        'torrent_upload_slots': {
+            'name': 'Upload Slots per Torrent',
+            'help': 'Limit the number of uploads when seeding',
+            'default': 4,
+            'minval':0,
+            'maxval':10,
+            'type':'int',
+            visible: false
+        },
         'active_torrents_limit': {
             'name': 'Active torrents limit',
             'help': 'Limit the number of active torrents. Additional torrents will be queued',

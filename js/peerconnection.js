@@ -518,7 +518,9 @@ PeerConnection.prototype = {
 
             if (this.get('complete') == 1) {
                 if (! this.peerInterested) {
-                    //this.close('both complete and peer not interested',true)
+                    if (! DEVMODE) {
+                        this.close('both complete and peer not interested',true)
+                    }
                 }
             }
 
@@ -735,7 +737,7 @@ PeerConnection.prototype = {
         this.handleMessage(data)
     },
     handleMessage: function(msgData) {
-        console.clog(L.SEED, 'handling message',msgData)
+        //console.clog(L.SEED, 'handling message',msgData)
         var method = this['handle_' + msgData.type]
         if (msgData.type != "KEEPALIVE") {
             this.set('last_message_received',msgData.type) // TODO - get a more specific message for piece number
@@ -842,6 +844,10 @@ PeerConnection.prototype = {
                 var torrent = this.client.torrents.get(hashhexlower)
                 if (! (torrent.started || torrent.canSeed())) {
                     this.close('torrent not active: '+torrent._attributes.name)
+                    return
+                }
+                if (torrent.canSeed() && torrent.peers.items.length >= this.client.app.options.get('torrent_upload_slots')) {
+                    this.close('too many uploads already')
                     return
                 }
                 this.torrent = torrent

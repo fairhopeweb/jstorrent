@@ -308,6 +308,10 @@ UDPTracker.prototype = {
         if (callback) { callback(countPeers) }
     },
     announce: function(event, callback) {
+        // look at http://www.bittorrent.org/beps/bep_0015.html
+        // do retry when connect timeout, or announce timeout
+
+        
         if (jstorrent.options.disable_trackers) { return }
         if (this.announcing) { return }
         event = event || 'started'
@@ -322,6 +326,8 @@ UDPTracker.prototype = {
                 if (err) {
                     this.set_error(err); return
                 }
+                // TODO - connection should be valid for up to two minutes.
+                
                 // this.connection = connectionInfo // dont re-use connection, whatevs
                 //console.log('tracker got connection',connectionInfo.connectionId)
 

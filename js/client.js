@@ -174,13 +174,11 @@ Client.prototype = {
             }
             if (matchSocket) {
                 console.log('using matched socket')
-                debugger
                 onCreate.call(this, matchSocket)
                 // or is it already listening?
             } else {
                 console.log('creating new socket')
-                chrome.sockets.tcpServer.create({name:"JSIncomingSocket",
-                                                 persistent:true}, onCreate.bind(this))
+                chrome.sockets.tcpServer.create({name:"JSIncomingSocket"},onCreate.bind(this))
             }
         }.bind(this))
     },

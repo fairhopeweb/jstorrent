@@ -936,7 +936,9 @@ Torrent.prototype = {
 
             this.peers.each( function(peer) {
                 if (peer.peerHandshake && peer.connected) {
-                    peer.sendMessage("HAVE", [payload.buffer])
+                    if (peer.get('complete') != 1) { // dont send HAVE to peers who wont care
+                        peer.sendMessage("HAVE", [payload.buffer])
+                    }
                 }
             });
         }
