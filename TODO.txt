@@ -1,3 +1,4 @@
+- remove textencoder js libs / digest (unnecessary)
 - check cost of truncate on file sizes
 - measure/check disk write speed
 
