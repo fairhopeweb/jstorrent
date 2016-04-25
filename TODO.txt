@@ -1,3 +1,4 @@
+- move calculate_speed into timer independent from UI render
 - remove port mapping on close
 
 - remove textencoder js libs / digest (unnecessary)
@@ -39,7 +40,7 @@
 - poll navigator.onLine sometimes ... ?
 - register idle change when app is open / foreground, so we can handle sleep/resume better
 - send keepalives or at least newstate think to sockets (sleep mode and they can stay connected?)
-- move calculate_speed into timer independent from UI render
+
 - store bitfield as binary string in local storage
 - show notification when update available, or when update was installed.
 - small swarm debugging

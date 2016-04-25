@@ -90,11 +90,11 @@ OptionDisplay.prototype = {
         if (! isNaN(val)) {
             this.opts.options.set(this.opts.key, val)
             var resetval = null
-            if (val < 1) {
-                resetval = 1
+            if (val < this.opts.meta.minval) {
+                resetval = this.opts.meta.minval
             }
-            if (val > 200) {
-                resetval = 200
+            if (val > this.opts.meta.maxval) {
+                resetval = this.opts.meta.maxval
             }
             if (resetval) {
                 evt.target.value = resetval

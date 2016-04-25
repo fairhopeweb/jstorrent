@@ -112,7 +112,7 @@ function Client(opts) {
     this.on('ready', _.bind(this.onReady, this))
 
     this.listenSock = null
-    this.listenPort = 4289 // TODO retry on other ports
+    this.listenPort = 10289 // TODO retry on other ports
     // TODO only setup UPNP after this
     this.listening = false
     this.setupListen()
@@ -141,7 +141,7 @@ Client.prototype = {
         chrome.sockets.tcp.getInfo(sockInfo.clientSocketId, function(info) {
             //console.log('got incoming socket info',info)
             var peer = new jstorrent.Peer({host:info.peerAddress,
-                                           torrent:'?',
+                                           torrent:null,
                                            port:info.peerPort})
             var peerconn = new jstorrent.PeerConnection({sockInfo:sockInfo, peer:peer, client:this})
         }.bind(this))

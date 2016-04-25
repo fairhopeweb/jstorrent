@@ -149,7 +149,7 @@ PeerConnection.prototype = {
     },
     cleanupRequests: function() {
         // when does this get called?
-        if (this.torrent == "?") { return }
+        if (! this.torrent) { return }
         var idx = this.torrent.connectionsServingInfodict.indexOf(this)
         if (idx != -1) {
             console.log('removing self from connections serving infodicts')
@@ -435,6 +435,12 @@ PeerConnection.prototype = {
             return
         }
 
+        var dl_limit = this.client.app.options.get('download_rate_limit')
+        if (dl_limit && this.torrent.get('downspeed') > (dl_limit * 1024)) {
+            //console.clog(L.DEV,'not requesting pieces, dl limit reached')
+            return
+        }
+
         if (this.torrent.unflushedPieceDataSize > this.torrent.unflushedPieceDataSizeLimit) {
             console.clog(L.DEV,'not requesting more pieces -- need disk io to write out more first')
             return
@@ -610,7 +616,9 @@ PeerConnection.prototype = {
         }
     },
     onReadTCP: function(readResult) {
-        this.lastReadTime = this.torrent.tickTime
+        if (this.torrent) {
+            this.lastReadTime = this.torrent.tickTime
+        }
         this.onRead(readResult)
     },
     onReadTCPError: function(readResult) {
@@ -644,7 +652,7 @@ PeerConnection.prototype = {
     },
     countBytes: function(type, val) {
         // bubble up to client
-        if (this.torrent.countBytes) {
+        if (this.torrent) {
             this.torrent.countBytes(type, val)
         }
         if (type == 'received') {
@@ -663,7 +671,7 @@ PeerConnection.prototype = {
             return
         }
         //console.log('onread',readResult,readResult.data.byteLength, [ui82str(new Uint8Array(readResult.data))])
-        if (! (this.torrent.started || this.torrent.canSeed())) {
+        if (this.torrent && ! (this.torrent.started || this.torrent.canSeed())) {
             this.close('torrent stopped')
             return
         }
