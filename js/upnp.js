@@ -54,7 +54,7 @@
         onSearchStop: function(info) {
             this.getIP( function() {
                 this.getMappings( function(mappings) {
-                    console.log('got current mappings',mappings)
+                    console.clog(L.SSDP,'got current mappings',mappings)
                     // check if already exists nice mapping we can use.
                 })
             }.bind(this))
@@ -77,7 +77,7 @@
                     }
                 }
             }
-            console.log('found WAN services',infos)
+            //console.log('found WAN services',infos)
             return infos
         },
         addMapping: function(port, callback) {
@@ -219,7 +219,7 @@
         },
         getDescription: function(callback) {
             var xhr = new WSC.ChromeSocketXMLHttpRequest
-            console.clog(L.SSDP,'query',this.description_url)
+            //console.clog(L.SSDP,'query',this.description_url)
             xhr.open("GET",this.description_url)
             xhr.responseType = 'xml'
             function onload(evt) {
@@ -237,7 +237,7 @@
                     }
 
                 }
-                console.log('got service info',this)
+                //console.log('got service info',this)
                 callback()
             }
             xhr.onload = xhr.onerror = xhr.ontimeout = onload.bind(this)
@@ -365,10 +365,10 @@
                 '\r\n'
 
             chrome.sockets.udp.send(state.sockInfo.socketId, new TextEncoder('utf-8').encode(req).buffer, this.multicast, this.ssdpPort, this.onsend.bind(this))
-            console.clog(L.SSDP, 'sending to',this.multicast,this.ssdpPort)
+            //console.clog(L.SSDP, 'sending to',this.multicast,this.ssdpPort)
         },
         onsend: function(result) {
-            console.clog(L.SSDP, 'sent result',result)
+            //console.clog(L.SSDP, 'sent result',result)
         }
     }
     jstorrent.UPNP = UPNP

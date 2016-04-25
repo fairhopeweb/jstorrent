@@ -108,11 +108,66 @@ function Client(opts) {
     this.on('error', _.bind(this.onError, this))
     this.on('ready', _.bind(this.onReady, this))
 
+    this.listenSock = null
+    this.listenPort = 4289
+    this.listening = false
+    this.setupListen()
+    this._onAccept = this.onAccept.bind(this)
+
     this.ports = {}
     this.portCtr = 0
 }
 
 Client.prototype = {
+    onAccept: function(sockInfo) {
+        console.log('incoming connection',sockInfo)
+        // check if bittorrent connection, dont even know what torrent we're looking at...
+        chrome.sockets.tcp.getInfo(sockInfo.clientSocketId, function(info) {
+            console.log('got incoming socket info',info)
+            var peer = new jstorrent.Peer({host:info.peerAddress,
+                                           torrent:'?',
+                                           port:'?'})
+            var peerconn = new jstorrent.PeerConnection({sockInfo:sockInfo, peer:peer, client:this})
+        }.bind(this))
+    },
+    setupListen: function() {
+        function onCreate(sockInfo) {
+            this.listenSock = sockInfo
+            chrome.sockets.tcpServer.listen(sockInfo.socketId,'0.0.0.0',this.listenPort,onListen.bind(this))
+        }
+        function onListen(result) {
+            var lasterr = chrome.runtime.lastError
+            if (lasterr || result < 0) {
+                console.log('lasterr listen on port',lasterr)
+                debugger
+            } else {
+                console.clog(L.CLIENT,"listening",this.listenPort)
+                this.listening = true
+                chrome.sockets.tcpServer.onAcceptError.addListener(this._onAccept)
+                chrome.sockets.tcpServer.onAccept.addListener(this._onAccept)
+            }
+        }
+        chrome.sockets.tcpServer.getSockets( function(sockets) {
+            var matchSocket = null
+            if (sockets.length > 0) {
+                for (var i=0; i<sockets.length; i++) {
+                    if (sockets[i].name == "JSIncomingSocket") {
+                        matchSocket = sockets[i]
+                    }
+                }
+            }
+            if (matchSocket) {
+                console.log('using matched socket')
+                debugger
+                onCreate.call(this, matchSocket)
+                // or is it already listening?
+            } else {
+                console.log('creating new socket')
+                chrome.sockets.tcpServer.create({name:"JSIncomingSocket",
+                                                 persistent:true}, onCreate.bind(this))
+            }
+        }.bind(this))
+    },
     onActiveTorrentsChange: function() {
         // a torrent stopped, completed, or started... (or settings changed)
         var numactive = _.keys(this.get('activeTorrents')).length

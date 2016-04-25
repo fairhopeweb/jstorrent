@@ -270,15 +270,6 @@ Torrent.prototype = {
 
         }
     },
-    bytesToHashhex: function(arr) {
-        console.assert(arr.length == 20)
-        var s = ''
-        for (var i=0; i<arr.length; i++) {
-            s += pad(arr[i].toString(16), '0', 2)
-        }
-        console.assert(s.length == 40)
-        return s
-    },
     addNonCompactPeerBuffer: function(added) {
         for (var i=0; i<added.length; i++) {
             var host = added[i].ip
@@ -380,7 +371,7 @@ Torrent.prototype = {
             if (hash) {
                 //console.log('hashed input torrent file to',hash)
                 _this.hashbytes = ui82arr(hash)
-                _this.hashhexlower = _this.bytesToHashhex(_this.hashbytes).toLowerCase()
+                _this.hashhexlower = bytesToHashhex(_this.hashbytes).toLowerCase()
                 //console.assert( _this.hashhexlower == '0cd80358a182edd5a74d1e967d98822212d2f744' ) // Tomorrow's Modern Boxes
                 _this.initializeTrackers()
                 _this.metadataPresentInitialize(opts)
@@ -1352,7 +1343,7 @@ Torrent.prototype = {
         //if (reallyStart === undefined) { return }
         if (this.started || this.starting) { return } // some kind of edge case where starting is true... and everything locked up. hmm
         if (this.isComplete()) {
-            this.set('state','complete')
+            this.set('state','seeding')
             this.save()
             return
         }

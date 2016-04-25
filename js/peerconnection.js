@@ -30,6 +30,7 @@ function PeerConnection(opts) {
 
     this.peer = opts.peer
     this.torrent = opts.peer.torrent
+    this.client = opts.client || opts.peer.torrent.client
     this.amInterested = false
     this.amChoked = true
     this.readThrottled = false
@@ -105,6 +106,16 @@ function PeerConnection(opts) {
     this.writing_length = 0
     this.readBuffer = new jstorrent.Buffer
     this.writeBuffer = new jstorrent.Buffer
+
+    if (opts.sockInfo) {
+        this.sockInfo = {socketId: opts.sockInfo.clientSocketId}
+        chrome.sockets.tcp.setPaused(this.sockInfo.socketId, false, function(){})
+        peerSockMap[this.sockInfo.socketId] = this
+        this.state = 'incoming'
+        this.connected = true
+    } else {
+        this.state = 'outgoing'
+    }
 }
 
 jstorrent.PeerConnection = PeerConnection;
@@ -137,6 +148,7 @@ PeerConnection.prototype = {
     },
     cleanupRequests: function() {
         // when does this get called?
+        if (this.torrent == "?") { return }
         var idx = this.torrent.connectionsServingInfodict.indexOf(this)
         if (idx != -1) {
             console.log('removing self from connections serving infodicts')
@@ -625,7 +637,9 @@ PeerConnection.prototype = {
     },
     countBytes: function(type, val) {
         // bubble up to client
-        this.torrent.countBytes(type, val)
+        if (this.torrent.countBytes) {
+            this.torrent.countBytes(type, val)
+        }
         if (type == 'received') {
             this.set('bytes_received', this.get('bytes_received') + val)
         } else {
@@ -633,8 +647,16 @@ PeerConnection.prototype = {
         }
     },
     onRead: function(readResult) {
+        if (this.state == 'incoming' && ! this.peerHandshake) {
+            //console.log('read with incoming peer connection')
+            // parse infohash, bittorrent protocol, etc
+            this.countBytes('received', readResult.data.byteLength)
+            this.readBuffer.add(readResult.data)
+            this.checkBuffer()
+            return
+        }
         //console.log('onread',readResult,readResult.data.byteLength, [ui82str(new Uint8Array(readResult.data))])
-        if (! this.torrent.started) {
+        if (! (this.torrent.started || this.torrent.get('state') == 'seeding')) {
             this.close('torrent stopped')
         }
 
@@ -662,7 +684,6 @@ PeerConnection.prototype = {
         if (! this.peerHandshake) {
             if (this.readBuffer.size() >= jstorrent.protocol.handshakeLength) {
                 var buf = this.readBuffer.consume(jstorrent.protocol.handshakeLength)
-
                 this.handleMessage({type:'HANDSHAKE',payloadSize: buf.byteLength, payload:buf})
                 //this.peerHandshake = 
                 //if (! this.peerHandshake) {
@@ -690,7 +711,7 @@ PeerConnection.prototype = {
     },
     parseMessage: function(buf) {
         var data = {}
-        //console.log('handling bittorrent message', new Uint8Array(buf))
+        //console.clog(L.PEER,'handling bittorrent message', new Uint8Array(buf))
         var msgsz = new DataView(buf, 0, 4).getUint32(0)
         if (msgsz == 0) {
             data.type = 'KEEPALIVE'
@@ -708,7 +729,7 @@ PeerConnection.prototype = {
         this.handleMessage(data)
     },
     handleMessage: function(msgData) {
-        //console.log('handling message',msgData)
+        //console.clog(L.PEER, 'handling message',msgData)
         var method = this['handle_' + msgData.type]
         if (msgData.type != "KEEPALIVE") {
             this.set('last_message_received',msgData.type) // TODO - get a more specific message for piece number
@@ -803,6 +824,31 @@ PeerConnection.prototype = {
     handle_HANDSHAKE: function(msg) {
         var buf = msg.payload
         this.peerHandshake = jstorrent.protocol.parseHandshake(buf)
+        if (! this.peerHandshake) {
+            console.log('invalid handshake',new TextDecoder('utf-8').decode(buf))
+            this.close('invalid handshake')
+        } else if (this.state == 'incoming') {
+            console.log('incoming connection peer handshake',this.peerHandshake)
+            var hashhexlower = bytesToHashhex(this.peerHandshake.infohash).toLowerCase()
+            if (this.client.torrents.containsKey(hashhexlower)) {
+                // have this torrent! yay!
+                var torrent = this.client.torrents.get(hashhexlower)
+                if (! (torrent.started || torrent.get('state') == 'seeding')) {
+                    this.close('torrent not started')
+                    return
+                }
+                this.torrent = torrent
+                this.peer.torrent = torrent
+                this.torrent.peers.add(this)
+                this.sendHandshake()
+                this.sendExtensionHandshake()
+                if (this.torrent.has_infodict()) {
+                    this.sendBitfield()
+                }
+            } else {
+                this.close('dont have this torrent')
+            }
+        }
     },
     handle_KEEPALIVE: function() {
         // do nothin... 
@@ -888,7 +934,10 @@ PeerConnection.prototype = {
                 console.error("was not expecting this torrent metadata piece")
             }
         } else if (infodictMsgType == 'REQUEST') {
-            if (! this.torrent.infodict_buffer) { return } // cant handle this!
+            if (! this.torrent.infodict_buffer) {
+                console.warn('dont have infodict buffer!')
+                return
+            } // cant handle this!
 
             var code = this.peerExtensionHandshake.m.ut_metadata
 
@@ -902,7 +951,7 @@ PeerConnection.prototype = {
             var slicelen = Math.min( d.total_size - slicea,
                                      jstorrent.protocol.chunkSize )
             // TODO -- assert pieceRequested/slicea in bounds
-            if (slicea > 0 && slicea < this.torrent.infodict_buffer.byteLength) {
+            if (slicea => 0 && slicea < this.torrent.infodict_buffer.byteLength) {
                 if (slicelen < 0) {
                     return // weird, some peers sending bad infodict message requests
                 }
@@ -914,6 +963,8 @@ PeerConnection.prototype = {
                                  [new Uint8Array([code]).buffer,
                                   new Uint8Array(bencode(d)).buffer,
                                   newbuf.buffer])
+            } else {
+                //console.log('problem serving metadata')
             }
         } else {
             //debugger

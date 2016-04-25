@@ -9,6 +9,7 @@ var L = {
     DISK: { name: 'DISK', color: 'darkblue', show: true },
     STREAM: { name: 'STREAM', color: 'orange', show: true },
     POWER: { name: 'POWER', color: 'blue', show: true },
+    CLIENT: { name: 'CLIENT', color: 'green', show: true },
     PEER: { name: 'PEER', color: '#082', show: true },
     SYSTEM: { name: 'SYSTEM', color: '#236', show: true },
     DEV: { name: 'DEV', color: '#622', show: DEVMODE },
@@ -252,6 +253,16 @@ function ui82arr(arr, startOffset) {
         outarr.push(arr[i + startOffset])
     }
     return outarr
+}
+
+function bytesToHashhex(arr) {
+    console.assert(arr.length == 20)
+    var s = ''
+    for (var i=0; i<arr.length; i++) {
+        s += pad(arr[i].toString(16), '0', 2)
+    }
+    console.assert(s.length == 40)
+    return s
 }
 
 function base32tohex(base32) {

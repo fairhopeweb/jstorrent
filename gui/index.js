@@ -133,7 +133,7 @@ function onready() {
         app.initialize( onappready )
 
     }
-    if (false && DEVMODE) {
+    if (DEVMODE) {
         console.log('waiting for webkit inspector to be ready')
         setTimeout( go, 1000)
     } else {
