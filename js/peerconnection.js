@@ -831,6 +831,8 @@ PeerConnection.prototype = {
         this.amChoked = false
     },
     handle_ALLOWED_FAST: function(msg) {
+        // http://www.bittorrent.org/beps/bep_0006.html
+        // Allowed Fast: <len=0x0005><op=0x11><index>* (can download even when choked)
         // ?
     },
     handle_CANCEL: function() {

@@ -1,3 +1,8 @@
+- add supportcrypto=0 to HTTP tracker announce (udp announce extra option flags too http://www.bittorrent.org/beps/bep_0041.html)
+- show ext header keys in peer list, see if for example lt_tex http://www.bittorrent.org/beps/bep_0028.html present ever
+- disconnect incoming peers if global maxuploads hit (before read handshake)
+- test stuttering of streaming page 1080p on arm vs stream to chromecast vs play from disk
+  and instrument dropped frames etc
 - seeding, queue piece messages as to not make diskio look too full.
 
 - move client into background page so we can cleanup properly when main window closes
