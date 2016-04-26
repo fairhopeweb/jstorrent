@@ -255,12 +255,12 @@
                 }
                 var ext_data = stringToUint8ArrayWS(this.parsedUrl.pathname + search)
                 // split up into chunks of sz < 255
-                var numchunks = Math.floor(ext_data.length / 255)+1
+                var numchunks = Math.ceil(ext_data.length / 255)
                 var chunks = []
                 for (var i=0; i<numchunks; i++) {
                     var a = i*255
                     var b = Math.min(a + 255, ext_data.length)
-                    chunks.push( ext_data.slice(i, b-a) )
+                    chunks.push( ext_data.slice(a,b) )
                 }
                 var payload = new Uint8Array(98 + 1 + numchunks + ext_data.length + 1)
             } else {
