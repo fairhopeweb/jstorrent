@@ -97,7 +97,7 @@
                 // maybe another packet is coming?
                 return {error:'need another packet?'}
             }
-
+            this.set('received',this.get('received')+countPeers)
             var peerList = []
             for (var i=0; i<countPeers; i++) {
                 var ipbytes = [v.getUint8( 20 + (i*6) ),

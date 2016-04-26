@@ -124,6 +124,7 @@ function UI(opts) {
             {id:'announces', name:"Announces", type:'number', formatVal: intDontShowZero},
             {id:'seeders', width:65, name:"Seeders", type:'number', formatVal: intDontShowZero},
             {id:'leechers', width:65, name:"Leechers", type:'number', formatVal: intDontShowZero},
+            {id:'received', width:65, name:"Received", type:'number', formatVal: intDontShowZero},
             {id:'state', name:"Status",width:200 },
             {id:'lasterror', name:"Information", width:300},
             {id:'next_announce', name:"Next Announce", type:'number'/*, formatVal:formatValETA*/},

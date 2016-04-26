@@ -60,6 +60,7 @@
         this.set('downloaded',0)
         this.set('leechers',0)
         this.set('seeders',0)
+        this.set('received',0)
         this.set('lasterror','')
 
         this.announcedWhen = null
@@ -183,8 +184,10 @@
 
             if (data.peers && typeof data.peers == 'object') {
                 this.torrent.addNonCompactPeerBuffer(data.peers)
+                this.set('received',this.get('received')+data.peers.length)
             } else if (data.peers) {
                 this.torrent.addCompactPeerBuffer(data.peers)
+                this.set('received',this.get('received')+data.peers.length)
             } else {
                 this.error({message:'no peers in response',data:data,evt:evt})
                 if (data['failure reason']) {
