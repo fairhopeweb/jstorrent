@@ -210,6 +210,7 @@
                 downloaded: this.torrent.get('downloaded'),
                 uploaded: this.torrent.get('uploaded'),
                 compact: 1,
+                supportcrypto: 0,
                 peer_id: ui82str(peeridbytes),
                 port: this.torrent.client.externalPort(), // some trackers complain when we send 0 and dont give a response
                 left: this.torrent.get('size') - this.torrent.get('downloaded')

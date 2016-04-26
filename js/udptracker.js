@@ -17,7 +17,7 @@
         this.connect_timeout = 2000
         this.connect_timeout_id
 
-        this.announce_timeout = 2000
+        this.announce_timeout = 20000
         this.announceRequest = null
         this.announce_callback = null
         this.announce_timeout_id
@@ -239,29 +239,38 @@
             }
         },
         get_announce_payload: function(connectionId, event) {
+            var doExtension = true
+            var addNoCrypto = true
             var transactionId = Math.floor(Math.random() * Math.pow(2,32))
-            var payload = new Uint8Array([
-                0,0,0,0, 0,0,0,0, /* connection id */
-                0,0,0,1, /* action */
-                0,0,0,0, /* transaction id */
-                0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0, /* infohash */
-                0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0, /* peer id */
-                0,0,0,0,0,0,0,0, /* downloaded */
-                0,0,0,0,0,0,0,0, /* left */
-                0,0,0,0,0,0,0,0, /* uploaded */
-                0,0,0,0, /* event */
-                0,0,0,0, /* ip */
-                0,0,0,0, /* key */
-                255,255,255,255, /* numwant , -1 for default */
-                2,0, /* port we listen on */
-                0,0, /* extensions, e.g. cookies or authentication */
-            ]);
-
+            var ACTIONS = {announce:1,
+                           scrape:2}
+            if (doExtension) {
+                var search = this.parsedUrl.search
+                if (addNoCrypto) {
+                    if (search.length == 0) {
+                        search = '?supportcrypto=0'
+                    } else {
+                        search += '&supportcrypto=0'
+                    }
+                }
+                var ext_data = stringToUint8ArrayWS(this.parsedUrl.pathname + search)
+                // split up into chunks of sz < 255
+                var numchunks = Math.floor(ext_data.length / 255)+1
+                var chunks = []
+                for (var i=0; i<numchunks; i++) {
+                    var a = i*255
+                    var b = Math.min(a + 255, ext_data.length)
+                    chunks.push( ext_data.slice(i, b-a) )
+                }
+                var payload = new Uint8Array(98 + 1 + numchunks + ext_data.length + 1)
+            } else {
+                var payload = new Uint8Array(98)
+            }
             var v = new DataView( payload.buffer );
             var i = 0
             v.setUint32( i, connectionId[0] ); i+=4
             v.setUint32( i, connectionId[1] ); i+=4
-            "action"; i+=4
+            v.setUint32( i, ACTIONS.announce ); i+=4
             v.setUint32( i, transactionId ); i+=4
             for (var j=0; j<20; j++) {
                 v.setInt8(i+j, this.torrent.hashbytes[j])
@@ -295,9 +304,21 @@
             */
             "ip";i+=4 // not sending IP is OK, tracker will figure it out.
             "key";i+=4
-            "numwant";i+=4
+            v.setInt32(i,-1); i+=4 // numwant
             var ext_port = this.torrent.client.externalPort()
             v.setUint16(i, ext_port); i+=2
+            // tracker extension protocol
+            console.assert(i==98)
+            if (doExtension) {
+                v.setUint8(i++, 0x2)
+                for (var j=0; j<chunks.length; j++) {
+                    v.setUint8(i++, chunks[j].length)
+                    for (var k=0; k<chunks[j].length; k++) {
+                        v.setUint8(i++, chunks[j][k])
+                    }
+                }
+                v.setUint8(i++,0)
+            }
             //console.log('udp tracker payload',new Uint8Array(payload.buffer))
             return {payload: payload.buffer, transactionId: transactionId};
         },

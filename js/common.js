@@ -154,7 +154,7 @@ jstorrent.options = {
 //        '726ff42f84356c9aeb27dfa379678c89f0e62149': ['127.0.0.1:9090'],
     },
     //    always_add_special_peer: ['127.0.0.1:8030','127.0.0.1:8031','127.0.0.1:8032','127.0.0.1:8033']
-    //    always_add_special_tracker: ["udp://tracker.coppersurfer.tk:6969/announce"],
+//        always_add_special_tracker: ["udp://tracker.coppersurfer.tk:6969/announce"],
 //    always_add_special_tracker: ["http://tracker.opentrackr.org:1337/announce"]
     
 //    always_add_special_peer: ['127.0.0.1:35974', '192.168.1.179:56844']
