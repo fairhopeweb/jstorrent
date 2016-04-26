@@ -60,7 +60,7 @@
         }
         colon++;
         var raw = x.slice(colon,colon+n);
-        if (opts && opts.utf8 && key != 'pieces' && key != 'originator') {
+        if (opts && opts.utf8 && key == 'name') { // basically, we only want to utf-8 decode the torrent name
             var decoded = td.decode(stringToUint8ArrayWS(raw))
             //var decoded = utf8.parse(stringToUint8Array(raw))
         } else {
@@ -145,9 +145,9 @@
         r.push('e'.charCodeAt(0));
     }
     function encode_string(x, r, stack, cb, opts) {
+        var isName = stack && stack.length > 0 && stack[stack.length-1] == 'name';
         var isPieces = stack && stack.length > 0 && stack[stack.length-1] == 'pieces';
-        var isOriginator = stack && stack.length > 0 && stack[stack.length-1] == 'originator';
-        if (opts && opts.utf8 && ! (isPieces || isOriginator) ) {
+        if (opts && opts.utf8 && isName) {
             //var bytes = utf8.toByteArray(x);
             var bytes = te.encode(x);
         } else {
