@@ -286,7 +286,7 @@
             v.setUint32(i+4, this.torrent.get('size') - this.torrent.get('downloaded')); i+=8
             v.setUint32(i+4, this.torrent.get('uploaded')); i+= 8
             var eventmap = { 'started': 2,
-                             'completed': 1,
+                             'complete': 1,
                              'stopped': 3,
                              'none': 0 }
             if (eventmap[event]) {
@@ -304,7 +304,12 @@
             */
             "ip";i+=4 // not sending IP is OK, tracker will figure it out.
             "key";i+=4
-            v.setInt32(i,-1); i+=4 // numwant
+            if (event == 'stopped' || event == 'complete') {
+                var numwant = 0
+            } else {
+                var numwant = -1
+            }
+            v.setInt32(i,numwant); i+=4 // numwant
             var ext_port = this.torrent.client.externalPort()
             v.setUint16(i, ext_port); i+=2
             // tracker extension protocol

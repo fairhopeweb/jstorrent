@@ -215,6 +215,9 @@
                 port: this.torrent.client.externalPort(), // some trackers complain when we send 0 and dont give a response
                 left: this.torrent.get('size') - this.torrent.get('downloaded')
             }
+            if (event == 'stopped' || event == 'complete') {
+                data.numwant = 0
+            }
             var xhr = new WSC.ChromeSocketXMLHttpRequest
             var url
             if (this.url.indexOf('?') == -1) {

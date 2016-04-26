@@ -845,7 +845,9 @@ PeerConnection.prototype = {
     handle_INTERESTED: function() {
         this.peerInterested = true
         if (this.torrent.isPrivate() || app.options.get('seed_public') || jstorrent.options.seed_public_torrents || this.peer.host == '127.0.0.1') {
-            this.sendMessage('UNCHOKE') // TODO - under what conditions?
+            if (this.torrent.isComplete()) {
+                this.sendMessage('UNCHOKE')
+            }
         }
     },
     handle_NOT_INTERESTED: function() {
