@@ -296,8 +296,10 @@ Torrent.prototype = {
             port = added.charCodeAt( idx+4 ) * 256 + added.charCodeAt( idx+5 )
             peer = new jstorrent.Peer({host:host, port:port, torrent:this})
             if (! this.swarm.contains(peer)) {
-                //console.log('peer buffer added new peer',host,port)
-                this.swarm.add(peer)
+                if (! jstorrent.options.disable_pex) {
+                    //console.log('peer buffer added new peer',host,port)
+                    this.swarm.add(peer)
+                }
             }
         }
 
@@ -1218,8 +1220,11 @@ Torrent.prototype = {
             v.setUint32(4, offset)
 
             this.set('uploaded', this.get('uploaded') + size) // cheating? what is "uploaded" supposed to be, anyway
-
-            peerconn.sendMessage('PIECE', [header.buffer].concat(result))
+            if (peerconn.connected) {
+                peerconn.sendMessage('PIECE', [header.buffer].concat(result))
+            } else {
+                // too bad, peer disconnected while we were getting the data
+            }
         },this))
     },
     has_infodict: function() {
@@ -1273,6 +1278,23 @@ Torrent.prototype = {
         }
     },
     initializeTrackers: function() {
+
+        if (jstorrent.options.always_add_special_tracker) {
+            var urls = jstorrent.options.always_add_special_tracker
+            for (var i=0; i<urls.length; i++) {
+                url = urls[i]
+                if (url.toLowerCase().match('^udp')) {
+                    tracker = new jstorrent.UDPTracker( {url:url, torrent: this} )
+                } else {
+                    tracker = new jstorrent.HTTPTracker( {url:url, torrent: this} )
+                }
+                if (! this.trackers.contains(tracker)) {
+                    this.trackers.add( tracker )
+                }
+            }
+            return
+        }
+        
         var url, tracker
         var announce_list = [], urls = []
         if (this.magnet_info && this.magnet_info.tr) {
@@ -1328,6 +1350,9 @@ Torrent.prototype = {
         }
         if (! this.trackers.contains(tracker)) {
             this.trackers.add( tracker )
+            if (this.started) {
+                tracker.announce()
+            }
         }
     },
     addPublicTrackers: function() {
@@ -1696,6 +1721,7 @@ Torrent.prototype = {
         if (this.thinkCtr % 4 == 0) {
             // only update these stats every second
             this.calculate_speeds()
+            this.trackerTick()
         }
 
         if (this.thinkCtr % 12 == 0) {
@@ -1728,6 +1754,15 @@ Torrent.prototype = {
                     }
                 }
                 // peer.set('only_connect_once',true) // huh?
+            }
+        }
+    },
+    trackerTick: function() {
+
+        // only if UI is active
+        if (this.client.app.UI && this.client.app.UI.detailtype == 'trackers') {
+            for (var i=0; i<this.trackers.items.length; i++) {
+                this.trackers.items[i].tick()
             }
         }
     },

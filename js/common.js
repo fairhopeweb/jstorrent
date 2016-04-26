@@ -1,22 +1,24 @@
 // logging levels
 var L = {
-    INIT: { name: 'INIT', color: '#cef', show: true },
-    UI: { name: 'UI', color: '#ce0', show: true },
-    APP: { name: 'APP', color: 'darkgreen', show: true },
-    TRACKER: { name: 'TRACKER', color: '#3e8', show: true },
-    TORRENT: { name: 'TORRENT', color: '#0ae', show: true },
-    DISKIO: { name: 'DISKIO', color: 'orange', show: true },
-    DISK: { name: 'DISK', color: 'darkblue', show: true },
-    STREAM: { name: 'STREAM', color: 'orange', show: true },
-    POWER: { name: 'POWER', color: 'blue', show: true },
-    CLIENT: { name: 'CLIENT', color: 'green', show: true },
-    PEER: { name: 'PEER', color: '#082', show: true },
-    SEED: { name: 'SEED', color: '#082', show: DEVMODE },
-    SYSTEM: { name: 'SYSTEM', color: '#236', show: true },
-    DEV: { name: 'DEV', color: '#622', show: DEVMODE },
-    EVENT: { name: 'EVENT', color: '#ddd', show: DEVMODE },
-    SSDP: { name: 'SSDP', color: '#ddd', show: DEVMODE }
+    INIT: { color: '#cef', show: true },
+    UI: { color: '#ce0', show: true },
+    APP: { color: 'darkgreen', show: true },
+    TRACKER: { color: '#3e8', show: true },
+    TORRENT: { color: '#0ae', show: true },
+    DISKIO: { color: 'orange', show: true },
+    DISK: { color: 'darkblue', show: true },
+    STREAM: { color: 'orange', show: true },
+    POWER: { color: 'blue', show: true },
+    CLIENT: { color: 'green', show: true },
+    PEER: { color: '#082', show: false },
+    SEED: { color: '#082', show: false },
+    SYSTEM: { color: '#236', show: true },
+    DEV: { color: '#622', show: false },
+    EVENT: { color: '#ddd', show: false },
+    SSDP: { color: '#ddd', show: false },
+    DHT: { color: '#ddd', show: false }
 }
+Object.keys(L).forEach( function(k) { L[k].name = k } )
 function reportAverageDownloadSpeed(secs, bytes) {
     var bytessec = bytes/secs
     console.clog(L.TORRENT, 'a new, uninterrupted torrent finished in',formatValETA(secs), 'avg rate', byteUnitsSec(bytessec))
@@ -140,6 +142,7 @@ jstorrent.options = {
     disable_trackers: false,
     slow_diskio: false,
     slow_hashcheck: false,
+    disable_pex: false,
     use_piece_cache: false,
     seed_public_torrents: true, // default off
     allow_report_torrent_bug: false,
@@ -149,8 +152,12 @@ jstorrent.options = {
 //        'b91ec066668f2ce8111349ae86cc81941ce48c69': ['184.75.214.170:15402']
 //        'b91ec066668f2ce8111349ae86cc81941ce48c69': ['127.0.0.1:9090'],
 //        '726ff42f84356c9aeb27dfa379678c89f0e62149': ['127.0.0.1:9090'],
-    }
+    },
     //    always_add_special_peer: ['127.0.0.1:8030','127.0.0.1:8031','127.0.0.1:8032','127.0.0.1:8033']
+    //    always_add_special_tracker: ["udp://tracker.coppersurfer.tk:6969/announce"],
+//    always_add_special_tracker: ["http://tracker.opentrackr.org:1337/announce"]
+    
+//    always_add_special_peer: ['127.0.0.1:35974', '192.168.1.179:56844']
 //    manual_infohash_on_start: ['726ff42f84356c9aeb27dfa379678c89f0e62149']
 }
 var bind = Function.prototype.bind
@@ -390,6 +397,7 @@ function pad(s, padwith, len) {
     var sunits = ['s','m','h','d']
     var ssz = [1, 60, 60*60, 24*60*60]
 
+    // want a version with more granularity (e.g. 27min 3sec)
     function formatValETA(val) {
         var parts = []
         if (val === undefined || val == 0 || ! val || !isFinite(val)) { return '' }
@@ -406,25 +414,21 @@ function pad(s, padwith, len) {
 
 })()
 
-/*
-useful parseUri regexp credit https://github.com/derek-watson/jsUri
-*/
-
-var parseUriRE = {
-    uri: /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/
-}
-
 function parseUri(str) {
-    var parser = parseUriRE.uri;
-    var parserKeys = ["source", "protocol", "authority", "userInfo", "user", "password", "host", "port", "relative", "path", "directory", "file", "query", "anchor"];
-    var m = parser.exec(str || '');
-    var parts = {};
-
-    parserKeys.forEach(function(key, i) {
-        parts[key] = m[i] || '';
-    });
-
-    return parts;
+    // use new URL(str) instead, more accurate.
+    if (str.startsWith('udp:')) {
+        var d = new URL(str.replace('udp:','http:'))
+        var r = {}
+        for (var key in d) {
+            r[key] = d[key]
+        }
+        r.href = r.href.replace('http:','udp:')
+        r.origin = r.origin.replace('http:','udp:')
+        r.protocol = r.protocol.replace('http:','udp:')
+        return r
+    } else {
+        return new URL(str)
+    }
 }
 
 function debugSockets() {

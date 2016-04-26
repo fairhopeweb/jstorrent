@@ -87,7 +87,7 @@ File.prototype = {
         }.bind(this))
     },
     onComplete: function() {
-        console.log('file complete event',this)
+        //console.log('file complete event',this)
         var UI = this.torrent.client.app.UI
         if (UI.detailtype == 'files' && UI.detailtable) {
             UI.detailtable.on_change(this,null,null,'Action') // update action on this

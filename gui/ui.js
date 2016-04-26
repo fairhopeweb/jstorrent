@@ -69,7 +69,6 @@ function UI(opts) {
     this.client = opts.client
 
     this.detailtable = null
-    //var default_tab = 'peers' // TODO -- remember last
     var default_tab = 'files'
     this.detailtype = default_tab
 
@@ -113,16 +112,28 @@ function UI(opts) {
             {attr:"host", name:"Host", width:110, sortable:true},
             {attr:"port", name:"Port", sortable:true, type:'number'},
             {id:"connected_ever", name: "Ever Connected", sortable:true, type:'number'},
-            {id:'connectionResult', sortable:true, width:300}
+            {id:'connectionResult', sortable:true, width:300},
+            {id:"complete", name: "Complete", formatVal: fracToPercent, type:'number'},
+            {id:"bytes_sent", name: "Sent", type:'number', formatVal: byteUnits},
+            {id:"bytes_received", name: "Received", type:'number', formatVal: byteUnits},
+            {name:"Client", id:'peerClientName', formatVal: formatClientName, width:125},
+            {id:"incoming", type:'number'},
         ],
         'trackers':[
-            {attr:'url', name:"URL", width:200, sortable:true},
-            {id:'announces', name:"Announces", type:'number'},
+            {attr:'url', name:"URL", width:250, sortable:true},
+            {id:'announces', name:"Announces", type:'number', formatVal: intDontShowZero},
+            {id:'seeders', width:65, name:"Seeders", type:'number', formatVal: intDontShowZero},
+            {id:'leechers', width:65, name:"Leechers", type:'number', formatVal: intDontShowZero},
+            {id:'state', name:"Status",width:200 },
+            {id:'lasterror', name:"Information", width:300},
+            {id:'next_announce', name:"Next Announce", type:'number'/*, formatVal:formatValETA*/},
+            {id:'interval', name:"Interval", type:'number', formatVal:formatValETA},
             {id:'errors', name:"Errors", type:'number'},
             {id:'timeouts', name:"Timeouts", type:'number'},
-            {id:'seeders', name:"Seeders", type:'number'},
-            {id:'leechers', name:"Leechers", type:'number'},
-            {id:'lasterror', width:400}
+            {id:'downloaded', name:"Downloaded", type:'number', formatVal: intDontShowZero},
+            {id:'scrapes', name:"Scrapes", type:'number'},
+            {id:'min_interval', name:"Min Interval", type:'number', formatVal:formatValETA},
+            {id:'disabled', name:"Disabled"}
         ],
         'diskio':[
             {id:'jobId', width:55, type:'number'},
@@ -189,6 +200,28 @@ function UI(opts) {
 }
 
 UI.prototype = {
+    getState: function() {
+        var t = this.get_selected_torrent()
+        return { detailtype: this.detailtype,
+                 selected: (t && t.hashhexlower) }
+    },
+    setState: function(state) {
+        console.clog(L.UI, 'restore state',state)
+        var hashhexlower = state.selected
+        this.detailtype = state.detailtype
+        var torrent = null
+        if (hashhexlower) {
+            var row = this.client.torrents.keyeditems[hashhexlower]
+            torrent = this.client.torrents.get(hashhexlower)
+            
+            if (row) {
+                this.torrenttable.grid.scrollRowIntoView(row);
+                this.torrenttable.grid.setSelectedRows([row])
+                //this.torrenttable.grid.flashRow(row, 300, 8);
+            }
+        }
+        this.set_detail(this.detailtype, torrent)
+    },
     destroy: function() {
         this.torrenttable.destroy()
         if (this.detailtable) {
@@ -259,6 +292,9 @@ UI.prototype = {
 
     },
     set_detail: function(type, torrent) {
+        $('#detail-tabs li').removeClass('active')
+        $('#detail-' + type).parent().addClass('active')
+        
         // fix to not redraw messages pane.
         //console.clog(L.UI,'set detail',type,torrent)
         //if (! torrent && type != 'messages') { return }

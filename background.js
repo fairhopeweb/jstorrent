@@ -5,12 +5,6 @@ var _update_available = false
 // the browser extension that adds a context menu
 var extensionId = "bnceafpojmnimbnhamaeedgomdcgnbjk"
 
-chrome.sockets.tcpServer.onAccept.addListener( backgroundAcceptListener )
-
-function backgroundAcceptListener(sockInfo) {
-    console.log('background accept listener', sockInfo)
-}
-
 function app() {
     if (chrome.app && chrome.app.window.get) {
         var mw

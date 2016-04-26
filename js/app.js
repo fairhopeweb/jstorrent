@@ -7,7 +7,7 @@ function App(opts) {
     this.id = 'app01' // device ID...
     if (chrome.system && chrome.system.storage) {
         // these dont work on mac. neet to poll chrome.system.storage.getInfo instead.
-        chrome.system.storage.getInfo( this.external_storage_info.bind(this) )
+        chrome.system.storage.getInfo( this.storage_info.bind(this) )
         chrome.system.storage.onAttached.addListener( _.bind(this.external_storage_attached, this) )
         chrome.system.storage.onDetached.addListener( _.bind(this.external_storage_detached, this) )
     }
@@ -18,7 +18,6 @@ function App(opts) {
     this.help_window = null
     this._suspend_canceled = false
     this.options = new jstorrent.Options({app:this}); // race condition, options not yet fetched...
-    //this.dht = new jstorrent.DHT // not ready yet!
     this.webapp = null
 
     this.analytics = null
@@ -84,6 +83,25 @@ function App(opts) {
 jstorrent.App = App
 
 App.prototype = {
+    restoreState: function() {
+        var key = this.id + '/UI/state'
+        chrome.storage.local.get(key, function(result) {
+            if (result[key]) {
+                var state = result[key]
+                //chrome.storage.local.remove(key)
+                this.UI.setState(state)
+            }
+        }.bind(this))
+    },
+    reload: function() {
+        // cleanly reload the app. remember the last UI state.
+        var state = this.UI.getState()
+        var d = {}
+        d[this.id + '/UI/state'] = state
+        chrome.storage.local.set(d, function() {
+            chrome.runtime.reload()
+        }.bind(this))
+    },
     onLine: function() {
         return navigator.onLine
     },
@@ -196,7 +214,12 @@ App.prototype = {
     onContextMenu: function(grid, item, evt) {
         console.clog(L.UI,'Context Menu with:',item)
         chrome.contextMenus.removeAll()
-        if (item.itemClass == jstorrent.Torrent) {
+        var cls = item._collections && item._collections[0] && item._collections[0].itemClass
+        if (cls == jstorrent.Tracker) {
+            window.contextMenuContextItem = item
+            var actions = ['Force announce','Delete']
+            actions.forEach(function(action){chrome.contextMenus.create({contexts:["all"],title:action,id:action})})
+        } else if (item.itemClass == jstorrent.Torrent) {
             if (jstorrent.options.allow_report_torrent_bug) {
 
                 var opts = {
@@ -233,8 +256,16 @@ App.prototype = {
         chrome.contextMenus.removeAll(function(){})
         console.clog(L.UI,'contextmenu click',c,c.menuItemId)
         var item = window.contextMenuContextItem
+        var cls = item && item._collections && item._collections[0] && item._collections[0].itemClass
         window.contextMenuContextItem = null
-        if (c.menuItemId == 'reportTorrentIssue') {
+        var id = c.menuItemId
+        if (cls == jstorrent.Tracker) {
+            if (id == 'Force announce') {
+                item.announce()
+            } else if (id == 'Delete') {
+                item.torrent.trackers.remove(item)
+            }
+        } else if (c.menuItemId == 'reportTorrentIssue') {
             var torrent = item
             var data = {data:torrent.getSaveData()}
 
@@ -305,17 +336,7 @@ App.prototype = {
     },
     reinstall: function() {
         chrome.storage.local.clear(function() {
-            reload()
-        })
-    },
-    upgrade: function() {
-        // used to test "upgrade" from previous jstorrent (pre-rewrite) version.
-        chrome.storage.local.clear(function() {
-            var obj = {}
-            obj[jstorrent.constants.keyPresentInPreRewrite] = true
-            chrome.storage.local.set(obj, function(){
-                reload()
-            })
+            chrome.runtime.reload()
         })
     },
     notifyStorageError: function() {
@@ -344,6 +365,7 @@ App.prototype = {
                                   onClick: _.bind(onclick,this) })
     },
     notifyWantToAddPublicTrackers: function(torrent) {
+        if (jstorrent.options.always_add_special_tracker) { return }
         if (this.options.get('auto_add_public_trackers')) {
             app.analytics.sendEvent("Torrent", "Tracker","addPublicTrackers")
             torrent.addPublicTrackers()
@@ -968,8 +990,8 @@ App.prototype = {
             }
         },this))
     },
-    external_storage_info: function(info) {
-        console.clog(L.DISK,'got external storage info',info)
+    storage_info: function(info) {
+        console.clog(L.DISK,'got storage info',info)
     },
     external_storage_attached: function(storageInfo) {
         console.clog(L.DISK,'external storage attached',storageInfo)
@@ -1048,7 +1070,7 @@ App.prototype = {
     },
     createWindowCustomTracker: function(item) {
         this.addCustomTrackerContext = item
-        this.focus_or_open('addcustomtracker', null, {width:360, height:80})
+        this.focus_or_open('addcustomtracker', null, {width:360, height:80}) // calls addTracker
     },
     focus_or_open: function(type, callback, opts) {
         if (this.popup_windows[type]) {

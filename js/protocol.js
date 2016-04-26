@@ -9,10 +9,11 @@ jstorrent.protocol = {
     socketWriteBufferMax: 4096, // doesn't really belong in this file, but whatever
     maxPacketSize: 32768,
     handshakeLength: 68,
+    // http://www.bittorrent.org/beps/bep_0004.html
     handshakeFlags: [0,0,0,0,0,
-                     0x10, // have to set this bit, or we wont get ut_metadata
+                     0x10, // LTEP (for ut_metadata et al)
                      0,
-                     1 // DHT
+                     0x01 | 0x04 // DHT + fast
                     ],
     extensionMessages: { ut_metadata: 2,
                          ut_pex: 3},

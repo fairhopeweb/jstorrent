@@ -14,6 +14,7 @@ function Client(opts) {
     this.app = opts.app
     this.id = opts.id
     this.upnp = new jstorrent.UPNP({client:this})
+    this.dht = new jstorrent.DHT({client:this})
     if (DEVMODE) {
         this.upnp.reset()
     }

@@ -12,8 +12,7 @@ function Options(opts) {
             'description': 'your list of torrents will be synchronized across your devices'
         },
         download_rate_limit: {
-            'name': 'Download rate limit (kB)',
-            'help': 'Maximimum download speed (0 = unlimited)',
+            'name': 'Max Download Speed (kB/s), [0:unlimited]',
             'default': 0,
             'minval':0,
             'maxval':32768,

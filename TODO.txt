@@ -1,7 +1,13 @@
+- seeding, queue piece messages as to not make diskio look too full.
+
+- move client into background page so we can cleanup properly when main window closes
+
+- send choke when peer completes to 100%
+- cleanup torrent infodict + utf8 handling (special cases for pieces/originator suck)
 - move calculate_speed into timer independent from UI render
 - remove port mapping on close
 
-- remove textencoder js libs / digest (unnecessary)
+- remove textencoder js libs / digest (unnecessary (actually still used for checking torrentmetadata))
 - check cost of truncate on file sizes
 - measure/check disk write speed
 

@@ -71,7 +71,10 @@
                         }
                     }
                     if (! mapped) {
-                        this.addMapping(this.client.listenPort, function(result) {
+                        this.addMapping(this.client.listenPort, 'TCP', function(result) {
+                            console.log('add mapping result',result)
+                        })
+                        this.addMapping(this.client.listenPort, 'UDP', function(result) {
                             console.log('add mapping result',result)
                         })
                     }
@@ -99,7 +102,7 @@
             //console.log('found WAN services',infos)
             return infos
         },
-        addMapping: function(port, callback) {
+        addMapping: function(port, prot, callback) {
             if (! this.validGateway) {
                 callback()
             } else {
@@ -124,7 +127,7 @@
                     ['NewInternalPort',port],
                     ['NewLeaseDuration',0],
                     ['NewPortMappingDescription','JSTorrent (upnp.js)'],
-                    ['NewProtocol','TCP'],
+                    ['NewProtocol',prot],
                     ['NewRemoteHost',""]
                 ]
                 this.validGateway.device.runService(this.validGateway.service,
@@ -372,6 +375,11 @@
             chrome.sockets.udp.joinGroup(state.sockInfo.socketId, this.multicast, this.onjoined.bind(this,state))
         },
         onjoined: function(state, result) {
+            var lasterr = chrome.runtime.lastError
+            if (lasterr) {
+                this.error(lasterr)
+                return
+            }
             if (result < 0) {
                 this.error({error:'join multicast',code:result})
                 return

@@ -7,6 +7,10 @@ function Peer(opts) {
 }
 jstorrent.Peer = Peer
 Peer.prototype = {
+    updateAttributes: function(attrs) {
+        var keys = ['bytes_received','bytes_sent','complete','peerClientName','incoming']
+        keys.forEach( function(key) { this.set(key, attrs[key]) }.bind(this) )
+    },
     get_key: function() {
         return this.host + ':' + this.port
     },

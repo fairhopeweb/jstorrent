@@ -83,6 +83,7 @@ function onappready() {
 
     window.UI = new UI({client:client})
     window.app.set_ui(UI)
+    app.restoreState()
 
     bind_events()
 
@@ -116,7 +117,7 @@ function onready() {
         if (evt.metaKey || evt.ctrlKey) {
             if (evt.keyCode == 82) {
                 console.log('received ctrl(meta)-r, reload app')
-                chrome.runtime.reload()
+                app.reload()
                 // ctrl-r
             }
             // prevent chrome app close window etc shortcuts
@@ -142,8 +143,6 @@ function onready() {
 }
 
 function click_detail_torrent(tab, evt) {
-    $('#detail-tabs li').removeClass('active')
-    $('#detail-' + tab).parent().addClass('active')
 
     var torrent = UI.get_selected_torrent()
     if (torrent) {

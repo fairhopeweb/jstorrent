@@ -68,6 +68,7 @@ function PeerConnection(opts) {
     this.set('outstanding',0)
     this.set('limit',2)
     this.set('complete',0)
+    this.set('incoming',false)
 
     // TODO -- if we have a peer that we keep sending "HAVE" messages
     // to and even those tiny messages don't get flushed out of the
@@ -112,7 +113,8 @@ function PeerConnection(opts) {
         this.sockInfo = {socketId: opts.sockInfo.clientSocketId}
         chrome.sockets.tcp.setPaused(this.sockInfo.socketId, false, function(){})
         peerSockMap[this.sockInfo.socketId] = this
-        this.state = 'incoming'
+        this.set('socketId',this.sockInfo.socketId)
+        this.set('incoming',true)
         this.connected = true
     } else {
         this.state = 'outgoing'
@@ -205,12 +207,15 @@ PeerConnection.prototype = {
         this.close(reason)
     },
     close: function(reason, forcelog) {
-        forcelog = true
+        // update peer (swarm) object with our stats ?
+        this.peer.updateAttributes(this._attributes)
+
+        if (forcelog === undefined) { forcelog = DEVMODE }
         if (this.closing) { return }
         this.closing = true
         if (forcelog) {
             //console.trace()
-            console.clog(L.SEED, 'disconnect',reason)
+            console.clog(L.SEED, 'disconnect',reason,this._attributes)
         }
         if (this.get('downspeed') > 1024 * 50) {
             console.clog(L.DEV, 'a good connection is closing',byteUnits(this._attributes.bytes_received), reason)
@@ -293,6 +298,7 @@ PeerConnection.prototype = {
         this.torrent.maybePropagatePEX({added: this.peer.serialize()})
         this.sendHandshake()
         this.sendExtensionHandshake()
+        this.sendPort()
         if (this.torrent.has_infodict()) {
             this.sendBitfield()
         }
@@ -312,6 +318,13 @@ PeerConnection.prototype = {
         }
         var arr = new Uint8Array(bencode( data )).buffer;
         this.sendMessage('UTORRENT_MSG', [new Uint8Array([0]).buffer, arr])
+    },
+    sendPort: function() {
+        var ext_port = this.client.externalPort()
+        var a = new Uint8Array(2)
+        var v = new DataView(a.buffer)
+        v.setUint16(0, ext_port)
+        this.sendMessage("PORT", [a.buffer])
     },
     sendMessage: function(type, payloads) {
         this.set('last_message_sent',type)
@@ -429,7 +442,7 @@ PeerConnection.prototype = {
     },
     couldRequestPieces: function() {
         // XXX -- in endgame mode, make sure all the fastest effective players get everything
-        if (app.options.get('debug_dht')) { return }
+        //if (app.options.get('debug_dht')) { return }
 
         if (this.outstandingPieceChunkRequestCount > this._attributes.limit) {
             return
@@ -662,7 +675,7 @@ PeerConnection.prototype = {
         }
     },
     onRead: function(readResult) {
-        if (this.state == 'incoming' && ! this.peerHandshake) {
+        if (this._attributes.incoming && ! this.peerHandshake) {
             //console.log('read with incoming peer connection')
             // parse infohash, bittorrent protocol, etc
             this.countBytes('received', readResult.data.byteLength)
@@ -695,6 +708,9 @@ PeerConnection.prototype = {
         //this.close('no real reason')
     },
     checkBuffer: function() {
+        if (! this.connected || this.closing) {
+            return
+        }
         //console.log('checkBuffer, len', this.readBuffer.deque.length, 'sz', this.readBuffer._size)
         // checks if there are messages
         if (! this.peerHandshake) {
@@ -814,6 +830,9 @@ PeerConnection.prototype = {
         this.set('amChoked',false)
         this.amChoked = false
     },
+    handle_ALLOWED_FAST: function(msg) {
+        // ?
+    },
     handle_CANCEL: function() {
         // ignore this message
     },
@@ -833,23 +852,25 @@ PeerConnection.prototype = {
     handle_PORT: function(msg) {
         // peer's listening port (DHT)?
         this.peerPort = new DataView(msg.payload, 5, 2).getUint16(0)
-        if (app.options.get('debug_dht')) {
-            app.dht.ping(this.peer.host, this.peerPort)
+        //console.log('got port msg',this.peerPort)
+        if (this.client.app.options.get('debug_dht')) {
+            this.client.dht.ping(this.peer.host, this.peerPort)
         }
     },
     handle_HANDSHAKE: function(msg) {
         var buf = msg.payload
         this.peerHandshake = jstorrent.protocol.parseHandshake(buf)
         if (! this.peerHandshake) {
-            console.clog(L.SEED,'invalid handshake (probably RC4 encrypted')
+            //console.clog(L.SEED,'invalid handshake (probably RC4 encrypted')
             // see http://wiki.vuze.com/w/Message_Stream_Encryption
             this.close('invalid handshake')
-        } else if (this.state == 'incoming') {
+        } else if (this._attributes.incoming) {
             //console.log('incoming connection peer handshake',this.peerHandshake)
             var hashhexlower = bytesToHashhex(this.peerHandshake.infohash).toLowerCase()
             if (this.client.torrents.containsKey(hashhexlower)) {
                 // have this torrent! yay!
                 var torrent = this.client.torrents.get(hashhexlower)
+                //console.log('incoming connection: '+torrent._attributes.name)
                 if (! (torrent.started || torrent.canSeed())) {
                     this.close('torrent not active: '+torrent._attributes.name)
                     return
@@ -861,9 +882,11 @@ PeerConnection.prototype = {
                 this.torrent = torrent
                 this.peer.torrent = torrent
                 this.torrent.peers.add(this)
+                this.torrent.swarm.add(this.peer)
                 console.clog(L.SEED, "established new incoming connection",this)
                 this.sendHandshake()
                 this.sendExtensionHandshake()
+                this.sendPort()
                 this.torrent.ensureLoaded( function() {
                     this.sendBitfield()
                 }.bind(this))
@@ -902,8 +925,7 @@ PeerConnection.prototype = {
             }
         } else {
             //debugger
-        }
-        
+        }        
     },
     handle_UTORRENT_MSG_ut_pex: function(msg) {
         var data = bdecode(ui82str(new Uint8Array(msg.payload, 6)))
@@ -957,7 +979,7 @@ PeerConnection.prototype = {
             }
         } else if (infodictMsgType == 'REQUEST') {
             if (! this.torrent.infodict_buffer) {
-                console.warn('dont have infodict buffer!')
+                //console.warn('dont have infodict buffer!')
                 return
             } // cant handle this!
 
@@ -1048,6 +1070,28 @@ PeerConnection.prototype = {
     doAfterInfodict: function(msg) {
         //console.warn('Deferring message until have infodict',msg.type)
         this.handleAfterInfodict.push( msg )
+    },
+    handle_HAVE_NONE: function(msg) {
+        // copied from handle_HAVE_ALL
+        if (! this.torrent.has_infodict()) {
+            this.doAfterInfodict(msg)
+        } else {
+            if (! this.peerBitfield) {
+                var arr = []
+                for (var i=0; i<this.torrent.numPieces; i++) {
+                    arr.push(0)
+                }
+                this.peerBitfield = new Uint8Array(arr)
+            } else {
+                for (var i=0; i<this.torrent.numPieces; i++) {
+                    this.peerBitfield[i] = 0
+                }
+            }
+        }
+        this.updatePercentComplete()
+    },
+    handle_REJECT_REQUEST: function(msg) {
+        console.clog(L.PEER,'todo: handle reject request')
     },
     handle_HAVE_ALL: function(msg) {
         if (! this.torrent.has_infodict()) {
