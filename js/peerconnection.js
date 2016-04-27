@@ -869,6 +869,10 @@ PeerConnection.prototype = {
             // see http://wiki.vuze.com/w/Message_Stream_Encryption
             this.close('invalid handshake')
         } else if (this._attributes.incoming) {
+            if (ui82str(this.client.peeridbytes) == ui82str(this.peerHandshake.peerid)) {
+                this.close('connected to self')
+                return
+            }
             //console.log('incoming connection peer handshake',this.peerHandshake)
             var hashhexlower = bytesToHashhex(this.peerHandshake.infohash).toLowerCase()
             if (this.client.torrents.containsKey(hashhexlower)) {

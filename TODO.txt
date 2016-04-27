@@ -1,3 +1,5 @@
+- limit reconnect attempts on peers for small swarm (back-off)
+- add source to peer (eg got from pex, tracker, dht, etc)
 - add tests for encode/decode various infodicts with/without utf-8 and other keys. infodict should work even with completely random binary string data
 - add supportcrypto=0 to HTTP tracker announce (udp announce extra option flags too http://www.bittorrent.org/beps/bep_0041.html)
 - show ext header keys in peer list, see if for example lt_tex http://www.bittorrent.org/beps/bep_0028.html present ever

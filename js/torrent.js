@@ -1744,6 +1744,10 @@ Torrent.prototype = {
                         //console.log('skipping peer that refused connection')
                         continue
                     }
+                    if (peer.host == this.client.externalIP() && peer.port == this.client.externalPort()) {
+                        // this is me!
+                        continue
+                    }
                     peerconn = new jstorrent.PeerConnection({peer:peer})
                     //console.log('should add peer!', idx, peer)
                     if (! this.peers.contains(peerconn)) {
