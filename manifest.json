@@ -59,7 +59,7 @@
     },
     "app": {
         "background": {
-            "scripts": ["conf.js", "background.js"]
+            "scripts": ["conf.js", "common.js", "background.js"]
         }
     },
     "url_handlers": {

@@ -151,6 +151,7 @@ jstorrent.options = {
     slow_hashcheck: false,
     disable_pex: false,
     use_piece_cache: false,
+    enable_ipv6: true,
     seed_public_torrents: true, // default off
     allow_report_torrent_bug: false,
     reset_on_complete: false, // reset torrent state on torrent completion (testing)
@@ -160,6 +161,8 @@ jstorrent.options = {
 //        'b91ec066668f2ce8111349ae86cc81941ce48c69': ['127.0.0.1:9090'],
 //        '726ff42f84356c9aeb27dfa379678c89f0e62149': ['127.0.0.1:9090'],
     },
+//    always_add_special_tracker: ["udp://tracker.ipv6tracker.org:80/announce", //IPv6
+//                                 "http://tracker.ipv6tracker.org:80/announce"] //IPv6
     //    always_add_special_peer: ['127.0.0.1:8030','127.0.0.1:8031','127.0.0.1:8032','127.0.0.1:8033']
 //        always_add_special_tracker: ["udp://tracker.coppersurfer.tk:6969/announce"],
 //    always_add_special_tracker: ["http://tracker.opentrackr.org:1337/announce"]
@@ -436,23 +439,6 @@ function parseUri(str) {
     } else {
         return new URL(str)
     }
-}
-
-function debugSockets() {
-    chrome.sockets.tcp.getSockets( function(socketInfos) {
-        var d = {}
-        for (var i=0; i<socketInfos.length; i++) {
-            d[socketInfos[i].socketId] = socketInfos[i]
-        }
-        console.log('current tcp sockets',d)
-    })
-    chrome.sockets.udp.getSockets( function(socketInfos) {
-        var d = {}
-        for (var i=0; i<socketInfos.length; i++) {
-            d[socketInfos[i].socketId] = socketInfos[i]
-        }
-        console.log('current udp sockets',d)
-    })
 }
 
 window.onerror = function(message, url, line) {

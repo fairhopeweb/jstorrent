@@ -182,14 +182,23 @@
             this.set('min_interval',data['min interval'] || data['min_interval'])
             this.set('lasterror','')
 
+            var gotpeers = false
             if (data.peers && typeof data.peers == 'object') {
                 this.torrent.addNonCompactPeerBuffer(data.peers)
-                this.set('received',this.get('received')+data.peers.length)
+                //this.set('received',this.get('received')+data.peers.length) // fix this
+                gotpeers = true
             } else if (data.peers) {
                 this.torrent.addCompactPeerBuffer(data.peers)
-                this.set('received',this.get('received')+data.peers.length)
-            } else {
-                this.error({message:'no peers in response',data:data,evt:evt})
+                //this.set('received',this.get('received')+data.peers.length) // fix this
+                gotpeers = true
+            }
+            if (data.peers6) {
+                this.torrent.addCompactPeerBuffer(data.peers6,'httptracker',{ipv6:true})
+                gotpeers = true
+            }
+
+            if (! gotpeers) {
+                this.error({message:'no peers in response',data:data})
                 if (data['failure reason']) {
                     if (this.torrent.isPrivate()) {
                         app.createNotification({details:"HTTP Tracker error, reason given: \"" + data['failure reason'] + '\". If this is a private torrent, please contact the site administrator and ask them if they can unblock JSTorrent',

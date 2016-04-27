@@ -285,16 +285,29 @@ Torrent.prototype = {
             }
         }
     },
-    addCompactPeerBuffer: function(added,source) {
-        console.assert(added.length%6==0)
-        var numPeers = added.length/6
+    addCompactPeerBuffer: function(added,source,opts) {
+        var ipv6 = opts && opts.ipv6
+        var hostbytes = ipv6 ? 16 : 4
+        var portbytes = 2
+        var eachbytes = hostbytes+portbytes
+        console.assert(added.length%eachbytes==0)
+        var numPeers = added.length/eachbytes
         for (var i=0; i<numPeers; i++) {
-            idx = 6*i
-            host = [added.charCodeAt( idx ),
-                    added.charCodeAt( idx+1 ),
-                    added.charCodeAt( idx+2 ),
-                    added.charCodeAt( idx+3 )].join('.')
-            port = added.charCodeAt( idx+4 ) * 256 + added.charCodeAt( idx+5 )
+            idx = eachbytes*i
+            var hostarr = []
+            for (j=0; j<hostbytes; j++) {
+                hostarr.push( added.charCodeAt( idx++ ) )
+            }
+            if (ipv6) {
+                var hostpairs = []
+                for (k=0;k<8;k++) {
+                    hostpairs.push( (hostarr[2*k]*256 + hostarr[2*k+1]).toString(16) )
+                }
+                var host = hostpairs.join(':')
+            } else {
+                var host = hostarr.join('.')
+            }
+            port = added.charCodeAt( idx ) * 256 + added.charCodeAt( idx+1 )
             peer = new jstorrent.Peer({host:host, port:port, torrent:this})
             if (source) peer.set('source',source)
             if (! this.swarm.contains(peer)) {
@@ -304,7 +317,6 @@ Torrent.prototype = {
                 }
             }
         }
-
     },
     initializeFromWeb: function(url, callback, opts) {
         console.clog(L.TORRENT,'torrent initialize from web',url)
