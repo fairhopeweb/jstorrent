@@ -55,9 +55,9 @@
         onSearchStop: function(info) {
             this.getIP( function() {
                 this.getMappings( function(mappings) {
-                    console.clog(L.UPNP,'got current mappings',mappings)
                     // check if already exists nice mapping we can use.
                     var internal = this.getInternalAddress()
+                    console.clog(L.UPNP,'got current mappings',mappings,'internal address',internal)
                     var mapped = false
                     for (var i=0; i<mappings.length; i++) {
                         if (mappings[i].NewInternalClient == internal &&
@@ -72,11 +72,11 @@
                     }
                     if (! mapped) {
                         this.addMapping(this.client.listenPort, 'TCP', function(result) {
-                            console.log('add mapping result',result)
-                        })
-                        this.addMapping(this.client.listenPort, 'UDP', function(result) {
-                            console.log('add mapping result',result)
-                        })
+                            console.clog(L.UPNP, 'add TCP mapping result',result)
+                            this.addMapping(this.client.listenPort, 'UDP', function(result) {
+                                console.clog(L.UPNP, 'add UDP mapping result',result)
+                            })
+                        }.bind(this))
                     }
                 }.bind(this))
             }.bind(this))
@@ -126,7 +126,7 @@
                     ['NewInternalClient',this.getInternalAddress()],
                     ['NewInternalPort',port],
                     ['NewLeaseDuration',0],
-                    ['NewPortMappingDescription','JSTorrent (upnp.js)'],
+                    ['NewPortMappingDescription','JSTorrent '+prot+' (upnp.js)'],
                     ['NewProtocol',prot],
                     ['NewRemoteHost',""]
                 ]
@@ -141,21 +141,21 @@
             } else {
                 var info = this.validGateway
                 var idx = 0
-                var mappings = []
+                var allmappings = []
 
                 function oneResult(evt) {
                     if (evt.target.code == 200) {
                         var resp = evt.target.responseXML.querySelector("GetGenericPortMappingEntryResponse")
                         var mapping = flatParseNode(resp)
-                        mappings.push(mapping)
+                        allmappings.push(mapping)
                         getOne()
                     } else {
-                        callback(mappings)
+                        callback(allmappings)
                     }
                 }
 
                 function getOne() {
-                    info.device.runService(info.service, 'GetGenericPortMappingEntry', [['NewPortMappingIndex',++idx]], oneResult)
+                    info.device.runService(info.service, 'GetGenericPortMappingEntry', [['NewPortMappingIndex',idx++]], oneResult)
                 }
                 getOne()
             }
