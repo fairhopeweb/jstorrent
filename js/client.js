@@ -177,8 +177,9 @@ Client.prototype = {
                 console.log('using matched socket')
                 onCreate.call(this, matchSocket)
                 // or is it already listening?
+                // TODO -- support "always seed" e.g. launch app when any incoming connection (quickly check storage)
             } else {
-                console.log('creating new socket')
+                // console.log('creating new socket')
                 chrome.sockets.tcpServer.create({name:"JSIncomingSocket"},onCreate.bind(this))
             }
         }.bind(this))

@@ -4,7 +4,7 @@ function reset_logging_flags() {
         INIT: { color: '#cef', show: true },
         UI: { color: '#ce0', show: true },
         APP: { color: 'darkgreen', show: true },
-        TRACKER: { color: '#3e8', show: true },
+        TRACKER: { color: '#3e8', show: false },
         TORRENT: { color: '#0ae', show: true },
         DISKIO: { color: 'orange', show: true },
         DISK: { color: 'darkblue', show: true },

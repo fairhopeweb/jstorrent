@@ -1045,7 +1045,7 @@ App.prototype = {
             return
         }
         optionsWindow.outerBounds.width = 365
-        optionsWindow.outerBounds.height = 485
+        optionsWindow.outerBounds.height = 535
         optionsWindow.show()
         this.stopPulsateOptions()
         app.analytics.sendAppView("OptionsView")
