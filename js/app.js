@@ -215,7 +215,12 @@ App.prototype = {
         console.clog(L.UI,'Context Menu with:',item)
         chrome.contextMenus.removeAll()
         var cls = item._collections && item._collections[0] && item._collections[0].itemClass
-        if (cls == jstorrent.Tracker) {
+        if (cls == jstorrent.PeerConnection) {
+            item.debugInfo()
+            window.contextMenuContextItem = item
+            var actions = ['Unchoke','Choke','Disconnect']
+            actions.forEach(function(action){chrome.contextMenus.create({contexts:["all"],title:action,id:action})})
+        } else if (cls == jstorrent.Tracker) {
             window.contextMenuContextItem = item
             var actions = ['Force announce','Delete']
             actions.forEach(function(action){chrome.contextMenus.create({contexts:["all"],title:action,id:action})})
@@ -230,8 +235,6 @@ App.prototype = {
                 window.contextMenuContextItem = item
                 chrome.contextMenus.create(opts, _.bind(this.onContextMenuCreate,this) )
             }
-        } else if (item.__name__ == 'PeerConnection') {
-            item.debugInfo()
         } else if (item.itemClass == jstorrent.File) {
             window.contextMenuContextItem = item
             var opts1 = {
@@ -259,7 +262,17 @@ App.prototype = {
         var cls = item && item._collections && item._collections[0] && item._collections[0].itemClass
         window.contextMenuContextItem = null
         var id = c.menuItemId
-        if (cls == jstorrent.Tracker) {
+        if (item == 'messages') {
+            // message pane
+            var k = c.menuItemId
+            if (k == "Reset") { return window.L = reset_logging_flags() }
+            L[k].show = ! L[k].show
+        } else if (cls == jstorrent.PeerConnection) {
+            if (id == 'Disconnect') item.disconnect()
+            else if (id == 'Choke') item.sendMessage("CHOKE")
+            else if (id == 'Unchoke') item.sendMessage("UNCHOKE")
+            
+        } else if (cls == jstorrent.Tracker) {
             if (id == 'Force announce') {
                 item.announce()
             } else if (id == 'Delete') {

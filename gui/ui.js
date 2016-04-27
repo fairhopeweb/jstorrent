@@ -119,6 +119,7 @@ function UI(opts) {
             {name:"Client", id:'peerClientName', formatVal: formatClientName, width:125},
             {id:"timeouts", type:'number'},
             {id:"incoming", type:'number'},
+            {id:"source"},
         ],
         'trackers':[
             {attr:'url', name:"URL", width:250, sortable:true},
@@ -301,7 +302,7 @@ UI.prototype = {
         //console.clog(L.UI,'set detail',type,torrent)
         //if (! torrent && type != 'messages') { return }
 
-        if (this.detailtype == 'messages' && type == 'messages') {return} // dont need to redraw
+        if (this.detailtype == 'messages' && type == 'messages' && this.detailtable) {return} // dont need to redraw (unless its from recover...)
         
         this.detailtype = type
 
@@ -402,6 +403,15 @@ function MessagesView(opts) {
 }
 MessagesView.prototype = {
     // XXX how many methods must we define?
+    onContextMenu: function(evt) {
+        window.contextMenuContextItem = 'messages'
+        var actions = Object.keys(L)
+        actions.forEach(function(action){
+            chrome.contextMenus.create({contexts:["all"],title:action,type:'checkbox',id:action,checked:L[action].show})
+        })
+        chrome.contextMenus.create({contexts:["all"],id:'separator',type:'separator'})
+        chrome.contextMenus.create({contexts:["all"],title:"Reset to default",id:'Reset'})
+    },
     showError: function(){},
     resizeCanvas: function(){},
     destroy: function() {

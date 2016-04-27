@@ -538,7 +538,7 @@ PeerConnection.prototype = {
 
             if (this.get('complete') == 1) {
                 if (! this.peerInterested) {
-                    if (! DEVMODE) {
+                    if (! jstorrent.options.seed_public_torrents) {
                         this.close('both complete and peer not interested',true)
                     }
                 }
@@ -942,7 +942,7 @@ PeerConnection.prototype = {
         //console.log('ut_pex data', data)
         var idx, host, port, peer
         if (data.added) {
-            this.torrent.addCompactPeerBuffer(data.added)
+            this.torrent.addCompactPeerBuffer(data.added,'pex')
         }
         this.torrent.maybePropagatePEX(data)
     },
@@ -1103,6 +1103,7 @@ PeerConnection.prototype = {
         console.clog(L.PEER,'todo: handle reject request')
     },
     handle_HAVE_ALL: function(msg) {
+        // TODO if they were interested and unchoked, choke them.
         if (! this.torrent.has_infodict()) {
             this.doAfterInfodict(msg)
         } else {

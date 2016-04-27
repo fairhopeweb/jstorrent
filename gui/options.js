@@ -62,7 +62,7 @@ OptionDisplay.prototype = {
                 '</label>' + 
                 '</div>';
         } else if (this.opts.meta.type == 'int') {
-            var tooltip = this.opts.meta.help ? ('<span data-toggle="tooltip" title="'+this.opts.meta.help+'">'):''
+            var tooltip = this.opts.meta.help ? ('<span data-toggle="tooltip" title="'+this.opts.meta.help+'"> '):' '
             s = '<div class="input"><label><input id="'+this.opts.key+'" size="3" type="number" min="'+this.opts.meta.minval+'" max="'+this.opts.meta.maxval+'" value="'+this.opts.val+'"></input>'+tooltip + this.getName() + '</span></label></div>'
         } else {
             debugger
@@ -140,7 +140,9 @@ function OptionsView(opts) {
 
     // move maxconns to be the first option
     keys.splice(keys.indexOf('maxconns'),1)
+    keys.splice(keys.indexOf('download_rate_limit'),1)
     keys = ['maxconns'].concat(keys)
+    keys = ['download_rate_limit'].concat(keys)
     
     var cur, curdom
 

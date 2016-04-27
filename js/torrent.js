@@ -285,7 +285,8 @@ Torrent.prototype = {
             }
         }
     },
-    addCompactPeerBuffer: function(added) {
+    addCompactPeerBuffer: function(added,source) {
+        console.assert(added.length%6==0)
         var numPeers = added.length/6
         for (var i=0; i<numPeers; i++) {
             idx = 6*i
@@ -295,6 +296,7 @@ Torrent.prototype = {
                     added.charCodeAt( idx+3 )].join('.')
             port = added.charCodeAt( idx+4 ) * 256 + added.charCodeAt( idx+5 )
             peer = new jstorrent.Peer({host:host, port:port, torrent:this})
+            if (source) peer.set('source',source)
             if (! this.swarm.contains(peer)) {
                 if (! jstorrent.options.disable_pex) {
                     //console.log('peer buffer added new peer',host,port)
@@ -456,7 +458,7 @@ Torrent.prototype = {
             this.initializeTrackers()
         }
 
-        if (this.get('state' ) == 'started') {
+        if (this.get('state' ) == 'started' || this.get('state' ) == 'seeding') {
             this.start()
         }
     },
@@ -1372,10 +1374,12 @@ Torrent.prototype = {
     start: function(reallyStart, opts) {
         //if (reallyStart === undefined) { return }
         if (this.started || this.starting) { return } // some kind of edge case where starting is true... and everything locked up. hmm
-        if (! jstorrent.options.seed_public_torrents && this.isComplete()) {
-            this.set('state','complete')
-            this.save()
-            return
+        if (this.isComplete()) {
+            if (! jstorrent.options.seed_public_torrents) {
+                this.set('state','complete')
+                this.save()
+                return
+            }
         }
         
         if (this.client.get('numActiveTorrents') >= this.client.app.options.get('active_torrents_limit')) {
@@ -1422,8 +1426,11 @@ Torrent.prototype = {
             return
         }
         
-        
-        this.set('state','started')
+        if (this.isComplete()) {
+            this.set('state','seeding')
+        } else {
+            this.set('state','started')
+        }
         this.trigger('started')
         this.set('complete', this.getPercentComplete())
         this.recalculatePieceBlacklist()
@@ -1739,7 +1746,9 @@ Torrent.prototype = {
                     tries++
                     idx = Math.floor( Math.random() * this.swarm.items.length )
                     peer = this.swarm.get_at(idx)
-                    if (peer.get('connectionResult') == 'net::ERR_CONNECTION_REFUSED') {
+                    if (peer.get('connectionResult') == 'net::ERR_CONNECTION_REFUSED' ||
+                        peer.get('connectionResult') == 'net::ERR_ADDRESS_INVALID' // remove from list in this case probably
+                       ) {
                         // TODO keep a list of valid peers separate from all peers
                         //console.log('skipping peer that refused connection')
                         continue
