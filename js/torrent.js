@@ -194,7 +194,8 @@ Torrent.attributeSerializers = {
 
 Torrent.prototype = {
     canSeed: function() {
-        return this.isPrivate() || this.started || this.get('state') == 'complete' || this.get('state') == 'seeding'
+        var seedpublic = this.client.app.options.get('seed_public')
+        return this.isPrivate() || (seedpublic && (this.started || this.get('state') == 'complete' || this.get('state') == 'seeding'))
     },
     updatePieceDataSizeLimit: function() {
         this.unflushedPieceDataSizeLimit = this.client.app.options.get('max_unflushed_piece_data') * Math.max(this.pieceLength,

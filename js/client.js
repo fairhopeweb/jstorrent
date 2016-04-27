@@ -150,7 +150,7 @@ Client.prototype = {
     setupListen: function() {
         function onCreate(sockInfo) {
             this.listenSock = sockInfo
-            chrome.sockets.tcpServer.listen(sockInfo.socketId,'::',this.listenPort,onListen.bind(this))
+            chrome.sockets.tcpServer.listen(sockInfo.socketId,jstorrent.options.enable_ipv6?'::':'0.0.0.0',this.listenPort,onListen.bind(this))
         }
         function onListen(result) {
             var lasterr = chrome.runtime.lastError

@@ -52,7 +52,7 @@
 
                 var buf = new Uint8Array(bencode( msg, null, {utf8:false} )).buffer;
 
-                udp.bind( createInfo.socketId, '::', 0, function() {
+                udp.bind( createInfo.socketId, '0.0.0.0', 0, function() {
                     udp.send( createInfo.socketId,
                               buf,
                               ip,
