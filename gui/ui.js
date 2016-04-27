@@ -117,6 +117,7 @@ function UI(opts) {
             {id:"bytes_sent", name: "Sent", type:'number', formatVal: byteUnits},
             {id:"bytes_received", name: "Received", type:'number', formatVal: byteUnits},
             {name:"Client", id:'peerClientName', formatVal: formatClientName, width:125},
+            {id:"timeouts", type:'number'},
             {id:"incoming", type:'number'},
         ],
         'trackers':[

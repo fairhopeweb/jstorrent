@@ -1744,6 +1744,9 @@ Torrent.prototype = {
                         //console.log('skipping peer that refused connection')
                         continue
                     }
+                    if (peer.get('timeouts') > 5) {
+                        continue
+                    }
                     if (peer.host == this.client.externalIP() && peer.port == this.client.externalPort()) {
                         // this is me!
                         continue

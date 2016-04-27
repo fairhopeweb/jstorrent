@@ -3,6 +3,7 @@ function Peer(opts) {
     this.torrent = opts.torrent
     console.assert(this.torrent !== undefined)
     this.host = opts.host
+    this.set('timeouts',0)
     this.port = opts.port
 }
 jstorrent.Peer = Peer

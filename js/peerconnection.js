@@ -198,6 +198,7 @@ PeerConnection.prototype = {
         this.connecting = false;
         this.connect_timeouts++;
         this.peer.set('connectionResult', 'timeout')
+        this.peer.set('timeouts',this.peer.get('timeouts')+1)
         if (! peerSockMap[this.sockInfo.socketId]) { debugger }
         this.close('connect_timeout')
     },
