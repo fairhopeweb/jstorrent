@@ -538,7 +538,9 @@ PeerConnection.prototype = {
 
             if (this.get('complete') == 1) {
                 if (! this.peerInterested) {
-                    if (! jstorrent.options.seed_public_torrents) {
+                    if (this.torrent.canSeed()) {
+                        // dont close connection
+                    } else if (! jstorrent.options.seed_public_torrents) {
                         this.close('both complete and peer not interested',true)
                     }
                 }
@@ -845,7 +847,9 @@ PeerConnection.prototype = {
     },
     handle_INTERESTED: function() {
         this.peerInterested = true
-        if (this.torrent.isPrivate() || app.options.get('seed_public') || jstorrent.options.seed_public_torrents || this.peer.host == '127.0.0.1') {
+        if (this.torrent.isPrivate()) {
+            this.sendMessage('UNCHOKE')
+        } else if (app.options.get('seed_public') || jstorrent.options.seed_public_torrents || this.peer.host == '127.0.0.1') {
             if (this.torrent.isComplete()) {
                 this.sendMessage('UNCHOKE')
             }
@@ -880,13 +884,17 @@ PeerConnection.prototype = {
                 // have this torrent! yay!
                 var torrent = this.client.torrents.get(hashhexlower)
                 //console.log('incoming connection: '+torrent._attributes.name)
-                if (! (torrent.started || torrent.canSeed())) {
-                    this.close('torrent not active: '+torrent._attributes.name)
-                    return
-                }
-                if (torrent.canSeed() && torrent.peers.items.length >= this.client.app.options.get('torrent_upload_slots')) {
-                    this.close('too many uploads already')
-                    return
+                if (torrent.isPrivate()) {
+                    // always allow private incoming connections, no limit :-)
+                } else {
+                    if (! (torrent.started || torrent.canSeed())) {
+                        this.close('torrent not active: '+torrent._attributes.name)
+                        return
+                    }
+                    if (torrent.canSeed() && torrent.peers.items.length >= this.client.app.options.get('torrent_upload_slots')) {
+                        this.close('too many uploads already')
+                        return
+                    }
                 }
                 this.torrent = torrent
                 this.peer.torrent = torrent

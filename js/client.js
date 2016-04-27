@@ -15,7 +15,7 @@ function Client(opts) {
     this.id = opts.id
     this.upnp = new jstorrent.UPNP({client:this})
     this.dht = new jstorrent.DHT({client:this})
-    if (DEVMODE) {
+    if (jstorrent.options.upnp) {
         this.upnp.reset()
     }
     this.activeTorrents = new jstorrent.Collection({__name__: 'Torrents', 

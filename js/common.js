@@ -4,7 +4,7 @@ function reset_logging_flags() {
         INIT: { color: '#cef', show: true },
         UI: { color: '#ce0', show: true },
         APP: { color: 'darkgreen', show: true },
-        TRACKER: { color: '#3e8', show: false },
+        TRACKER: { color: '#3e8', show: true },
         TORRENT: { color: '#0ae', show: true },
         DISKIO: { color: 'orange', show: true },
         DISK: { color: 'darkblue', show: true },
@@ -16,7 +16,7 @@ function reset_logging_flags() {
         SYSTEM: { color: '#236', show: true },
         DEV: { color: '#622', show: false },
         EVENT: { color: '#ddd', show: false },
-        SSDP: { color: '#ddd', show: false },
+        UPNP: { color: '#ddd', show: true },
         DHT: { color: '#ddd', show: false }
     }
     Object.keys(L).forEach( function(k) { L[k].name = k } )
@@ -149,6 +149,7 @@ jstorrent.options = {
     disable_trackers: false,
     slow_diskio: false,
     slow_hashcheck: false,
+    upnp: true,
     disable_pex: false,
     use_piece_cache: false,
     enable_ipv6: true,

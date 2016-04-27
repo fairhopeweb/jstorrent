@@ -194,7 +194,7 @@ Torrent.attributeSerializers = {
 
 Torrent.prototype = {
     canSeed: function() {
-        return this.started || this.get('state') == 'complete' || this.get('state') == 'seeding'
+        return this.isPrivate() || this.started || this.get('state') == 'complete' || this.get('state') == 'seeding'
     },
     updatePieceDataSizeLimit: function() {
         this.unflushedPieceDataSizeLimit = this.client.app.options.get('max_unflushed_piece_data') * Math.max(this.pieceLength,
@@ -1387,7 +1387,9 @@ Torrent.prototype = {
         //if (reallyStart === undefined) { return }
         if (this.started || this.starting) { return } // some kind of edge case where starting is true... and everything locked up. hmm
         if (this.isComplete()) {
-            if (! jstorrent.options.seed_public_torrents) {
+            if (this.isPrivate()) {
+                // let it seed!
+            } else if (! jstorrent.options.seed_public_torrents) {
                 this.set('state','complete')
                 this.save()
                 return

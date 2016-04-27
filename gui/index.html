@@ -36,7 +36,6 @@
   <script src="../js/upnp.js"></script>
   <script src="../js/disk.js"></script>
   <script src="../js/diskio.js"></script>
-  <!--script src="../js/chromesocketxhr.js"></script-->
   <script src="../js/tracker.js"></script>
   <script src="../js/udptracker.js"></script>
   <script src="../js/torrent.js"></script>
@@ -57,10 +56,10 @@
 
   <script src="../js/web-server-chrome/common.js"></script>
   <script src="../js/web-server-chrome/mime.js"></script>
-  <script src="../js/web-server-chrome/chromesocketxhr.js"></script>
   <script src="../js/web-server-chrome/buffer.js"></script>
   <script src="../js/web-server-chrome/request.js"></script>
   <script src="../js/web-server-chrome/stream.js"></script>
+  <script src="../js/web-server-chrome/chromesocketxhr.js"></script>
   <script src="../js/web-server-chrome/connection.js"></script>
   <script src="../js/web-server-chrome/webapp.js"></script>
   <script src="../js/web-server-chrome/handlers.js"></script>
@@ -259,5 +258,17 @@
 <div style="clear:both"></div>
 <div id="detailGrid" ></div>
 </div> <!-- ui wrapper -->
+<div style="display:none" id="wsc-error">
+  <div style="font-size:200%; color:red; margin:1em;">
+  Web Server Chrome library was not loaded and is now required.
+  <a href="https://github.com/kzahel/web-server-chrome" target="_blank">Get it</a>
+  <hr />
+  The files should go in the JSTorrent folder under js/web-server-chrome
+
+  <hr />
+  (NOT js/web-server-chrome-master)
+  </div>
+</div>
+
 </body>
 </html>

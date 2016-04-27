@@ -55,7 +55,7 @@
         onSearchStop: function(info) {
             this.getIP( function() {
                 this.getMappings( function(mappings) {
-                    console.clog(L.SSDP,'got current mappings',mappings)
+                    console.clog(L.UPNP,'got current mappings',mappings)
                     // check if already exists nice mapping we can use.
                     var internal = this.getInternalAddress()
                     var mapped = false
@@ -64,7 +64,7 @@
                             mappings[i].NewInternalPort == this.client.listenPort &&
                             mappings[i].NewProtocol == "TCP") {
                             // found it
-                            console.clog(L.SSDP,'already have port mapped')
+                            console.clog(L.UPNP,'already have port mapped')
                             mapped = true
                             this.mapping = mappings[i]
                             break
@@ -82,7 +82,7 @@
             }.bind(this))
         },
         onDevice: function(info) {
-            console.clog(L.SSDP, 'found an internet gateway device',info)
+            console.clog(L.UPNP, 'found an internet gateway device',info)
             var device = new GatewayDevice(info)
             device.getDescription( function() {
                 this.devices.push( device )
@@ -230,6 +230,7 @@
                 xhr.setRequestHeader(k, headers[k])
             }
             xhr.open("POST",url)
+            xhr.setRequestHeader('connection','close')
             xhr.responseType = 'xml'
             xhr.send(payload)
             function onload(evt) {
@@ -241,8 +242,9 @@
         },
         getDescription: function(callback) {
             var xhr = new WSC.ChromeSocketXMLHttpRequest
-            //console.clog(L.SSDP,'query',this.description_url)
+            //console.clog(L.UPNP,'query',this.description_url)
             xhr.open("GET",this.description_url)
+            xhr.setRequestHeader('connection','close')
             xhr.responseType = 'xml'
             function onload(evt) {
                 if (evt.target.code == 200) {
@@ -326,7 +328,7 @@
         },
         error: function(data) {
             this.lastError = data
-            console.clog(L.SSDP, "error",data)
+            console.clog(L.UPNP, "error",data)
             this.searching = false
             // clear out all sockets in sockmap
             this.cleanup()
@@ -338,7 +340,7 @@
             this.sockMap = {}
         },
         stopsearch: function() {
-            console.clog(L.SSDP, "stopping ssdp search")
+            console.clog(L.UPNP, "stopping ssdp search")
             // stop searching, kill all sockets
             this.searching = false
             this.cleanup()
@@ -371,7 +373,7 @@
         },
         onInfo: function(state, info) {
             this.boundPort = info.localPort
-            console.clog(L.SSDP,'bound')
+            console.clog(L.UPNP,'bound')
             chrome.sockets.udp.joinGroup(state.sockInfo.socketId, this.multicast, this.onjoined.bind(this,state))
         },
         onjoined: function(state, result) {
@@ -392,10 +394,10 @@
                 '\r\n'
 
             chrome.sockets.udp.send(state.sockInfo.socketId, new TextEncoder('utf-8').encode(req).buffer, this.multicast, this.ssdpPort, this.onsend.bind(this))
-            //console.clog(L.SSDP, 'sending to',this.multicast,this.ssdpPort)
+            //console.clog(L.UPNP, 'sending to',this.multicast,this.ssdpPort)
         },
         onsend: function(result) {
-            //console.clog(L.SSDP, 'sent result',result)
+            //console.clog(L.UPNP, 'sent result',result)
         }
     }
     jstorrent.UPNP = UPNP

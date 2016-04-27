@@ -68,6 +68,8 @@
         this.announce_callback = null
         this.announce_timeout_hit = false
         this.announce_timeout_id = null
+
+        this.request = null
     }
     Tracker.announce_timeout = 20000 // 20 seconds should be enough
     jstorrent.Tracker = Tracker;
@@ -98,7 +100,7 @@
             if (this.announcing) { callback({error:'already announcing'}); return }
             event = event || 'started'
             this.announce_callback = callback
-            this.announce_timeout_id = setTimeout( _.bind(this.on_announce_timeout,this), this.announce_timeout )
+            this.announce_timeout_id = setTimeout( _.bind(this.on_announce_timeout,this), Tracker.announce_timeout )
             this.doannounce(event, callback)
         },
         onAnnounceSuccess: function() {
@@ -197,7 +199,9 @@
                 gotpeers = true
             }
 
-            if (! gotpeers) {
+            if (this.request.numwant == 0 && ! gotpeers) {
+                // thats ok.
+            } else if (! gotpeers) {
                 this.error({message:'no peers in response',data:data})
                 if (data['failure reason']) {
                     if (this.torrent.isPrivate()) {
@@ -227,6 +231,7 @@
                 port: this.torrent.client.externalPort(), // some trackers complain when we send 0 and dont give a response
                 left: this.torrent.get('size') - this.torrent.get('downloaded')
             }
+            this.request = data
             if (event == 'stopped' || event == 'complete') {
                 data.numwant = 0
             }
@@ -250,6 +255,7 @@
                 var strResponse = ui82str(new Uint8Array(evt.target.response))
 
                 if (evt.target.status != 200) {
+                    console.clog(L.TRACKER,'tracker error',evt)
                     this.error(evt.target.status)
                 } else {
                     try {
@@ -263,6 +269,7 @@
             }.bind(this)
             xhr.ontimeout = function(evt) {
                 this.error('timeout')
+                xhr.cancel()
             }.bind(this)
             xhr.onerror = _.bind(function(evt) {
                 console.log('http tracker error',evt)

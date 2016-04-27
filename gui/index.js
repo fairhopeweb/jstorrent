@@ -116,9 +116,13 @@ function onready() {
     function keydown(evt) {
         if (evt.metaKey || evt.ctrlKey) {
             if (evt.keyCode == 82) {
-                console.log('received ctrl(meta)-r, reload app')
-                app.reload()
                 // ctrl-r
+                console.log('received ctrl(meta)-r, reload app')
+                if (window.app) {
+                    app.reload()
+                } else {
+                    chrome.runtime.reload()
+                }
             }
             // prevent chrome app close window etc shortcuts
             // metakey is osx
@@ -129,10 +133,15 @@ function onready() {
     }
     document.body.addEventListener('keydown', keydown)
 
+    if (! window.WSC) {
+        //getel('ui-wrapper').style.display='none'
+        getel('wsc-error').style.display=''
+        return
+    }
+    
     function go() {
         window.app = new jstorrent.App;
         app.initialize( onappready )
-
     }
     if (DEVMODE) {
         console.log('waiting for webkit inspector to be ready')

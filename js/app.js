@@ -603,6 +603,7 @@ App.prototype = {
     createNotification: function(opts) {
         opts.id = opts.id || ('notification' + this.notificationCounter++)
         //console.log('createNotification', opts.id)
+        console.clog(L.APP, "notification:", opts.details, opts.message)
         opts.parent = this
         if (! this.notifications.containsKey(opts.id)) {
             var notification = new jstorrent.Notification(opts)
