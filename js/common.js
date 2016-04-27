@@ -153,7 +153,7 @@ jstorrent.options = {
     disable_pex: false,
     use_piece_cache: false,
     enable_ipv6: true,
-    seed_public_torrents: true, // default off
+    seed_public_torrents: false, // default off
     allow_report_torrent_bug: false,
     reset_on_complete: false, // reset torrent state on torrent completion (testing)
     manual_peer_connect_on_start: {

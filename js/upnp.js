@@ -359,7 +359,7 @@
                     if (result < 0) {
                         this.error({error:'ttl',code:result})
                     } else {
-                        chrome.sockets.udp.bind(state.sockInfo.socketId, '::', 0, this.onbound.bind(this,state))
+                        chrome.sockets.udp.bind(state.sockInfo.socketId, '0.0.0.0', 0, this.onbound.bind(this,state))
                     }
                 }.bind(this))
             }.bind(this))

@@ -587,9 +587,11 @@ App.prototype = {
         }
     },
     notificationClicked: function(id) {
-        //console.log('clicked on notification with id',id)
+        //console.log('clicked on notification with id',id) // from previous app (runtime.reload() ? )
         var notification = this.notifications.get(id)
-        notification.handleClick()
+        if (notification) {
+            notification.handleClick()
+        }
     },
     notificationButtonClicked: function(id, idx) {
         //console.log('clicked on notification with id',id)
