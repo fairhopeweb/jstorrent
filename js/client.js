@@ -139,6 +139,7 @@ Client.prototype = {
     onAccept: function(sockInfo) {
         //console.log('incoming connection',sockInfo)
         // check if bittorrent connection, dont even know what torrent we're looking at...
+        assert(sockInfo.clientSocketId)
         chrome.sockets.tcp.getInfo(sockInfo.clientSocketId, function(info) {
             //console.log('got incoming socket info',info)
             var peer = new jstorrent.Peer({host:info.peerAddress,
@@ -150,7 +151,7 @@ Client.prototype = {
     setupListen: function() {
         function onCreate(sockInfo) {
             this.listenSock = sockInfo
-            chrome.sockets.tcpServer.listen(sockInfo.socketId,jstorrent.options.enable_ipv6?'::':'0.0.0.0',this.listenPort,onListen.bind(this))
+            chrome.sockets.tcpServer.listen(sockInfo.socketId,this.app.options.get('incoming_ipv6')?'::':'0.0.0.0',this.listenPort,onListen.bind(this))
         }
         function onListen(result) {
             var lasterr = chrome.runtime.lastError
@@ -473,7 +474,7 @@ Client.prototype = {
             //app.notify("Downloading Torrent...")
             // this is the async thingie, downloading the torrent
         } else if (this.torrents.contains(torrent)) {
-            console.warn('already have this torrent!')
+            console.warn('already have this torrent!',console.trace()) // double callback
             this.app.highlightTorrent(torrent.hashhexlower)
             // we already had this torrent, maybe add the trackers to it...
         } else {

@@ -1,3 +1,6 @@
+function assert(bool) {
+    if (! bool && DEVMODE) debugger
+}
 function debugSockets() {
     chrome.sockets.tcp.getSockets( function(socketInfos) {
         var d = {}

@@ -170,9 +170,11 @@ function bind_events() {
     });
 
     getel('detailGrid').addEventListener('contextmenu',function(evt) {
+        if (app) { app.onContextMenuNoItem() }
+        /*
         if (app && app.UI && app.UI.detailtable && app.UI.detailtable.onContextMenu) {
             app.UI.detailtable.onContextMenu(evt)
-        }
+        }*/
     })
     
     window.onfocus = function() {

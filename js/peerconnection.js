@@ -216,7 +216,9 @@ PeerConnection.prototype = {
         this.closing = true
         if (forcelog) {
             //console.trace()
-            console.clog(L.SEED, 'disconnect',reason,this._attributes)
+            if (this._attributes.incoming) {
+                console.clog(L.SEED, 'disconnect',reason,this._attributes)
+            }
         }
         if (this.get('downspeed') > 1024 * 50) {
             console.clog(L.DEV, 'a good connection is closing',byteUnits(this._attributes.bytes_received), reason)
@@ -887,7 +889,7 @@ PeerConnection.prototype = {
                 if (torrent.isPrivate()) {
                     // always allow private incoming connections, no limit :-)
                 } else {
-                    if (! (torrent.started || torrent.canSeed())) {
+                    if (! (torrent.started)) {
                         this.close('torrent not active: '+torrent._attributes.name)
                         return
                     }
@@ -895,11 +897,23 @@ PeerConnection.prototype = {
                         this.close('too many uploads already')
                         return
                     }
+                    if (torrent.peers.items.length >= this.client.app.options.get('maxconns')*2) { // allow some extra incoming peers
+                        this.close('too many peers already')
+                        return
+                    }
+                    if (torrent.isComplete() && ! torrent.canSeed()) {
+                        this.close('not seeding')
+                        return
+                    }
                 }
                 this.torrent = torrent
                 this.peer.torrent = torrent
                 this.torrent.peers.add(this)
-                this.torrent.swarm.add(this.peer)
+                if (! this.torrent.swarm.contains(this.peer)) {
+                    this.torrent.swarm.add(this.peer)
+                } else {
+                    this.peer = this.torrent.swarm.get(this.peer.get_key())
+                }
                 console.clog(L.SEED, "established new incoming connection",this)
                 this.sendHandshake()
                 this.sendExtensionHandshake()
@@ -908,7 +922,7 @@ PeerConnection.prototype = {
                     this.sendBitfield()
                 }.bind(this))
             } else {
-                this.close('dont have this torrent')
+                this.close('dont have this torrent: ' + hashhexlower)
             }
         }
     },
@@ -946,12 +960,16 @@ PeerConnection.prototype = {
     },
     handle_UTORRENT_MSG_ut_pex: function(msg) {
         var data = bdecode(ui82str(new Uint8Array(msg.payload, 6)))
-        // TODO -- use this data :-)
         //console.log('ut_pex data', data)
         var idx, host, port, peer
         if (data.added) {
             this.torrent.addCompactPeerBuffer(data.added,'pex')
         }
+        if (data.added6) {
+            this.torrent.addCompactPeerBuffer(data.added6,'pex',{ipv6:true})
+        }
+        // handle dropped/dropped6
+        // added.f added6.f always seem to be empty
         this.torrent.maybePropagatePEX(data)
     },
     handle_UTORRENT_MSG_ut_metadata: function(msg) {

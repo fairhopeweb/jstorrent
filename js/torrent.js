@@ -274,21 +274,18 @@ Torrent.prototype = {
 
         }
     },
-    addNonCompactPeerBuffer: function(added) {
+    addNonCompactPeerBuffer: function(added,source) {
         for (var i=0; i<added.length; i++) {
             var host = added[i].ip
             var port = added[i].port
+            this.add_peer(host,port,source)
             // also contains .peer_id, but we dont care
-            peer = new jstorrent.Peer({host:host, port:port, torrent:this})
-            if (! this.swarm.contains(peer)) {
-                //console.log('peer buffer added new peer',host,port)
-                this.swarm.add(peer)
-            }
         }
     },
     addCompactPeerBuffer: function(added,source,opts) {
         var ipv6 = opts && opts.ipv6
         var hostbytes = ipv6 ? 16 : 4
+        if (ipv6 && ! jstorrent.options.enable_ipv6) { return }
         var portbytes = 2
         var eachbytes = hostbytes+portbytes
         console.assert(added.length%eachbytes==0)
@@ -309,14 +306,7 @@ Torrent.prototype = {
                 var host = hostarr.join('.')
             }
             port = added.charCodeAt( idx ) * 256 + added.charCodeAt( idx+1 )
-            peer = new jstorrent.Peer({host:host, port:port, torrent:this})
-            if (source) peer.set('source',source)
-            if (! this.swarm.contains(peer)) {
-                if (! jstorrent.options.disable_pex) {
-                    //console.log('peer buffer added new peer',host,port)
-                    this.swarm.add(peer)
-                }
-            }
+            this.add_peer(host,port,source)
         }
     },
     initializeFromWeb: function(url, callback, opts) {
@@ -1460,13 +1450,9 @@ Torrent.prototype = {
         if (jstorrent.options.always_add_special_peer) {
             for (var i=0; i<jstorrent.options.always_add_special_peer.length; i++) {
                 var host = jstorrent.options.always_add_special_peer[i]
-                var peer = new jstorrent.Peer({torrent: this, host:host.split(':')[0], port:parseInt(host.split(':')[1])})
-                if (! this.swarm.contains(peer)) {
-                    this.swarm.add(peer)
-                }
+                this.add_peer_string(host,'special')
             }
         }
-
         setTimeout( _.bind(function(){
             // HACK delay this a little so manual peers kick in first, before frame
             //this.trigger('started')
@@ -1476,17 +1462,7 @@ Torrent.prototype = {
             if (hosts) {
                 for (var i=0; i<hosts.length; i++) {
                     var host = hosts[i]
-                    var peer = new jstorrent.Peer({torrent: this, host:host.split(':')[0], port:parseInt(host.split(':')[1])})
-                    if (! this.swarm.contains(peer)) {
-                        this.swarm.add(peer)
-                    }
-                    var peerconn = new jstorrent.PeerConnection({peer:peer})
-                    //console.log('should add peer!', idx, peer)
-                    if (! this.peers.contains(peerconn)) {
-                        this.peers.add( peerconn )
-                        //this.set('numpeers',this.peers.items.length)
-                        peerconn.connect()
-                    }
+                    this.add_peer_string(host,'manual',true)
                 }
             }
         }
@@ -1571,6 +1547,38 @@ Torrent.prototype = {
             //this.forceAnnounce()
         }
     },
+    parse_peer: function(s) {
+        try {
+            var parsed = new URL('http://' + s)
+            return { host: parsed.hostname,
+                     port: parseInt(parsed.port) || 6881 }
+        } catch(e) {
+        }
+    },
+    add_peer_string: function(s, source, connect) {
+        var info = this.parse_peer(s)
+        if (info) {
+            var peer = this.add_peer(info.host, info.port, source)
+            var peerconn = new jstorrent.PeerConnection({peer:peer})
+            //console.log('should add peer!', idx, peer)
+            if (! this.peers.contains(peerconn)) {
+                this.peers.add( peerconn )
+                //this.set('numpeers',this.peers.items.length)
+                peerconn.connect()
+            }
+        }
+    },
+    add_peer: function(host, port, source) {
+        var peer = new jstorrent.Peer({host:host, port:port, torrent:this})
+        if (source) peer.set('source',source)
+        if (! this.swarm.contains(peer)) {
+            if (! (jstorrent.options.disable_pex && source == 'pex')) {
+                console.log('peer buffer added new peer',host,port)
+                this.swarm.add(peer)
+                return peer
+            }
+        }
+    },
     onComplete: function() {
         //console.log('torrent.onComplete')
         this.set('downspeed',0)
@@ -1578,10 +1586,13 @@ Torrent.prototype = {
 
         this.peers.items.forEach( function(peer) {
             if (peer.connected) {
+                if (! this.canSeed()) {
+                    peer.close('done')
+                }
                 // TODO make sure piece cache gets cleared out!
                 //peer.sendMessage("UNCHOKE")
             }
-        })
+        }.bind(this))
         this.removeFromActives()
 
         for (var i=0; i<this.trackers.length; i++) {

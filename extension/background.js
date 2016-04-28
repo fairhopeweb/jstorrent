@@ -14,8 +14,44 @@ var createProps = {
                        ]
 }
 
+function dl_create(item) {
+    //console.log('created download item',item)
+    chrome.downloads.onChanged.addListener(dl_change)
+}
+function dl_change(delta) {
+    console.log('download delta',delta)
+    if (delta.state && delta.state.current == 'complete') {
+        chrome.downloads.search({id:delta.id},function(d){
+            d = d[0]
+            //console.log('completed dl',d)
+            //chrome.tabs.create({url:'file://' + d.filename})
+
+            console.log("FOUND FILE PATH",d.filename)
+
+            setTimeout( function() {
+                chrome.downloads.removeFile(d.id)
+            }, 1000)
+
+            chrome.downloads.onCreated.removeListener(dl_create)
+            chrome.downloads.onChanged.removeListener(dl_change)
+            //chrome.browser.openTab({url:d.filename})
+
+            //chrome.browser.openTab({url:d.
+            //chrome.downloads.open(d.id)
+        })
+    }
+}
+
+function getDownloadPath() {
+    chrome.downloads.onCreated.addListener(dl_create)
+    chrome.downloads.setShelfEnabled(false)
+    chrome.downloads.download({saveAs:false,url:'http://www.google.com/robots.txt'}, function(result) {
+        console.log('original download result',result)
+    })
+}
+
 function onContextMenuClickHandler(info, tab) {
-        //console.log(info, tab)
+    //console.log(info, tab)
 
         chrome.runtime.sendMessage(jstorrent_id, {command:'add-url',url:info.linkUrl, pageUrl:info.pageUrl}, function(result) {
             console.log('result of message from full',result,chrome.runtime.lastError)

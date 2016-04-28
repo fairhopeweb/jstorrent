@@ -199,15 +199,20 @@ App.prototype = {
         this.analytics.sendEvent('acceptLanguages',window.navigator.language,this.accept_languages)
     },
     onContextMenuNoItem: function(grid, info, evt) {
-        window.contextMenuContextItem = info
         chrome.contextMenus.removeAll()
-        if (info.collection.itemClass == jstorrent.Tracker) {
+        if (this.UI.detailtype == 'trackers') {
             var opts = {
                 contexts:["all"],
                 title:"Add Custom Tracker",
                 id:"add-custom-tracker"
             }
             chrome.contextMenus.create(opts)
+        } else if (this.UI.detailtype == 'peers') {
+            var actions = ['Add peer']
+            actions.forEach(function(action){chrome.contextMenus.create({contexts:["all"],title:action,id:action})})
+        } else if (this.UI.detailtype == 'swarm') {
+            var actions = ['Add peer']
+            actions.forEach(function(action){chrome.contextMenus.create({contexts:["all"],title:action,id:action})})
         }
         return true
     },
@@ -262,7 +267,28 @@ App.prototype = {
         var cls = item && item._collections && item._collections[0] && item._collections[0].itemClass
         window.contextMenuContextItem = null
         var id = c.menuItemId
-        if (item == 'messages') {
+        if (id == 'Add peer') {
+            var torrent = this.UI.detailcontext
+            var dialog = getel('dialog-add-peer')
+            var input = document.querySelector('#dialog-add-peer input')
+            dialog.showModal()
+            function submit() {
+                var val = input.value
+                input.value = ''
+                console.log('got value',val)
+                torrent.add_peer_string(val)
+                dialog.close()
+            }
+            document.querySelector('#dialog-add-peer input').onkeydown = function(evt) {
+                if (evt.keyCode == 13) {
+                    submit()
+                }
+            }
+            document.querySelector('#dialog-add-peer button').onclick = submit
+        } else if (id == 'add-custom-tracker') {
+            console.clog(L.UI,'add custom tracker now...')
+            app.createWindowCustomTracker(item)
+        } else if (item == 'messages') {
             // message pane
             var k = c.menuItemId
             if (k == "Reset") { return window.L = reset_logging_flags() }
@@ -304,9 +330,6 @@ App.prototype = {
                 var file = files[i]
                 file.torrent.setFilePriority(file.num, 0, file.getPriority())
             }
-        } else if (c.menuItemId == 'add-custom-tracker') {
-            console.clog(L.UI,'add custom tracker now...')
-            app.createWindowCustomTracker(item)
         }
     },
     onAcceptLanguages: function(s) {
@@ -1080,8 +1103,7 @@ App.prototype = {
         this.upsell_window = null
     },
     addTracker: function(val) {
-        var context = this.addCustomTrackerContext
-        var torrent = context.collection.opts.torrent
+        var torrent = this.UI.detailcontext
         torrent.addTrackerByURL(val)
     },
     createWindowCustomTracker: function(item) {

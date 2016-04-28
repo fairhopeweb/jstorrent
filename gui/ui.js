@@ -106,7 +106,8 @@ function UI(opts) {
             {id:"last_message_received", name: "Last Received", width:120},
             {id:'timeouts', name:"Timeouts", type:'number'},
             {id:"amChoked", type:'number'},
-            {id:"peerChoked", type:'number'}
+            {id:"peerChoked", type:'number'},
+            {id:"incoming", type:'number'}
         ],
         'swarm':[
             {attr:"host", name:"Host", width:110, sortable:true},
@@ -305,6 +306,7 @@ UI.prototype = {
         if (this.detailtype == 'messages' && type == 'messages' && this.detailtable) {return} // dont need to redraw (unless its from recover...)
         
         this.detailtype = type
+        this.detailcontext = torrent
 
         if (this.detailtable) {
             this.detailtable.destroy()

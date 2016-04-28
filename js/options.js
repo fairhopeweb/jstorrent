@@ -123,6 +123,13 @@ function Options(opts) {
             'visible': false,
             'type':'bool'
         },
+        "incoming_ipv6": {
+            'default':true,
+            'name':'Allow incoming IPV6 connections',
+            'type':'bool',
+            advanced:true,
+            'visible':false
+        },
         'seed_public': {
             'default':false,
             'name':'Enable seeding public torrents (BETA)',
