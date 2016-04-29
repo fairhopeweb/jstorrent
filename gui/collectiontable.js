@@ -111,7 +111,7 @@ debugger // using CellSelectEditor now
                 grid.setSelectedRows([cell.row])
             }
             var item = grid.getDataItem(cell.row)
-            return app.onContextMenu(grid, item, evt)
+            return fgapp.onContextMenu(grid, item, evt)
         } else {
             console.error('unable to get cell from event')
         }

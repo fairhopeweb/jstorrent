@@ -1,5 +1,5 @@
 (function() {
-    
+    console.log('session.js')
     function Session(event) {
         // load chrome.storage.local settings
         // (maybe resume.dat file from PERSISTENT isolated storage)
@@ -30,7 +30,19 @@
             this[id] = null
             if (id == MAINWIN) {
                 this.UI = null
+                var opts = chrome.app.window.get('options')
+                if (opts) { opts.close() }
+                var help = chrome.app.window.get('help')
+                if (help) { help.close() }
             }
+        },
+        onWindowRestored: function() {
+            console.log('main window restored. re-create UI')
+            this.client.fgapp.UI.undestroy()
+        },
+        onWindowMinimized: function() {
+            console.log('main window minimized. destroy UI')
+            this.client.fgapp.UI.destroy()
         },
         notify: function(msg, prio) {
             console.log('app notify',msg,'prio',prio)
@@ -140,6 +152,8 @@
                 chrome.app.window.create('gui/ui.html',
                                          opts,
                                          function(win){
+                                             win.onMinimized.addListener(this.onWindowMinimized.bind(this,id))
+                                             win.onRestored.addListener(this.onWindowRestored.bind(this,id))
                                              win.onClosed.addListener(this.onWindowClosed.bind(this,id))
                                          }.bind(this))
             }

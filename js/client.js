@@ -154,7 +154,8 @@ Client.prototype = {
         }.bind(this))
     },
     stopListen: function() {
-        this.listening = true
+        console.clog(L.CLIENT, "Stop listening")
+        this.listening = false
         chrome.sockets.tcpServer.onAcceptError.removeListener(this._onAccept)
         chrome.sockets.tcpServer.onAccept.removeListener(this._onAccept)
         chrome.sockets.tcpServer.close(this.listenSock.socketId)

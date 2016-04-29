@@ -89,12 +89,9 @@ jstorrent.AppForeground = AppForeground
 AppForeground.prototype = {
     reload: function() {
         // cleanly reload the app. remember the last UI state.
-        var state = app.UI.getState()
-        var d = {}
-        d[app.id + '/UI/state'] = state
-        chrome.storage.local.set(d, function() {
+        app.UI.saveState(function() {
             chrome.runtime.reload()
-        }.bind(this))
+        })
     },
     onLine: function() {
         return navigator.onLine
@@ -194,17 +191,21 @@ AppForeground.prototype = {
     },
     onContextMenuNoItem: function(grid, info, evt) {
         chrome.contextMenus.removeAll()
-        if (this.UI.detailtype == 'trackers') {
+
+        var ui = this.UI
+        if (ui.detailtable && ui.detailtable.onContextMenu) {
+            ui.detailtable.onContextMenu(evt)
+        } else if (ui.detailtype == 'trackers') {
             var opts = {
                 contexts:["all"],
                 title:"Add Custom Tracker",
                 id:"add-custom-tracker"
             }
             chrome.contextMenus.create(opts)
-        } else if (this.UI.detailtype == 'peers') {
+        } else if (ui.detailtype == 'peers') {
             var actions = ['Add peer']
             actions.forEach(function(action){chrome.contextMenus.create({contexts:["all"],title:action,id:action})})
-        } else if (this.UI.detailtype == 'swarm') {
+        } else if (ui.detailtype == 'swarm') {
             var actions = ['Add peer']
             actions.forEach(function(action){chrome.contextMenus.create({contexts:["all"],title:action,id:action})})
         }
@@ -285,6 +286,7 @@ AppForeground.prototype = {
         } else if (item == 'messages') {
             // message pane
             var k = c.menuItemId
+            // want to send this to client.html
             if (k == "Reset") { return window.L = reset_logging_flags() }
             L[k].show = ! L[k].show
         } else if (cls == jstorrent.PeerConnection) {
@@ -453,7 +455,7 @@ AppForeground.prototype = {
     handle_click: function(type, collection, evt, info) {
         // gui/ui.js
         var file = collection.items[info.row]
-        var column = UI.coldefs.files[info.cell]
+        var column = app.UI.coldefs.files[info.cell]
         if (type == 'files') {
             console.clog(L.UI,'clicked in files',file, info.cell)
             if (column.name == 'Action') {

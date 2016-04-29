@@ -17,7 +17,7 @@ console.log = function() {
     } else {
         window.LOGHISTORY = null
     }
-    window.LOGLISTENER = null
+    window.LOGLISTENERS = []
 /*
     console.log = function() {
         var args = Array.prototype.slice.apply(arguments)
@@ -26,6 +26,14 @@ console.log = function() {
         //Function.prototype.bind.call(consolelog, console).apply(console,args)
     }
 */
+    function handlelog(args) {
+        if (LOGHISTORY) LOGHISTORY.add(args)
+        if (LOGLISTENERS && LOGLISTENERS.length > 0) {
+            for (var i=0; i<LOGLISTENERS.length; i++) {
+                LOGLISTENERS[i](args)
+            }
+        }
+    }
 
     function wrappedlog(method) {
         var wrapped = function() {
@@ -38,10 +46,7 @@ console.log = function() {
                 args = ['%cWarn','color:orange'].concat(args)
             }
 
-            if (LOGHISTORY) LOGHISTORY.add(args)
-            if (LOGLISTENER) {
-                LOGLISTENER(args)
-            }
+            handlelog(args)
         }
         return wrapped
     }
@@ -62,10 +67,7 @@ console.log = function() {
             if (tolog.color) {
                 args = ['%c' + tolog.name, 'color:'+tolog.color].concat(args)
             }
-            if (LOGHISTORY) LOGHISTORY.add( args )
-            if (LOGLISTENER) {
-                LOGLISTENER(args)
-            }
+            handlelog(args)
             ORIGINALCONSOLE.log.apply(console,args)
         }
     }

@@ -65,6 +65,11 @@ function onappready() {
 */
 
     window.client = app.client
+    if (! chrome.app.window.get('client').contentWindow.WSC) {
+        //getel('ui-wrapper').style.display='none'
+        getel('wsc-error').style.display=''
+        return
+    }
 
     if (window.example_url_2) {
         //document.getElementById("url").value = example_url_3
@@ -114,11 +119,6 @@ function onappready() {
 }
 
 function onready() {
-    if (! window.WSC) {
-        //getel('ui-wrapper').style.display='none'
-        getel('wsc-error').style.display=''
-        return
-    }
     
     function go() {
         window.app = new jstorrent.App;
@@ -180,10 +180,6 @@ function bind_events() {
 
     getel('detailGrid').addEventListener('contextmenu',function(evt) {
         if (fgapp) { fgapp.onContextMenuNoItem() }
-        /*
-        if (app && app.UI && app.UI.detailtable && app.UI.detailtable.onContextMenu) {
-            app.UI.detailtable.onContextMenu(evt)
-        }*/
     })
     
     window.onfocus = function() {

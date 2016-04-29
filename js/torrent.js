@@ -1573,7 +1573,6 @@ Torrent.prototype = {
         if (source) peer.set('source',source)
         if (! this.swarm.contains(peer)) {
             if (! (jstorrent.options.disable_pex && source == 'pex')) {
-                console.log('peer buffer added new peer',host,port)
                 this.swarm.add(peer)
                 return peer
             }
