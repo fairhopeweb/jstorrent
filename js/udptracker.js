@@ -123,9 +123,9 @@
             // look at http://www.bittorrent.org/beps/bep_0015.html
             // do retry when connect timeout, or announce timeout
             this.updateState('get_connection')
-	    this.getConnection( this.onConnection.bind(this) )
+	    this.getConnection( this.onConnection.bind(this,event) )
         },
-        onConnection: function(connection) {
+        onConnection: function(event, connection) {
             if (connection.error) {
                 this.error(connection.error);
                 return
@@ -326,7 +326,7 @@
                 v.setUint8(i++,0)
             }
             //console.log('udp tracker payload',new Uint8Array(payload.buffer))
-            return {payload: payload.buffer, transactionId: transactionId};
+            return {payload: payload.buffer, transactionId: transactionId, event:event, connectionId:connectionId};
         },
         get_connection_data: function() {
 	    // bittorrent udp protocol connection header info

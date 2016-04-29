@@ -234,7 +234,7 @@ UI.prototype = {
             var row = this.client.torrents.keyeditems[hashhexlower]
             torrent = this.client.torrents.get(hashhexlower)
             
-            if (row) {
+            if (row !== undefined) {
                 this.torrenttable.grid.scrollRowIntoView(row);
                 this.torrenttable.grid.setSelectedRows([row])
                 //this.torrenttable.grid.flashRow(row, 300, 8);

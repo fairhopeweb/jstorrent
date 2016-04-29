@@ -69,7 +69,9 @@
         this.announce_timeout_hit = false
         this.announce_timeout_id = null
 
-        this.request = null
+        this.next_announce_timeout_id = null
+
+        this.announceRequest = null
     }
     Tracker.announce_timeout = 20000 // 20 seconds should be enough
     jstorrent.Tracker = Tracker;
@@ -77,6 +79,11 @@
     Tracker.prototype = {
         get_key: function() {
             return this.url
+        },
+        cleanup: function() {
+            if (this.next_announce_timeout_id) {
+                clearTimeout( this.next_announce_timeout_id )
+            }
         },
         tick: function() {
             // if torrent is active, send a tick every second or so? so we can update the display.
@@ -90,12 +97,13 @@
             }
         },
         announce: function(event, callback) {
+            if (this.next_announce_timeout_id) {
+                clearTimeout(this.next_announce_timeout_id)
+            }
+            this.next_announce_timeout_id = null
             if (jstorrent.options.disable_trackers) {
                 callback({error:'disabled'})
                 return
-            }
-            if (this.next_announce_timeout_id) {
-                clearTimeout(this.next_announce_timeout_id)
             }
             if (this.announcing) { callback({error:'already announcing'}); return }
             event = event || 'started'
@@ -104,6 +112,7 @@
             this.doannounce(event, callback)
         },
         onAnnounceSuccess: function() {
+            console.log(this,'onannouncesuccess',this.announceRequest)
             this.set('announces',this.get('announces')+1)
             clearTimeout( this.announce_timeout_id )
             var callback = this.announce_callback
@@ -111,8 +120,13 @@
             this.announce_timeout_id = null
             this.announcing = false
             this.announcedWhen = Date.now()
-            this.next_announce_timeout_id = setTimeout( this.announce.bind(this,'none'),
-                                                        this.get('interval') * 1000 )
+            if (this.announceRequest.event == 'stopped' || this.announceRequest.event == 'complete') {
+                // TODO if seeding, still announce on complete
+                this.set('next_announce', 0)
+            } else {
+                this.next_announce_timeout_id = setTimeout( this.announce.bind(this,'none'),
+                                                            this.get('interval') * 1000 )
+            }
             this.updateState('idle')
             if (callback) {
                 callback(resp)
@@ -199,7 +213,7 @@
                 gotpeers = true
             }
 
-            if (this.request.numwant == 0 && ! gotpeers) {
+            if (this.announceRequest.numwant == 0 && ! gotpeers) {
                 // thats ok.
             } else if (! gotpeers) {
                 this.error({message:'no peers in response',data:data})
@@ -231,7 +245,7 @@
                 port: this.torrent.client.externalPort(), // some trackers complain when we send 0 and dont give a response
                 left: this.torrent.get('size') - this.torrent.get('downloaded')
             }
-            this.request = data
+            this.announceRequest = data
             if (event == 'stopped' || event == 'complete') {
                 data.numwant = 0
             }

@@ -1,10 +1,11 @@
 (function() {
-    console.log('session.js')
     function Session(event) {
         // load chrome.storage.local settings
         // (maybe resume.dat file from PERSISTENT isolated storage)
         // setup listen for gcm messages if setting wants it.
         this.id = 'app01'
+        this.statekey = 'session01.state'
+        this.state = null
         this.options = null
         this.permissions = null
         this.notifications = new jstorrent.Notifications
@@ -20,13 +21,27 @@
         this[MAINWIN] = false
         this.registerEvent(event)
         
-        async.parallel( [ this.getPermissions.bind(this),
-                          this.getOptions.bind(this) ],
-                        this.onReady.bind(this))
+        runParallel( [ this.getPermissions.bind(this),
+                       this.getLastState.bind(this),
+                       this.getOptions.bind(this) ],
+                     this.onReady.bind(this))
     }
     SessionProto = {
+        getLastState: function(cb) {
+            chrome.storage.local.get(this.statekey, function(result) {
+                this.state = result[this.statekey]
+                cb()
+            }.bind(this))
+        },
+        debugState: function() {
+            return {client:this.client,
+                    MAINWIN:this[MAINWIN],
+                    analytics:this.analytics,
+                    UI:this.UI,
+                    launching:this.launching}
+        },
         onWindowClosed: function(id) {
-            console.clog(L.SESSION,'window closed',id)
+            console.clog(L.SESSION,'window closed',id,this.debugState())
             this[id] = null
             if (id == MAINWIN) {
                 this.UI = null
@@ -38,11 +53,15 @@
         },
         onWindowRestored: function() {
             console.log('main window restored. re-create UI')
-            this.client.fgapp.UI.undestroy()
+            if (this.client && this.client.fgapp && this.client.fgapp.UI) {
+                this.client.fgapp.UI.undestroy()
+            }
         },
         onWindowMinimized: function() {
             console.log('main window minimized. destroy UI')
-            this.client.fgapp.UI.destroy()
+            if (this.client && this.client.fgapp && this.client.fgapp.UI) {
+                this.client.fgapp.UI.destroy()
+            }
         },
         notify: function(msg, prio) {
             console.log('app notify',msg,'prio',prio)
@@ -57,24 +76,29 @@
             }
         },
         shutdown: function() {
-            if (false) {
-                this.analytics = null
-                this.UI = null
-                if (this.client) {
-                    this.client.fgapp = null
-                }
-                this.client = null
+            killAllSockets()
+            this.analytics = null
+            this.UI = null
+            if (this.client) {
+                //this.client.fgapp.cleanup()
+                this.client.fgapp = null
             }
+            this.client.cleanup()
+            this.client = null
             
             var cwin = chrome.app.window.get('client')
             if (cwin) cwin.close()
             var awin = chrome.app.window.get('analytics')
             if (awin) awin.close()
-            console.log(this.thinking)
             if (this.thinking) {
                 clearInterval(this.thinking)
                 this.thinking = null
             }
+            var d = {}
+            d[this.statekey] = {dontstart_once:true}
+            chrome.storage.local.set(d, function() {
+                chrome.runtime.reload()
+            })
         },
         addListener: function(t,cb) {
             if (! this._listeners[t]) this._listeners[t] = []
@@ -85,7 +109,7 @@
             if (cbs) cbs.forEach( function(cb){cb()} )
         },
         registerEvent: function(event) {
-            console.clog(L.SESSION,'register event',event)
+            console.clog(L.SESSION,'register event',event,this.debugState())
             this.events.push(event)
             this.runEvents()
         },
@@ -108,7 +132,16 @@
         onReady: function() {
             console.clog(L.SESSION,'ready')
             this.ready = true
-            this.runEvents()
+            
+            if (this.state && this.state.dontstart_once) {
+                if (this.events) { this.events.shift() }
+                chrome.storage.local.remove(this.statekey, function() {
+                    console.clog(L.SESSION, 'wont start, dontstart_once')
+                })
+                this.state = null
+            } else {
+                this.runEvents()
+            }
         },
         createClient: function() {
             if (! this.client) {
@@ -204,7 +237,7 @@
         think: function() {
             //console.clog(L.SESSION,'think')
             if (this.client && this.client.activeTorrents.items.length == 0 && ! chrome.app.window.get(MAINWIN) && ! this.launching) {
-                console.clog(L.SESSION,'shut it down.')
+                console.clog(L.SESSION,'shut it down?',this.debugState())
                 this.shutdown()
             }
         },
@@ -225,6 +258,9 @@
                     this.launch(event)
                 }
                 break
+            case 'onSuspend':
+                console.log('going to suspend. great!')
+                return
             default:
                 console.log('other/unrecognized runtime event',event)
             }

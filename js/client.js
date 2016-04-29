@@ -131,6 +131,9 @@ function Client(opts) {
 }
 
 Client.prototype = {
+    cleanup: function() {
+        // make sure no event listeners etc...
+    },
     maybeStartWebApp: function() {
         if (! window.WSC) {
             console.warn('no js/web-server-chrome folder?')

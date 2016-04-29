@@ -64,7 +64,7 @@ function onappready() {
     })
 */
 
-    window.client = app.client
+    //window.client = app.client
     if (! chrome.app.window.get('client').contentWindow.WSC) {
         //getel('ui-wrapper').style.display='none'
         getel('wsc-error').style.display=''
@@ -83,20 +83,9 @@ function onappready() {
     document.getElementById("detailGrid").style.height = gui_opts.detailGrid_height;
 */
 
-    document.getElementById("add-form").addEventListener('submit', onadd)
-    document.getElementById('url-btn').addEventListener('click',onadd)
-
-    var ui = new UI({client:client})
-    app.UI = ui
-    ui.restoreState()
-
-
     bind_events()
 
     app.analytics.sendAppView("MainView")
-
-
-    $('#webstorelink')[0].href = fgapp.getCWSPage()
 
     if (jstorrent.device.platform == 'Android') {
         var url = "http://academictorrents.com/download/af4c6ce643f30da2619fe6cf7dd838b1d4539743"
@@ -172,6 +161,11 @@ function bind_events() {
     }
 
     document.body.addEventListener('keydown', keydown)
+
+    $('#webstorelink')[0].href = fgapp.getCWSPage()
+
+    document.getElementById("add-form").addEventListener('submit', onadd)
+    document.getElementById('url-btn').addEventListener('click',onadd)
     
     var torrenttabs = ['info','files','peers','swarm','trackers','pieces','diskio','messages'] 
     torrenttabs.forEach(function(tab) {

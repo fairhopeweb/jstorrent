@@ -32,9 +32,9 @@ function AppForeground(opts) {
     chrome.notifications.onClosed.addListener(_.bind(this.notificationClosed, this))
     chrome.contextMenus.onClicked.addListener(_.bind(this.onContextMenuClick, this))
 
-
+    this._onIdleStateChanged = this.onIdleStateChanged.bind(this)
     if (chrome.idle && chrome.idle.onStateChanged) {
-        chrome.idle.onStateChanged.addListener( this.onIdleStateChanged.bind(this) )
+        chrome.idle.onStateChanged.addListener( this._onIdleStateChanged )
     }
     
     this.popupwindowdialog = null // what it multiple are triggered? do we queue up the messages?
@@ -84,6 +84,9 @@ function AppForeground(opts) {
 jstorrent.AppForeground = AppForeground
 
 AppForeground.prototype = {
+    cleanup: function() {
+        chrome.idle.onStateChanged.removeListener( this._onIdleStateChanged )
+    },
     reload: function() {
         // cleanly reload the app. remember the last UI state.
         app.UI.saveState(function() {
@@ -594,6 +597,39 @@ AppForeground.prototype = {
     showPopupWindowDialog: function(details) {
         this.createNotification({details:details})
     },
+    updateRemainingDownloadsDisplay: function() {
+        // bother the user every N downloads with a link to the chrome web store and let them write a review...
+
+        this.getTotalDownloads( _.bind(function(val) {
+            this.totalDownloads = val
+            $('#download-remain').text(this.freeTrialFreeDownloads - val)
+        },this))
+    },
+    canDownload: function() {
+        if (! this.isLite()) { return true }
+        return this.totalDownloads < this.freeTrialFreeDownloads
+    },
+    getTotalDownloads: function(callback) {
+        chrome.storage.sync.get('totalDownloads', _.bind(function(resp) {
+            callback( resp['totalDownloads'] || 0 )
+        },this))
+    },
+    incrementTotalDownloads: function(callback) {
+        chrome.storage.sync.get('totalDownloads', _.bind(function(resp) {
+            var obj = {}
+            obj['totalDownloads'] = (resp['totalDownloads'] || 0) + 1
+            chrome.storage.sync.set( obj, callback)
+        },this))
+    },
+    isLite: function() {
+        if (DEVMODE) { return false }
+        return chrome.runtime.id == jstorrent.constants.cws_jstorrent_lite
+    },
+    isUnpacked: function() {
+        return DEVMODE
+        return ! _.contains([jstorrent.constants.cws_jstorrent,
+                             jstorrent.constants.cws_jstorrent_lite], chrome.runtime.id)
+    },
     onTorrentHaveMetadata: function(torrent) {
         if (this.UI && this.UI.get_selected_torrent() == torrent) {
             // reset the detail view (works for files view, general view)
@@ -643,39 +679,6 @@ AppForeground.prototype = {
                 torrent.resetState()
             }, 4000 )
         }
-    },
-    updateRemainingDownloadsDisplay: function() {
-        // bother the user every N downloads with a link to the chrome web store and let them write a review...
-
-        this.getTotalDownloads( _.bind(function(val) {
-            this.totalDownloads = val
-            $('#download-remain').text(this.freeTrialFreeDownloads - val)
-        },this))
-    },
-    canDownload: function() {
-        if (! this.isLite()) { return true }
-        return this.totalDownloads < this.freeTrialFreeDownloads
-    },
-    getTotalDownloads: function(callback) {
-        chrome.storage.sync.get('totalDownloads', _.bind(function(resp) {
-            callback( resp['totalDownloads'] || 0 )
-        },this))
-    },
-    incrementTotalDownloads: function(callback) {
-        chrome.storage.sync.get('totalDownloads', _.bind(function(resp) {
-            var obj = {}
-            obj['totalDownloads'] = (resp['totalDownloads'] || 0) + 1
-            chrome.storage.sync.set( obj, callback)
-        },this))
-    },
-    isLite: function() {
-        if (DEVMODE) { return false }
-        return chrome.runtime.id == jstorrent.constants.cws_jstorrent_lite
-    },
-    isUnpacked: function() {
-        return DEVMODE
-        return ! _.contains([jstorrent.constants.cws_jstorrent,
-                             jstorrent.constants.cws_jstorrent_lite], chrome.runtime.id)
     },
     onTorrentProgress: function(torrent) {
         if (jstorrent.device.platform === 'Android') { return } // progress notification broken on android

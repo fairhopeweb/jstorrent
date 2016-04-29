@@ -62,7 +62,7 @@ if (self.jstorrent) {
 
 } else {
     // otherwise we are in the worker thread
-    importScripts('deps/digest.js')
+    // importScripts('deps/digest.js')
 
     self.addEventListener('message', function(evt) {
         var msg = evt.data
@@ -73,7 +73,7 @@ if (self.jstorrent) {
 
         if (msg.command == 'hashChunks') {
 
-            if (self.crypto && self.crypto.subtle) {
+            if (true && self.crypto && self.crypto.subtle) { // todo make a nice error
                 var sz = 0
                 for (var i=0; i<chunks.length; i++) { sz += chunks[i].byteLength }
                 var toCheck = new Uint8Array(sz)

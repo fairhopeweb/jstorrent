@@ -16,7 +16,7 @@ function Disk(opts) {
         _.delay(function() {
             var numActive = this.client.get('numActiveTorrents')
 
-            if (numActive == 0 && false) {
+            if (numActive == 0) {
                 console.log('disk, stop ticking') // dont stop ticking... hrm.
                 if (this.think_interval) { 
                     clearInterval(this.think_interval)
@@ -129,7 +129,7 @@ Disk.prototype = {
     },
     checkBroken: function(callback) {
         if (! this.entry) { if (callback) {callback(true)}; return }
-        //console.log('checkBroken')
+        console.log('checkBroken')
         var _this = this
         if (this.checkingBroken) { console.log('alreadycheckingbroken');return }
         this.checkingBroken = true

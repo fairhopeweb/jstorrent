@@ -1,46 +1,3 @@
-function Bridge(opts) {
-    this.id = Bridge.ctr++
-    this.start = opts.start
-    this.startPiece = Math.floor( opts.start / opts.torrent.pieceLength )
-    console.clog(L.STREAM,this.id,'new bridge with startpiece',this.startPiece)
-    this.end = opts.end
-    this.handler = opts.handler
-    this.file = opts.file
-    this.file.set('streaming','init'+this.startPiece)
-    this.torrent = opts.torrent
-    this.ondata = null
-}
-Bridge.ctr = 0
-var Bridgeproto = {
-    notneeded: function() {
-        console.clog(L.STREAM,'bridge.notneeded')
-        this.handler.request.connection.stream.onclose = null
-        delete this.torrent.bridges[this.id]
-    },
-    onhandlerclose: function() {
-        console.clog(L.STREAM,'bridge.onhandlerclose')
-        this.file.set('streaming',false)
-        console.warn("REMOVE BRIDGE",this.id)
-        // called when the handler connection is closed
-        //debugger
-        delete this.torrent.bridges[this.id]
-    },
-    requestfinished: function() {
-        console.clog(L.STREAM,'bridge.requestfinished')
-        this.file.set('streaming',false)
-        console.warn("REMOVE BRIDGE",this.id)
-        this.handler.request.connection.stream.onclose = null // only if current?
-        delete this.torrent.bridges[this.id]
-        // remove "onclose"
-    },
-    newPiece: function(pieceNum) {
-        this.file.set('streaming','now'+pieceNum)
-        // a new piece is available
-        this.ondata()
-    }
-}
-_.extend(Bridge.prototype, Bridgeproto)
-
 function Torrent(opts) {
     jstorrent.Item.apply(this, arguments)
     this.__name__ = arguments.callee.name
@@ -475,7 +432,7 @@ Torrent.prototype = {
         return piece
     },
     registerRangeRequest: function(range, handler) {
-        var bridge = new Bridge({start:range[0],end:range[1],handler:handler,torrent:this,file:handler.file})
+        var bridge = new jstorrent.Bridge({start:range[0],end:range[1],handler:handler,torrent:this,file:handler.file})
         this.bridges[bridge.id] = bridge
         console.clog(L.STREAM,'bridges now',this.bridges)
         if (this.get('state') == 'stopped') { this.start() }
@@ -1599,14 +1556,43 @@ Torrent.prototype = {
         }
     },
     onStopped: function() {
-        //console.log('torrent.onStopped') // could be previously "complete"
         this.removeFromActives()
+        this.session_start_time = null
+        this.starting = false
+        this.isEndgame = false
 
-        if (this.stopinfo && this.stopinfo.dontannounce) {
-            return
+        app.analytics.sendEvent("Torrent", "Stopping")
+        this.set('state','stopped')
+        this.set('downspeed',0)
+        this.set('upspeed',0)
+        this.set('eta',0)
+        this.started = false
+
+        if (this.think_interval) { 
+            clearInterval(this.think_interval)
+            this.think_interval = null
         }
-        for (var i=0; i<this.trackers.length; i++) {
-            this.trackers.get_at(i).announce('stopped')
+        this.peers.each( function(peer) {
+            peer.close('torrent stopped')
+        })
+
+        for (var i=0; i<this.pieces.items.length; i++) {
+            this.pieces.items[i].resetData()
+        }
+        if (this.getStorage()) {
+            this.getStorage().cancelTorrentJobs(this)
+        }
+        this.pieces.clear()
+        if (this.client.entryCache) this.client.entryCache.clearTorrent(this)
+        this.unflushedPieceDataSize = 0
+        this.save()
+        
+        if (this.stopinfo && this.stopinfo.dontannounce) {
+
+        } else {
+            for (var i=0; i<this.trackers.length; i++) {
+                this.trackers.get_at(i).announce('stopped')
+            }
         }
     },
     maybePropagatePEX: function(data) {
@@ -1621,46 +1607,9 @@ Torrent.prototype = {
         })
     },
     stop: function(info) {
-        this.session_start_time = null
         this.stopinfo = info
-        this.starting = false
-        this.isEndgame = false
         if (this.get('state') == 'stopped') { return }
         this.trigger('stopped')
-        app.analytics.sendEvent("Torrent", "Stopping")
-        this.set('state','stopped')
-        this.set('downspeed',0)
-        this.set('upspeed',0)
-        this.set('eta',0)
-        this.started = false
-
-        if (this.think_interval) { 
-            clearInterval(this.think_interval)
-            this.think_interval = null
-        }
-        // prevent newStateThink from reconnecting us
-
-        this.peers.each( function(peer) {
-            // this is not closing all the connections because it modifies .items...
-            // need to iterate better...
-            peer.close('torrent stopped')
-        })
-
-        for (var i=0; i<this.pieces.items.length; i++) {
-            this.pieces.items[i].resetData()
-        }
-        // TODO -- move these into some kind of resetState function?
-
-
-        // TODO - stop all disk i/o jobs for this torrent...
-        if (this.getStorage()) {
-            this.getStorage().cancelTorrentJobs(this)
-        }
-
-        this.pieces.clear()
-        if (app.entryCache) app.entryCache.clearTorrent(this)
-        this.unflushedPieceDataSize = 0
-        this.save()
     },
     remove: function(callback, opts) {
         console.log('remove torrent',callback,opts)
