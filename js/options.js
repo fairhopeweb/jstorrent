@@ -249,8 +249,8 @@
               fullPath: entry.fullPath}
               )
             */
-            if (this.app) {
-                this.app.set_default_download_location(entry)
+            if (this.app && this.app.client && this.app.client.fgapp) {
+                this.app.client.fgapp.set_default_download_location(entry)
             } else {
                 //mainAppWindow.app.download_location = entry
                 mainAppWindow.app.set_default_download_location(entry);

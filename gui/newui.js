@@ -12,7 +12,6 @@ function onready() {
         app.client.fgapp = fgapp
         fgapp.options = app.options
         fgapp.bind_misc_client_torrent()
-        bind_events()
         onappready()
         fgapp.UI = app.UI
         bg.session.onUIPageInit(window)

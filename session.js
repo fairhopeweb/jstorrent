@@ -8,7 +8,7 @@
         this.options = null
         this.permissions = null
         this.notifications = new jstorrent.Notifications
-        this.events = [event]
+        this.events = []
         this.ready = false
         this.launching = false
         this.eventData = null
@@ -18,6 +18,7 @@
         this.analytics = false
         this.client = false
         this[MAINWIN] = false
+        this.registerEvent(event)
         
         async.parallel( [ this.getPermissions.bind(this),
                           this.getOptions.bind(this) ],
@@ -71,11 +72,8 @@
         },
         registerEvent: function(event) {
             console.clog(L.SESSION,'register event',event)
-            if (this.ready && ! this.launching) {
-                this.runEvent(event)
-            } else {
-                this.events.push(event)
-            }
+            this.events.push(event)
+            this.runEvents()
         },
         getPermissions: function(cb) {
             chrome.permissions.getAll( function(permissions) {
@@ -88,8 +86,9 @@
             this.options.load( cb )
         },
         runEvents: function() {
-            while (this.events.length >0) { // todo make async runner
-                this.runEvent( this.events.shift() )
+            if (this.ready && ! this.launching && this.events.length > 0) {
+                var evt = this.events.shift()
+                this.runEvent( evt )
             }
         },
         onReady: function() {
@@ -125,8 +124,21 @@
             if (! this[MAINWIN]) {
                 var id = MAINWIN
                 this[MAINWIN]=true
+                var opts ={
+                    outerBounds: { width: 865,
+                                   height: 610,
+                                   minWidth: 780,
+                                   minHeight: 200 },
+                    frame:{type:'chrome',
+                           color:'#2191ed',
+                           activeColor:'#2191ed',
+                           inactiveColor: '#82c9ff'
+                          },
+                    resizable: true,
+                    id: id
+                }
                 chrome.app.window.create('gui/ui.html',
-                                         {id:id},
+                                         opts,
                                          function(win){
                                              win.onClosed.addListener(this.onWindowClosed.bind(this,id))
                                          }.bind(this))

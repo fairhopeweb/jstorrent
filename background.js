@@ -6,101 +6,8 @@ var _update_available = false
 var extensionId = "bnceafpojmnimbnhamaeedgomdcgnbjk"
 var session = null
 
-function app() {
-    if (chrome.app && chrome.app.window.get) {
-        var mw
-        
-        if (true) {
-            var mw = chrome.app.window.get(MAINWIN)
-        } else {
-            var mw = chrome.app.window.getAll().filter( function(w) { return w.id == MAINWIN } )
-            if (mw.length > 0)
-                mw = mw[0]
-        }
+/*
 
-        if (mw && mw.contentWindow) {
-            return mw.contentWindow.app
-        }
-    }
-}
-
-function getMainWindow() {
-    return chrome.app.window.get && chrome.app.window.get(MAINWIN)
-}
-
-function WindowManager() {
-    // TODO -- if we add "id" to this, then chrome.app.window.create
-    // won't create it twice.  plus, then its size and positioning
-    // will be remembered. so put it in.
-    this.creatingMainWindow = false
-    this.createMainWindowCallbacks = []
-    this.mainWindow = chrome.app.window.get(MAINWIN)
-}
-
-WindowManager.prototype = {
-    getMainWindow: function(callback) {
-        // gets main window or creates if needed
-        if (this.mainWindow) {
-            callback(this.mainWindow)
-        } else {
-            this.createMainWindow( function() {
-                callback(this.mainWindow)
-            }.bind(this))
-        }
-    },
-    createMainWindow: function(callback) {
-        if (this.mainWindow) { 
-            console.log('not creating main window, it already exists')
-            return
-        }
-
-        if (this.creatingMainWindow) {
-            // this can happen when we select multiple "torrent" files
-            // in the files app and launch with JSTorrent.
-            this.createMainWindowCallbacks.push(callback)
-            return
-        }
-        this.creatingMainWindow = true
-        var page = 'gui/index.html'
-        //var page = 'polymer-ui/index.html'
-        var opts ={
-            outerBounds: { width: 865,
-                           height: 610,
-                           minWidth: 780,
-                           minHeight: 200 },
-            frame:{type:'chrome',
-                   color:'#2191ed',
-                   activeColor:'#2191ed',
-                   inactiveColor: '#82c9ff'
-                  },
-            resizable: true,
-            id: MAINWIN
-        }
-        console.log('creating main window',opts)
-        chrome.app.window.create(page,
-                                 opts,
-                                 function(mainWindow) {
-                                     ensureAlive()
-                                     this.mainWindow = mainWindow
-                                     this.creatingMainWindow = false
-                                     mainWindow.onMinimized.addListener( this.onMinimizedMainWindow.bind(this) )
-                                     mainWindow.onRestored.addListener( this.onRestoredMainWindow.bind(this) )
-                                     
-                                     mainWindow.onClosed.addListener( function() {
-                                         this.onClosedMainWindow()
-                                     }.bind(this))
-
-                                     if (callback) { callback() }
-
-                                     var cb
-                                     while (this.createMainWindowCallbacks.length > 0) {
-                                         cb = this.createMainWindowCallbacks.pop()
-                                         cb()
-                                     }
-
-                                 }.bind(this)
-			        );
-    },
     onRestoredMainWindow: function() {
         console.log('main window restored. re-create UI')
         var app = this.mainWindow.contentWindow.app
@@ -140,25 +47,7 @@ WindowManager.prototype = {
         }
     }
 }
-
-var windowManager = new WindowManager
-// if background page reloads, we lose reference to windowmanager main window...
-//window.ctr = 0
-function ensureAlive() {
-    return
-    // attempt to make this page not suspend, because that causes our retained directoryentry to become invalid
-    if (! window.ensureAliveTimeout) {
-        if (getMainWindow()) { // only when the page is alive
-            window.ensureAliveTimeout = setTimeout( function() {
-                window.ensureAliveTimeout = null;
-                //window.ctr++
-                //console.log('ensured alive')
-                ensureAlive()
-            }, 1000 )
-        }
-    }
-}
-
+*/
 
 function launch() {
     runtimeEvent({type:'onLaunched', data:{source:'debugger'}})
@@ -171,16 +60,9 @@ function runtimeEvent(event) {
         session = new jstorrent.Session(event)
     }
 }
-
+/*
 function onAppLaunchMessage_old(launchData) {
     // launchData, request, sender, sendRepsonse
-
-//    chrome.app.window.create("dummy.html", function(win) {
-//        window.open('gui/index.html')
-//        setTimeout(function() {
-//            win && win.contentWindow.close()
-//        }, 1e3)
-//    })
 
     function onMainWindow(mainWindow) {
         mainWindow.contentWindow.app.registerLaunchData(launchData)
@@ -210,18 +92,7 @@ function onAppLaunchMessage_old(launchData) {
         }
     })
 }
-/*
-var BLOBS = []
-function getBlobURL(entry, callback) {
-    function onfile(file) {
-        console.log('playable file',file)
-        var url = (window.URL || window.webkitURL).createObjectURL(file)
-        BLOBS.push(url) // when to destroy object url?
-        callback(url)
-    }
-    entry.file(onfile,onfile)
-}*/
-
+*/
 function setup_uninstall() {
     try {
         chrome.runtime.setUninstallURL('http://jstorrent.com/uninstall/?id=' + encodeURIComponent(chrome.runtime.id),
@@ -326,7 +197,6 @@ function doShowUpdateAvailable(details) {
     }
     chrome.notifications.onButtonClicked.addListener( onButtonClick )
 }
-
 function doShowUpdateNotification(details, history) {
     var currentVersion = details.cur
     var msg = chrome.i18n.getMessage("extName") + " has updated to version " + currentVersion
@@ -354,33 +224,6 @@ function doShowUpdateNotification(details, history) {
     }
     chrome.notifications.onButtonClicked.addListener( onButtonClick )
 }
-
-/*
-// detect if extension is installed... -- moved to js/app.js
-chrome.runtime.sendMessage(extensionId, {running:true}, function(response) {
-    console.log('got msg from extension',response, chrome.runtime.lastError)
-})
-*/
-
-function triggerKeepAwake() {
-    // creating a notification also works?
-    // HACK: make an XHR to cause onSuspendCanceled event
-    console.log('triggerKeepAwake')
-    if (false) {
-        var xhr = new XMLHttpRequest
-        xhr.open("GET","http://127.0.0.1:8000" + '/dummyUrlPing')
-        function onload(evt) {
-            console.log('triggerKeepAwake XHR loaded',evt)
-        }
-        xhr.onerror = onload
-        xhr.onload = onload
-        xhr.send()
-    } else {
-        // this keeps it alive consistently as long as you down close the notification (chromeos)
-        chrome.notifications.create('keepawake',{priority:2,title:"jstorrent",message:"keepawake!",iconUrl:'/js-128.png',type:'basic'})
-    }
-}
-
 function checkForUpdateMaybe() {
     function docheck() {
         console.log('check for update')

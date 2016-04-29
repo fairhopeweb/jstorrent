@@ -229,7 +229,7 @@ function getBackgroundAndApp(callback) {
             tries++
             var app
             try {
-                app = bg.app()
+                app = bg.session
             } catch(e){
                 console.warn(e)
             }
