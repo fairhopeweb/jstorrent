@@ -3,7 +3,7 @@ function Disk(opts) {
     this.__name__ = arguments.callee.name
     this.diskio = null
     this.client = opts.client || opts.parent.parent
-    this.app = opts.app
+    this.app = this.client.app
     this.brandnew = opts.brandnew
     this.concurrentBroken = 0
     this.think_interval = null
@@ -72,7 +72,7 @@ Disk.prototype = {
         this.diskio = new jstorrent.DiskIO({disk:this})
     },
     restoreFromKey: function() {
-        console.clog(L.INIT,'restoring disk with id',this.key)
+        console.clog(L.INIT,'attempt restore disk with id',this.key)
         chrome.fileSystem.restoreEntry(this.key, _.bind(function(entry) {
             var lasterror = chrome.runtime.lastError
             // remove this.
@@ -82,7 +82,7 @@ Disk.prototype = {
                 var parts = this._opts.id.split(':')
                 parts.shift()
                 var folderName = parts.join(':')
-                app.notifyMissingDisk(this.key, folderName)
+                this.app.notifyMissingDisk(this.key, folderName)
                 var collection = this.getCollection()
                 //collection.opts.client.trigger('error','Unable to load Download Directory: '+ folderName) // double error notification, how annoying.
                 // now loop over torrents using this download directory and set their error state
@@ -105,7 +105,7 @@ Disk.prototype = {
         },this))
     },
     onentry: function() {
-        this.get_key()
+        var key = this.get_key()
         if (this.entry.name == 'crxfs') {
             // calling getDisplayPath on the package entry will cause a lastError, which we don't want..
             //console.log(this.key,'crxfs manual trigger ready')
@@ -117,8 +117,12 @@ Disk.prototype = {
                 //console.log(this.key,'got display path',displaypath)
                 this.set('entrydisplaypath',displaypath)
                 if (this.brandnew && this.isGoogleDrive()) {
-                    app.warnGoogleDrive()
+                    this.app.warnGoogleDrive()
                 }
+                var not = this.app.notifications.get('directory-missing-'+key)
+                if (not) { not.close() }
+        
+
                 this.trigger('ready') // XXX only after ALL disks are ready
             }.bind(this))
         }
@@ -136,11 +140,11 @@ Disk.prototype = {
             console.error('disk seems definitely broken. needs restart?',this.concurrentBroken)
             if (this.concurrentBroken > 2) {
                 console.error('disk broken concurrently...',this.concurrentBroken)
-                app.notify("FATAL DISK ERROR. Please restart the app",2)
+                this.app.notify("FATAL DISK ERROR. Please restart the app",2)
                 if (! this.reportedBroken) {
                     this.reportedBroken = true
                     //app.analytics.sendEvent('DiskIO','JobBroken',JSON.stringify(this.diskio.items[0]._attributes))
-                    app.analytics.sendEvent('DiskIO','DiskBroken')
+                    this.app.analytics.sendEvent('DiskIO','DiskBroken')
                 }
             }
             if (callback) { callback(true) }

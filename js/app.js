@@ -2,7 +2,8 @@
 
 // rather should have a better separation ...
 
-function App(opts) {
+function AppForeground(opts) {
+    var fullapp = false
     //console.log('creating app')
     this.id = 'app01' // device ID...
     if (chrome.system && chrome.system.storage) {
@@ -17,20 +18,23 @@ function App(opts) {
     this.options_window = null
     this.help_window = null
     this._suspend_canceled = false
-    this.options = new jstorrent.Options({app:this}); // race condition, options not yet fetched...
+    if (fullapp) {
+        this.options = new jstorrent.Options({app:this}); // race condition, options not yet fetched...
+    }
     this.webapp = null
 
     this.analytics = null
-    this.entryCache = new jstorrent.EntryCache
-    this.fileMetadataCache = new jstorrent.FileMetadataCache
 
     // need to store a bunch of notifications keyed by either torrents or other things...
-    this.notificationCounter = 0
-    this.notifications = new jstorrent.Collection({parent:this, shouldPersist: false})
+    if (fullapp) {
+        this.notificationCounter = 0
+        this.notifications = new jstorrent.Collection({parent:this, shouldPersist: false})
+    }
     chrome.notifications.onClicked.addListener(_.bind(this.notificationClicked, this))
     chrome.notifications.onButtonClicked.addListener(_.bind(this.notificationButtonClicked, this))
     chrome.notifications.onClosed.addListener(_.bind(this.notificationClosed, this))
     chrome.contextMenus.onClicked.addListener(_.bind(this.onContextMenuClick, this))
+
 
     if (chrome.idle && chrome.idle.onStateChanged) {
         chrome.idle.onStateChanged.addListener( this.onIdleStateChanged.bind(this) )
@@ -80,24 +84,14 @@ function App(opts) {
     }
 }
 
-jstorrent.App = App
+jstorrent.AppForeground = AppForeground
 
-App.prototype = {
-    restoreState: function() {
-        var key = this.id + '/UI/state'
-        chrome.storage.local.get(key, function(result) {
-            if (result[key]) {
-                var state = result[key]
-                //chrome.storage.local.remove(key)
-                this.UI.setState(state)
-            }
-        }.bind(this))
-    },
+AppForeground.prototype = {
     reload: function() {
         // cleanly reload the app. remember the last UI state.
-        var state = this.UI.getState()
+        var state = app.UI.getState()
         var d = {}
-        d[this.id + '/UI/state'] = state
+        d[app.id + '/UI/state'] = state
         chrome.storage.local.set(d, function() {
             chrome.runtime.reload()
         }.bind(this))
@@ -355,13 +349,11 @@ App.prototype = {
         }
     },
     closeNotifications: function() {
-        this.notifications.each( function(n) {
+        this.notifications.foeach( function(n) {
             n.close()
         })
     },
-    initialize_client: function() {
-        console.clog(L.INIT,'app:initialize_client')
-        this.client = new jstorrent.Client({app:this, id:'client01'});
+    bind_misc_client_torrent: function() {
         this.client.torrents.on('error', _.bind(this.onTorrentError, this))
         this.client.torrents.on('started', _.bind(this.onTorrentStart, this))
         this.client.torrents.on('havemetadata', _.bind(this.onTorrentHaveMetadata, this))
@@ -369,6 +361,11 @@ App.prototype = {
         this.client.torrents.on('progress', _.bind(this.onTorrentProgress, this))
         this.client.torrents.on('complete', _.bind(this.onTorrentComplete, this))
         this.client.on('error', _.bind(this.onClientError, this))
+    },
+    initialize_client: function() {
+        console.clog(L.INIT,'app:initialize_client')
+        this.client = new jstorrent.Client({app:this, id:'client01'});
+        this.bind_misc_client_torrent()
     },
     reinstall: function() {
         chrome.storage.local.clear(function() {
@@ -795,6 +792,7 @@ App.prototype = {
                 var opts = {type: 'progress',
                             message: "Download in Progress",
                             progress: Math.floor(100*torrent.get('complete')),
+                            priority: 2,
                             details: torrentname,
                             id: id}
                 this.createNotification(opts)

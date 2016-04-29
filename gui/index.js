@@ -7,7 +7,7 @@ var gui_opts = {
     detailGrid_height: 300
 }
 
-document.addEventListener("DOMContentLoaded", onready);
+//document.addEventListener("DOMContentLoaded", onready);
 window.onresize = _.debounce(function(evt) {
     onresizewindow()
 },100)
@@ -16,7 +16,7 @@ function onaddkeydown(evt) {
     console.assert(false) // never being called
     debugger
     if (evt && evt.keyCode == 13) {
-        app.add_from_url(url);
+        fgapp.add_from_url(url);
     }
 }
 
@@ -25,9 +25,9 @@ function onadd(evt) {
     var url = document.getElementById("url").value;
     if (! url) {
         // open dialog to select file
-        app.select_torrent()
+        fgapp.select_torrent()
     } else {
-        app.add_from_url(url)
+        fgapp.add_from_url(url)
     }
 
     document.getElementById("url").value = ''
@@ -81,16 +81,17 @@ function onappready() {
     document.getElementById("add-form").addEventListener('submit', onadd)
     document.getElementById('url-btn').addEventListener('click',onadd)
 
-    window.UI = new UI({client:client})
-    window.app.set_ui(UI)
-    app.restoreState()
+    var ui = new UI({client:client})
+    app.UI = ui
+    ui.restoreState()
+
 
     bind_events()
 
     app.analytics.sendAppView("MainView")
 
 
-    $('#webstorelink')[0].href = app.getCWSPage()
+    $('#webstorelink')[0].href = fgapp.getCWSPage()
 
     if (jstorrent.device.platform == 'Android') {
         var url = "http://academictorrents.com/download/af4c6ce643f30da2619fe6cf7dd838b1d4539743"
@@ -113,26 +114,6 @@ function onappready() {
 }
 
 function onready() {
-    function keydown(evt) {
-        if (evt.metaKey || evt.ctrlKey) {
-            if (evt.keyCode == 82) {
-                // ctrl-r
-                console.log('received ctrl(meta)-r, reload app')
-                if (window.app) {
-                    app.reload()
-                } else {
-                    chrome.runtime.reload()
-                }
-            }
-            // prevent chrome app close window etc shortcuts
-            // metakey is osx
-            // ctrlkey for win
-
-            //evt.preventDefault() // dont prevent ctrl-w
-        }
-    }
-    document.body.addEventListener('keydown', keydown)
-
     if (! window.WSC) {
         //getel('ui-wrapper').style.display='none'
         getel('wsc-error').style.display=''
@@ -153,24 +134,52 @@ function onready() {
 
 function click_detail_torrent(tab, evt) {
 
-    var torrent = UI.get_selected_torrent()
+    var torrent = app.UI.get_selected_torrent()
     if (torrent) {
-        UI.set_detail(tab, torrent)
+        app.UI.set_detail(tab, torrent)
     } else if (tab == 'messages') {
-        UI.set_detail(tab, torrent)
+        app.UI.set_detail(tab, torrent)
     } else {
-        UI.set_detail(tab, null)
+        app.UI.set_detail(tab, null)
         //console.warn('no torrent selected')
     }
 }
+_events_bound = false
 function bind_events() {
+    if (_events_bound) {
+        console.log('double binding events')
+        console.trace()
+        return
+    }
+    _events_bound = true
+    function keydown(evt) {
+        if (evt.metaKey || evt.ctrlKey) {
+            if (evt.keyCode == 82) {
+                // ctrl-r
+                console.log('received ctrl(meta)-r, reload app')
+                if (window.fgapp) {
+                    fgapp.reload()
+                } else {
+                    chrome.runtime.reload()
+                }
+            }
+            // prevent chrome app close window etc shortcuts
+            // metakey is osx
+            // ctrlkey for win
+
+            //evt.preventDefault() // dont prevent ctrl-w
+        }
+    }
+
+    document.body.addEventListener('keydown', keydown)
+    
     var torrenttabs = ['info','files','peers','swarm','trackers','pieces','diskio','messages'] 
     torrenttabs.forEach(function(tab) {
 	$('#detail-' + tab).click( click_detail_torrent.bind(this, tab) )
     });
 
     getel('detailGrid').addEventListener('contextmenu',function(evt) {
-        if (app) { app.onContextMenuNoItem() }
+        if (fgapp) { fgapp.onContextMenuNoItem() }
         /*
         if (app && app.UI && app.UI.detailtable && app.UI.detailtable.onContextMenu) {
             app.UI.detailtable.onContextMenu(evt)
@@ -185,54 +194,54 @@ function bind_events() {
     }
 
     $('#top-titlebar-close').click( function(evt) {
-        app.close()
+        fgapp.close()
     })
     $('#top-titlebar-min').click( function(evt) {
         if (app.minimized) {
-            app.unminimize()
+            fgapp.unminimize()
         } else {
-            app.minimize()
+            fgapp.minimize()
         }
     })
 
 
     $('.download-remain-click').click( function(evt) {
         //window.open("upsell.html", '_blank')
-        app.open_upsell_page()
+        fgapp.open_upsell_page()
         //window.open(jstorrent.constants.cws_url + jstorrent.constants.cws_jstorrent,'_blank')
     })
     $('#re-check').click( function(evt) {
-        app.toolbar_recheck()
+        fgapp.toolbar_recheck()
     })
     $('#reset-state').click( function(evt) {
-        app.toolbar_resetstate()
+        fgapp.toolbar_resetstate()
     })
 
     $('#get-share-url').click( function(evt) {
-        app.open_share_window()
+        fgapp.open_share_window()
         evt.preventDefault()
         return false
     })
 
     $('#button-options').click( function(evt) {
-        app.focus_or_open_options();
+        fgapp.focus_or_open_options();
     })
     $('#button-stop').click( function(evt) {
-        app.toolbar_stop()
+        fgapp.toolbar_stop()
     })
     $('#button-start').click( function(evt) {
-        app.toolbar_start()
+        fgapp.toolbar_start()
     })
     $('#button-remove').click( function(evt) {
-        app.toolbar_remove()
+        fgapp.toolbar_remove()
     })
 
     $('#button-help').click( function(evt) {
-        app.focus_or_open_help()
+        fgapp.focus_or_open_help()
     })
 
     $('#button-sponsor').click( function(evt) {
-        app.focus_or_open('sponsor')
+        fgapp.focus_or_open('sponsor')
     })
 
     // apparently for drop to work everywhere, you have to prevent default for enter/over/leave
@@ -266,7 +275,7 @@ function drop(evt) {
     console.log(arguments.callee.name)
     evt.dataTransfer.dropEffect = 'copy'
     evt.preventDefault();
-    app.handleDrop(evt)
+    fgapp.handleDrop(evt)
     return false;
 }
 

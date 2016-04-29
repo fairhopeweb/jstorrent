@@ -13,6 +13,8 @@ function Client(opts) {
     this.ready = false
     this.app = opts.app
     this.id = opts.id
+    this.entryCache = new jstorrent.EntryCache
+    this.fileMetadataCache = new jstorrent.FileMetadataCache
     this.upnp = new jstorrent.UPNP({client:this})
     this.dht = new jstorrent.DHT({client:this})
     if (jstorrent.options.upnp) {
@@ -84,7 +86,9 @@ function Client(opts) {
         this.disks.fetch(_.bind(function() {
             if (this.disks.items.length == 0) {
                 console.log('disks length == 0')
-                this.app.notifyNeedDownloadDirectory()
+                if (this.fgapp) {
+                    this.fgapp.notifyNeedDownloadDirectory()
+                }
                 loadTorrents()
             }
             // XXX - install a timeout ??
@@ -116,7 +120,8 @@ function Client(opts) {
     this.listenPort = 10389 // TODO retry on other ports
     // TODO only setup UPNP after this
     this.listening = false
-    this.setupListen()
+    //this.setupListen() // only setup when active torrents, shutdown when no active torrents
+    this.settingUpListen = false
     this._onAccept = this.onAccept.bind(this)
 
     this.ports = {}
@@ -148,7 +153,16 @@ Client.prototype = {
             var peerconn = new jstorrent.PeerConnection({sockInfo:sockInfo, peer:peer, client:this})
         }.bind(this))
     },
+    stopListen: function() {
+        this.listening = true
+        chrome.sockets.tcpServer.onAcceptError.removeListener(this._onAccept)
+        chrome.sockets.tcpServer.onAccept.removeListener(this._onAccept)
+        chrome.sockets.tcpServer.close(this.listenSock.socketId)
+        this.listenSock = null
+    },
     setupListen: function() {
+        if (this.settingUpListen) { console.error("already setting up listening socket"); return }
+        this.settingUpListen = true
         function onCreate(sockInfo) {
             this.listenSock = sockInfo
             chrome.sockets.tcpServer.listen(sockInfo.socketId,this.app.options.get('incoming_ipv6')?'::':'0.0.0.0',this.listenPort,onListen.bind(this))
@@ -160,6 +174,7 @@ Client.prototype = {
                 debugger
             } else {
                 console.clog(L.CLIENT,"listening",this.listenPort)
+                this.settingUpListen = false
                 this.listening = true
                 chrome.sockets.tcpServer.onAcceptError.addListener(this._onAccept)
                 chrome.sockets.tcpServer.onAccept.addListener(this._onAccept)
@@ -290,25 +305,29 @@ Client.prototype = {
     },
     onChange: function(item,newval,oldval,attr) { 
         if (attr == 'numActiveTorrents') {
-
-            if (this.app.options.get('prevent_sleep')) {
-                console.clog(L.POWER,'number of active torrents now', newval)
-                if (newval == 0) {
-                    this.set('downspeed',0)
-                    this.set('upspeed',0)
-                    if (this.thinkInterval) {
-                        clearInterval(this.thinkInterval)
-                        this.thinkInterval = null
-                    }
+            var preventsleep = this.app.options.get('prevent_sleep')
+            console.clog(L.POWER,'number of active torrents now', newval)
+            if (newval == 0) {
+                this.set('downspeed',0)
+                this.set('upspeed',0)
+                if (this.thinkInterval) {
+                    clearInterval(this.thinkInterval)
+                    this.thinkInterval = null
+                }
+                if (preventsleep) {
                     console.clog(L.POWER,'release keep awake')
                     chrome.power.releaseKeepAwake()
-                } else if (newval > 0 && oldval == 0) {
-                    if (! this.thinkInterval) {
-                        this.thinkInterval = setInterval( _.bind(this.frame,this), 1000 )
-                    }
+                }
+                this.stopListen()
+            } else if (newval > 0 && oldval == 0) {
+                if (! this.thinkInterval) {
+                    this.thinkInterval = setInterval( _.bind(this.frame,this), 1000 )
+                }
+                if (preventsleep) {
                     console.clog(L.POWER,'requesting system keep awake')
                     chrome.power.requestKeepAwake('system')
                 }
+                this.setupListen()
             }
         }
         // console.log('client change',newval,attr) 
@@ -342,11 +361,10 @@ Client.prototype = {
         }
     },
     handleLaunchData: function(launchData) {
-        if (! this.app.canDownload()) {
-            this.app.notifyNoDownloadsLeft()
+        if (this.fgapp && ! this.fgapp.canDownload()) {
+            this.fgapp.notifyNoDownloadsLeft()
             return
         }
-
         var item
         //console.log('handle launch data',launchData)
         if (launchData.type == 'onMessageExternal') {
@@ -367,7 +385,7 @@ Client.prototype = {
         } else if (launchData.type == 'debugger') {
             
         } else {
-            debugger
+            //debugger
         }
     },
     addTorrentFromEntry: function(entry, callback) {
@@ -382,13 +400,13 @@ Client.prototype = {
                                                if (! this.torrents.containsKey(result.torrent.hashhexlower)) {
                                                    result.torrent.saveMetadata( function() {
                                                        this.torrents.add(result.torrent)
-                                                       this.app.highlightTorrent(result.torrent.hashhexlower)
+                                                       this.fgapp.highlightTorrent(result.torrent.hashhexlower)
                                                        result.torrent.save()
                                                        this.torrents.save()
                                                        callback()
                                                    }.bind(this))
                                                } else {
-                                                   this.app.highlightTorrent(result.torrent.hashhexlower)
+                                                   this.fgapp.highlightTorrent(result.torrent.hashhexlower)
                                                    this.trigger('error','already had this torrent',result.torrent.hashhexlower)
                                                    callback()
                                                }
@@ -425,7 +443,9 @@ Client.prototype = {
         if (data.torrent) {
             if (! this.torrents.containsKey(data.torrent.hashhexlower)) {
                 this.torrents.add( data.torrent )
-                this.app.highlightTorrent(data.torrent.hashhexlower)
+                if (this.fgapp) {
+                    this.fgapp.highlightTorrent(data.torrent.hashhexlower)
+                }
                 if (opts && opts.pageUrl) {
                     data.torrent.set('sourcePageUrl',opts.pageUrl)
                 }
@@ -475,7 +495,9 @@ Client.prototype = {
             // this is the async thingie, downloading the torrent
         } else if (this.torrents.contains(torrent)) {
             console.warn('already have this torrent!',console.trace()) // double callback
-            this.app.highlightTorrent(torrent.hashhexlower)
+            if (this.fgapp) {
+                this.fgapp.highlightTorrent(torrent.hashhexlower)
+            }
             // we already had this torrent, maybe add the trackers to it...
         } else {
             debugger

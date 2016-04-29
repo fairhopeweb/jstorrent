@@ -12,7 +12,11 @@ console.log = function() {
 
 (function() {
     window.ORIGINALCONSOLE = {log:console.log, warn:console.warn, error:console.error}
-    window.LOGHISTORY = new jstorrent.RingBuffer(100)
+    if (jstorrent.RingBuffer) {
+        window.LOGHISTORY = new jstorrent.RingBuffer(100)
+    } else {
+        window.LOGHISTORY = null
+    }
     window.LOGLISTENER = null
 /*
     console.log = function() {
@@ -34,7 +38,7 @@ console.log = function() {
                 args = ['%cWarn','color:orange'].concat(args)
             }
 
-            LOGHISTORY.add(args)
+            if (LOGHISTORY) LOGHISTORY.add(args)
             if (LOGLISTENER) {
                 LOGLISTENER(args)
             }
@@ -58,7 +62,7 @@ console.log = function() {
             if (tolog.color) {
                 args = ['%c' + tolog.name, 'color:'+tolog.color].concat(args)
             }
-            LOGHISTORY.add( args )
+            if (LOGHISTORY) LOGHISTORY.add( args )
             if (LOGLISTENER) {
                 LOGLISTENER(args)
             }

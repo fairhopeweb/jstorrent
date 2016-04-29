@@ -143,7 +143,7 @@
 
     function recursiveGetEntryReadOnly(disk, inpath, callback) {
         var cacheKey = disk.key + '/' + inpath.join('/')
-        var inCache = app.entryCache && app.entryCache.get(cacheKey)
+        var inCache = client.entryCache && client.entryCache.get(cacheKey)
         if (inCache) { 
             //console.log('cachehit',cacheKey)
             callback(inCache); 
@@ -166,7 +166,7 @@
             } else if (e.name == 'NotFoundError') {
                 callback({error:e})
             } else if (e.isFile) {
-                app.entryCache.set(cacheKey, e)
+                client.entryCache.set(cacheKey, e)
                 callback(e)
             } else if (e.isDirectory) {
                 callback(e)
@@ -195,7 +195,7 @@
 
     function recursiveGetEntryWrite(disk, inpath, callback) {
         var cacheKey = disk.key + '/' + inpath.join('/')
-        var inCache = app.entryCache.get(cacheKey)
+        var inCache = client.entryCache.get(cacheKey)
         if (inCache) { callback(inCache); return }
 
         var filesystem = disk.entry
@@ -237,7 +237,7 @@
                 if (e.name && e.message) {
                     oncallback({error:e})
                 } else if (e.isFile) {
-                    app.entryCache.set(cacheKey, e)
+                    client.entryCache.set(cacheKey, e)
                     oncallback(e)
                 } else {
                     oncallback({error:'file exists'})
@@ -537,7 +537,7 @@
                 job.set('state','gotentry')
                 if (entry.error) {
                     if (entry.error.name == 'NotFoundError') {
-                        app.fileMetadataCache.updateEntryManual(this.disk.entry, path, {size:0})
+                        client.fileMetadataCache.updateEntryManual(this.disk.entry, path, {size:0})
                         oncallback({size:0,exists:false})
                     } else {
                         oncallback(entry)
@@ -547,23 +547,23 @@
                     function onMetadata(result) {
                         job.set('state','gotmetadata')
                         if (result.err) { // XXX correct signature?
-                            app.fileMetadataCache.invalidate(entry)
+                            client.fileMetadataCache.invalidate(entry)
                             oncallback({error:result.err})
                             debugger
                         } else {
                             // check matches
-                            var cachedMetadata = app.fileMetadataCache.get(entry)
+                            var cachedMetadata = client.fileMetadataCache.get(entry)
                             if (cachedMetadata) {
                                 console.assert(cachedMetadata.size == result.size)
                             }
 
-                            app.fileMetadataCache.updateEntry(entry, result)
+                            client.fileMetadataCache.updateEntry(entry, result)
                             oncallback(result)
                         }
                     }
                     job.set('state','getmetadata')
 
-                    var cachedMetadata = app.fileMetadataCache.get(entry)
+                    var cachedMetadata = client.fileMetadataCache.get(entry)
                     if (cachedMetadata) {
                         onMetadata(cachedMetadata)
                     } else {
@@ -605,7 +605,7 @@
                     //console.log('got writer',writer)
                     if (this.checkShouldBail(job)) { writer.abort(); return }
                     writer.onwrite = function(evt) {
-                        app.fileMetadataCache.updateSizeExact(entry, 0)
+                        client.fileMetadataCache.updateSizeExact(entry, 0)
                         if (this.checkShouldBail(job)) return
                         job.set('state','createwriter2')
 
@@ -620,11 +620,11 @@
                             //console.log('got writer2',writer2)
                             if (this.checkShouldBail(job)) { writer2.abort(); return }
                             writer2.onwrite = function(evt2) {
-                                app.fileMetadataCache.updateSize(entry, opts.data.byteLength)
+                                client.fileMetadataCache.updateSize(entry, opts.data.byteLength)
                                 oncallback(evt2)
                             }
                             writer2.onerror = function(evt2) {
-                                app.fileMetadataCache.invalidate(entry)
+                                client.fileMetadataCache.invalidate(entry)
                                 job.set('state','writer2.onerror')
                                 job.set('error',evt2.target.error.name)
                                 console.error('writer error',evt2)
@@ -653,7 +653,7 @@
                         job.set('progress',pct)
                     }
                     writer.onerror = function(evt) {
-                        app.fileMetadataCache.invalidate(entry)
+                        client.fileMetadataCache.invalidate(entry)
                         console.error('truncate error',evt)
                         job.set('state','write.truncate.error')
                         job.set('error',evt.target.error.name)
@@ -824,7 +824,7 @@
                             fr.onload = onRead
                             fr.onerror = onRead // TODO make better
 
-                            var cachedMeta = app.fileMetadataCache.get(entry)
+                            var cachedMeta = client.fileMetadataCache.get(entry)
                             if (cachedMeta) {
                                 console.assert(cachedMeta.size == file.size)
                             }
@@ -965,11 +965,11 @@
                     if (this.checkShouldBail(job)) { writer.abort(); return }
                     writer.onwrite = function(evt) {
                         // VERIFY it
-                        //app.fileMetadataCache.updateSize(entry, )
+                        //client.fileMetadataCache.updateSize(entry, )
 
                         entry.getMetadata( function(meta) {
                             if (meta.size == opts.size) {
-                                app.fileMetadataCache.updateSize(entry, opts.size)
+                                client.fileMetadataCache.updateSize(entry, opts.size)
                                 oncallback(evt)
                             } else {
                                 debugger
@@ -986,7 +986,7 @@
                         job.set('progress',pct)
                     }
                     writer.onerror = function(evt) {
-                        app.fileMetadataCache.invalidate(entry)
+                        client.fileMetadataCache.invalidate(entry)
                         console.error('truncate writer error, wanted',opts.size, evt.target.error.name,evt)
                         job.set('state','truncate.writer.error')
                         job.set('error',evt.target.error.name)
@@ -1041,7 +1041,7 @@
                 entry.createWriter( function(writer) {
                     if (this.checkShouldBail(job)) { writer.abort(); return }
                     writer.onwrite = function(evt) {
-                        app.fileMetadataCache.updateSize(entry, offset + buftowrite.byteLength)
+                        client.fileMetadataCache.updateSize(entry, offset + buftowrite.byteLength)
                         oncallback(evt)
                     }
                     writer.onprogress = function(evt) {
@@ -1053,7 +1053,7 @@
                         job.set('state','onwriteend')
                     }
                     writer.onerror = function(evt) {
-                        app.fileMetadataCache.invalidate(entry)
+                        client.fileMetadataCache.invalidate(entry)
                         job.set('state','onzerowriteerror')
                         job.set('error',evt.target.error.name)
                         console.error('zerowriter error',evt, evt.target.error.name)
@@ -1161,7 +1161,7 @@
                     job.set('state','gotwriter')
                     if (this.checkShouldBail(job)) { writer.abort(); return }
                     writer.onwrite = function(evt) {
-                        app.fileMetadataCache.updateSize(entry, fileOffset + buftowrite.byteLength)
+                        client.fileMetadataCache.updateSize(entry, fileOffset + buftowrite.byteLength)
                         job.set('state','onwrite')
                         oncallback(evt)
                     }
@@ -1174,7 +1174,7 @@
                         job.set('state','onwriteend')
                     }
                     writer.onerror = function(evt) {
-                        app.fileMetadataCache.invalidate(entry)
+                        client.fileMetadataCache.invalidate(entry)
                         job.set('state','onwriteerror')
                         job.set('error',evt.target.error.name)
                         console.error('writer error',evt, evt.target.error)

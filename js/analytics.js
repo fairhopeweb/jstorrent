@@ -73,7 +73,7 @@ function Analytics(opts) {
     } else {
         console.clog(L.EVENT,"Setup analytics",this.service)
         this.service = analytics.getService(service);
-        this.service.getConfig().addCallback(_.bind(this.initAnalyticsConfig,this));
+        this.service.getConfig().addCallback(this.initAnalyticsConfig.bind(this));
         this.tracker = this.service.getTracker(id);
     }
 

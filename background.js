@@ -4,6 +4,7 @@ var MAINWIN = 'mainWindow2'
 var _update_available = false
 // the browser extension that adds a context menu
 var extensionId = "bnceafpojmnimbnhamaeedgomdcgnbjk"
+var session = null
 
 function app() {
     if (chrome.app && chrome.app.window.get) {
@@ -26,7 +27,6 @@ function app() {
 function getMainWindow() {
     return chrome.app.window.get && chrome.app.window.get(MAINWIN)
 }
-
 
 function WindowManager() {
     // TODO -- if we add "id" to this, then chrome.app.window.create
@@ -160,18 +160,19 @@ function ensureAlive() {
 }
 
 
-chrome.app.runtime.onLaunched.addListener(function(launchData) {
-    console.log('onLaunched with launchdata',launchData)
-    var info = {type:'onLaunched',
-                launchData: launchData}
-    onAppLaunchMessage(info)
-});
-
 function launch() {
-    onAppLaunchMessage({type:'debugger'})
+    runtimeEvent({type:'onLaunched', data:{source:'debugger'}})
 }
 
-function onAppLaunchMessage(launchData) {
+function runtimeEvent(event) {
+    if (session) {
+        session.registerEvent(event)
+    } else {
+        session = new jstorrent.Session(event)
+    }
+}
+
+function onAppLaunchMessage_old(launchData) {
     // launchData, request, sender, sendRepsonse
 
 //    chrome.app.window.create("dummy.html", function(win) {
@@ -236,61 +237,6 @@ function setup_uninstall() {
     }
 }
 
-chrome.runtime.onInstalled.addListener(function(details) {
-    console.log('onInstalled',details)
-    var sk = 'onInstalledInfo'
-    chrome.storage.sync.get('sk', function(syncresp) {
-    chrome.storage.local.get(sk, function(resp) {
-        var showUpdateNotification = false
-        console.log('got previous install info',resp)
-
-        var previous_updates = resp[sk]
-        var changed = false
-        var most_recent_update = null
-        if (previous_updates && previous_updates.length > 0) {
-            most_recent_update = previous_updates[previous_updates.length-1]
-        }
-
-        details.date = new Date().getTime()
-        details.cur = chrome.runtime.getManifest().version
-
-        if (syncresp['sk'] !== undefined) {
-            showUpdateNotification = true
-            chrome.storage.sync.remove("sk")
-        }
-        
-        if (! previous_updates) {
-            console.log('initializing install info')
-            resp[sk] = [details]
-            changed = true
-        } else if (most_recent_update && most_recent_update.cur == details.cur) {
-            // previousVersion missing?
-        } else if (details.previousVersion == details.cur) {
-            // happend because of chrome.runtime.reload probably
-        } else {
-            console.log('adding new install info',details)
-            resp[sk].push(details)
-            changed = true
-            showUpdateNotification = true
-        }
-
-        if (resp[sk].length > 15) {
-            // purge really old entries
-            changed = true
-            resp[sk].splice(0,1)
-        }
-        if (changed) {
-            chrome.storage.local.set(resp, function(){console.log('persisted onInstalled info')})
-        }
-
-        if (showUpdateNotification) {
-            doShowUpdateNotification(details, resp)
-        }
-    })
-    })
-    //details.reason // install, update, chrome_update
-    //details.previousVersion // only if update
-})
 function fetchVersion() {
     var url = 'http://jstorrent.com/data/version.txt'
     function onload(evt) {
@@ -409,17 +355,6 @@ function doShowUpdateNotification(details, history) {
     chrome.notifications.onButtonClicked.addListener( onButtonClick )
 }
 
-chrome.runtime.onUpdateAvailable.addListener( function(details) {
-    // notify that there's a new version? click to restart? nah...
-    console.log('a new version is available:',details.version,details)
-    _update_available = true
-    if (DEVMODE) {
-        doShowUpdateAvailableDEV(details)
-    } else {
-        doShowUpdateAvailable(details)
-    }
-})
-
 /*
 // detect if extension is installed... -- moved to js/app.js
 chrome.runtime.sendMessage(extensionId, {running:true}, function(response) {
@@ -427,13 +362,23 @@ chrome.runtime.sendMessage(extensionId, {running:true}, function(response) {
 })
 */
 
-if (chrome.runtime.onMessage) {
-    chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-        console.log('chrome runtime message',request,sender)
-        if (request && request.command == 'openWindow') {
-            chrome.browser.openTab({url:request.url})
+function triggerKeepAwake() {
+    // creating a notification also works?
+    // HACK: make an XHR to cause onSuspendCanceled event
+    console.log('triggerKeepAwake')
+    if (false) {
+        var xhr = new XMLHttpRequest
+        xhr.open("GET","http://127.0.0.1:8000" + '/dummyUrlPing')
+        function onload(evt) {
+            console.log('triggerKeepAwake XHR loaded',evt)
         }
-    })
+        xhr.onerror = onload
+        xhr.onload = onload
+        xhr.send()
+    } else {
+        // this keeps it alive consistently as long as you down close the notification (chromeos)
+        chrome.notifications.create('keepawake',{priority:2,title:"jstorrent",message:"keepawake!",iconUrl:'/js-128.png',type:'basic'})
+    }
 }
 
 function checkForUpdateMaybe() {
@@ -466,7 +411,81 @@ function checkForUpdateMaybe() {
     })
 }
 
-if (chrome.runtime.onMessageExternal) {
+chrome.runtime.onInstalled.addListener(function(details) {
+    runtimeEvent({type:'onInstalled',data:details})
+    //console.log('onInstalled',details)
+    var sk = 'onInstalledInfo'
+    chrome.storage.sync.get('sk', function(syncresp) {
+    chrome.storage.local.get(sk, function(resp) {
+        var showUpdateNotification = false
+        //console.log('got previous install info',resp)
+
+        var previous_updates = resp[sk]
+        var changed = false
+        var most_recent_update = null
+        if (previous_updates && previous_updates.length > 0) {
+            most_recent_update = previous_updates[previous_updates.length-1]
+        }
+
+        details.date = new Date().getTime()
+        details.cur = chrome.runtime.getManifest().version
+
+        if (syncresp['sk'] !== undefined) {
+            showUpdateNotification = true
+            chrome.storage.sync.remove("sk")
+        }
+        
+        if (! previous_updates) {
+            console.log('initializing install info')
+            resp[sk] = [details]
+            changed = true
+        } else if (most_recent_update && most_recent_update.cur == details.cur) {
+            // previousVersion missing?
+        } else if (details.previousVersion == details.cur) {
+            // happend because of chrome.runtime.reload probably
+        } else {
+            console.log('adding new install info',details)
+            resp[sk].push(details)
+            changed = true
+            showUpdateNotification = true
+        }
+
+        if (resp[sk].length > 15) {
+            // purge really old entries
+            changed = true
+            resp[sk].splice(0,1)
+        }
+        if (changed) {
+            chrome.storage.local.set(resp, function(){console.log('persisted onInstalled info')})
+        }
+
+        if (showUpdateNotification) {
+            doShowUpdateNotification(details, resp)
+        }
+    })
+    })
+    //details.reason // install, update, chrome_update
+    //details.previousVersion // only if update
+})
+
+chrome.runtime.onUpdateAvailable.addListener( function(details) {
+    // notify that there's a new version? click to restart? nah...
+    console.log('a new version is available:',details.version,details)
+    _update_available = true
+    if (DEVMODE) {
+        doShowUpdateAvailableDEV(details)
+    } else {
+        doShowUpdateAvailable(details)
+    }
+})
+
+chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+    console.log('chrome runtime message',request,sender)
+    if (request && request.command == 'openWindow') {
+        chrome.browser.openTab({url:request.url})
+    }
+})
+
 chrome.runtime.onMessageExternal.addListener(function(request, sender, sendResponse) {
     console.log('onMessageExternal',request,sender)
     if (request && request.command == 'checkInstalled') {
@@ -482,7 +501,7 @@ chrome.runtime.onMessageExternal.addListener(function(request, sender, sendRespo
                     request: request,
                     sender: sender,
                     sendResponse: sendResponse}
-        onAppLaunchMessage(info)
+        runtimeEvent(info)
 
         sendResponse({ handled: true, 
                        id: chrome.runtime.id, 
@@ -503,49 +522,43 @@ chrome.runtime.onMessageExternal.addListener(function(request, sender, sendRespo
                        message: 'unknown command' })
     }
 });
-}
 
-
-if (chrome.runtime.onConnectExternal) {
-    chrome.runtime.onConnectExternal.addListener( function(port) {
-        var authorized = true
-        if (authorized) {
-            console.log('received authorized port',port)
-            try{
-                if (window.mediaPort) {
-                    // disconnect the other port
-                    mediaPort.postMessage({error:"another port is opening"}) // might already be disconnected.
-                    mediaPort.disconnect()
-                }
-            }catch(e){
-                console.warn("port was already disconnected")
+chrome.runtime.onConnectExternal.addListener( function(port) {
+    var authorized = true
+    if (authorized) {
+        console.log('received authorized port',port)
+        try{
+            if (window.mediaPort) {
+                // disconnect the other port
+                mediaPort.postMessage({error:"another port is opening"}) // might already be disconnected.
+                mediaPort.disconnect()
             }
-            window.mediaPort = port
-            port.onMessage.addListener( function(msg) {
-                var a = app()
-                if (a) {
-                    a.client.handleExternalMessage(msg, port)
-                } else {
-                    port.postMessage({error:"no app"})
-                    console.warn('no app, could not handle external message')
-                }
-            })
-            port.onDisconnect.addListener( function(msg) {
-                console.log('external ondisconnect',msg)
-                window.mediaPort = null
-            })
-            port.postMessage({text:"OK"})
-        } else {
-            console.error('unauthorized port',port)
-            port.disconnect()
+        }catch(e){
+            console.warn("port was already disconnected")
         }
-    })
-}
-
-chrome.runtime.onStartup.addListener( function(evt) {
-    console.log('onStartup',evt)
+        window.mediaPort = port
+        port.onMessage.addListener( function(msg) {
+            var a = app()
+            if (a) {
+                a.client.handleExternalMessage(msg, port)
+            } else {
+                port.postMessage({error:"no app"})
+                console.warn('no app, could not handle external message')
+            }
+        })
+        port.onDisconnect.addListener( function(msg) {
+            console.log('external ondisconnect',msg)
+            window.mediaPort = null
+        })
+        port.postMessage({text:"OK"})
+    } else {
+        console.error('unauthorized port',port)
+        port.disconnect()
+    }
 })
+
 chrome.runtime.onSuspend.addListener( function(evt) {
+    runtimeEvent({type:'onSuspend',data:evt})
     var a = app()
     if (a) {
         a.runtimeMessage('onSuspend')
@@ -555,27 +568,9 @@ chrome.runtime.onSuspend.addListener( function(evt) {
     // triggerKeepAwake()
 })
 
-function triggerKeepAwake() {
-    // creating a notification also works?
-    // HACK: make an XHR to cause onSuspendCanceled event
-    console.log('triggerKeepAwake')
-    if (false) {
-        var xhr = new XMLHttpRequest
-        xhr.open("GET","http://127.0.0.1:8000" + '/dummyUrlPing')
-        function onload(evt) {
-            console.log('triggerKeepAwake XHR loaded',evt)
-        }
-        xhr.onerror = onload
-        xhr.onload = onload
-        xhr.send()
-    } else {
-        // this keeps it alive consistently as long as you down close the notification (chromeos)
-        chrome.notifications.create('keepawake',{priority:2,title:"jstorrent",message:"keepawake!",iconUrl:'/js-128.png',type:'basic'})
-    }
-}
-
-
 chrome.runtime.onSuspendCanceled.addListener( function(evt) {
+    runtimeEvent({type:'onSuspendCanceled',data:evt})
+
     var a = app()
     if (a) {
         a.runtimeMessage('onSuspendCanceled')
@@ -588,7 +583,20 @@ if (chrome.idle && chrome.idle.onStateChanged) {
         console.log('idle state changed',evt)
     })
 }*/
+
+chrome.runtime.onStartup.addListener( function(evt) {
+    runtimeEvent({type:'onStartup',data:evt})
+    console.log('onStartup',evt)
+})
+
+chrome.app.runtime.onLaunched.addListener(function(data) {
+    var info = {type:'onLaunched',
+                data: data}
+    runtimeEvent(info)
+});
+
 chrome.app.runtime.onRestarted.addListener( function(evt) {
+    runtimeEvent({type:'onRestarted',data:evt})
     console.log('app onRestarted',evt)
 })
 

@@ -1664,6 +1664,8 @@ Torrent.prototype = {
         this.save()
     },
     remove: function(callback, opts) {
+        console.log('remove torrent',callback,opts)
+        console.trace()
         var _this = this
         this.stop(opts)
         this.set('state','removing')

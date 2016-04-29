@@ -1,28 +1,3 @@
-// logging levels
-function reset_logging_flags() {
-    var L = {
-        INIT: { color: '#cef', show: true },
-        UI: { color: '#ce0', show: true },
-        APP: { color: 'darkgreen', show: true },
-        TRACKER: { color: '#3e8', show: false },
-        TORRENT: { color: '#0ae', show: true },
-        DISKIO: { color: 'orange', show: true },
-        DISK: { color: 'darkblue', show: true },
-        STREAM: { color: 'orange', show: true },
-        POWER: { color: 'blue', show: true },
-        CLIENT: { color: 'green', show: true },
-        PEER: { color: '#082', show: false },
-        SEED: { color: '#082', show: false },
-        SYSTEM: { color: '#236', show: true },
-        DEV: { color: '#622', show: false },
-        EVENT: { color: '#ddd', show: false },
-        UPNP: { color: '#ddd', show: true },
-        DHT: { color: '#ddd', show: false }
-    }
-    Object.keys(L).forEach( function(k) { L[k].name = k } )
-    return L
-}
-window.L = reset_logging_flags()
 // add option to show/hide all these (contextmenu?)
 function reportAverageDownloadSpeed(secs, bytes) {
     var bytessec = bytes/secs
@@ -444,15 +419,15 @@ function parseUri(str) {
 
 window.onerror = function(message, url, line) {
     // TODO -- report this to google analytics or something
-    if (window.app) {
+    if (window.fgapp) {
         if (url.toLowerCase().match('^chrome-extension://')) {
             var parts = url.split('/')
             parts.shift(); parts.shift(); parts.shift()
             url = parts.join('/')
         }
-        window.app.createNotification({message:"Unexpected Error!",
-                                       priority: 2,
-                                       details: 'ver ' + jstorrent.constants.manifest.version+". In file " + url + " at line " + line + ', ' + message})
+        window.fgapp.createNotification({message:"Unexpected Error!",
+                                         priority: 2,
+                                         details: 'ver ' + jstorrent.constants.manifest.version+". In file " + url + " at line " + line + ', ' + message})
 
         // if window.onerror has an error, then bad things happen.
         // make sure sendEvent cant have bad errors :-)

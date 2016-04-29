@@ -204,6 +204,16 @@ function UI(opts) {
 }
 
 UI.prototype = {
+    restoreState: function() {
+        var key = this.client.app.id + '/UI/state'
+        chrome.storage.local.get(key, function(result) {
+            if (result[key]) {
+                var state = result[key]
+                //chrome.storage.local.remove(key)
+                this.setState(state)
+            }
+        }.bind(this))
+    },
     getState: function() {
         var t = this.get_selected_torrent()
         return { detailtype: this.detailtype,
@@ -377,11 +387,11 @@ UI.prototype = {
                         // XXX TODO -- make torrent list refresh once metadata is completed...
                         this.detailtable.grid.setData([])
                     }
-                    this.detailtable.grid.onClick.subscribe( _.bind(app.handle_click, app, 'files', torrent[type]) )
+                    this.detailtable.grid.onClick.subscribe( _.bind(fgapp.handle_click, app, 'files', torrent[type]) )
                 } else if (this.detailtype == 'peers') {
-                    this.detailtable.grid.onDblClick.subscribe( _.bind(app.handle_dblclick, app, 'peers', torrent[type]) )
+                    this.detailtable.grid.onDblClick.subscribe( _.bind(fgapp.handle_dblclick, app, 'peers', torrent[type]) )
                 } else if (this.detailtype == 'swarm') {
-                    this.detailtable.grid.onDblClick.subscribe( _.bind(app.handle_dblclick, app, 'swarm', torrent[type]) )
+                    this.detailtable.grid.onDblClick.subscribe( _.bind(fgapp.handle_dblclick, app, 'swarm', torrent[type]) )
                 }
             }
         }
@@ -391,17 +401,15 @@ UI.prototype = {
 function MessagesView(opts) {
     this.opts = opts
     this.elt = $('#'+this.opts.domid)
+    this.clientwin = chrome.app.window.get('client').contentWindow
+    this.clientwin.LOGLISTENER = this.onNewLog.bind(this)
     this.render()
-    window.LOGLISTENER = this.onNewLog.bind(this)
+    //window.LOGLISTENER = this.onNewLog.bind(this)
     $('#detailGrid')[0].style.overflow = 'auto'
     $('#detailGrid')[0].style.padding = '4px'
     $('#detailGrid')[0].style['-webkit-user-select'] = 'initial'
-
     var obj = $('#detailGrid')[0]
     obj.scrollTop = obj.scrollHeight + 1000
-
-
-    
 }
 MessagesView.prototype = {
     // XXX how many methods must we define?
@@ -418,7 +426,7 @@ MessagesView.prototype = {
     resizeCanvas: function(){},
     destroy: function() {
         this.elt.html('')
-        window.LOGLISTENER = null
+        this.clientwin.LOGLISTENER = null
         $('#detailGrid')[0].style.overflow = 'hidden'
         $('#detailGrid')[0].style.padding = '0px'
     },
@@ -478,14 +486,14 @@ MessagesView.prototype = {
     },
     render: function() {
         this.elt.show()
-        if (window.LOGHISTORY) {
-            var unshown = LOGHISTORY.totalrecorded - LOGHISTORY.filled
+        if (this.clientwin.LOGHISTORY) {
+            var unshown = this.clientwin.LOGHISTORY.totalrecorded - this.clientwin.LOGHISTORY.filled
             if (unshown > 0) {
                 this.onNewLog(['%cWarn','color:orange',unshown + ' previous messages not shown'])
             }
             
-            for (var i=0; i<LOGHISTORY.filled; i++) {
-                var line = LOGHISTORY.get(-LOGHISTORY.filled+1+i)
+            for (var i=0; i<this.clientwin.LOGHISTORY.filled; i++) {
+                var line = this.clientwin.LOGHISTORY.get(-this.clientwin.LOGHISTORY.filled+1+i)
                 this.onNewLog(line)
             }
         }
@@ -589,3 +597,5 @@ GeneralInfoView.prototype = {
         $('#'+this.opts.domid).children().height( $('#'+this.opts.domid).height() )
     }
 }
+
+jstorrent.UI = UI

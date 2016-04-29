@@ -47,6 +47,9 @@ function getDownloadPath() {
     chrome.downloads.setShelfEnabled(false)
     chrome.downloads.download({saveAs:false,url:'http://www.google.com/robots.txt'}, function(result) {
         console.log('original download result',result)
+        setTimeout( function() {
+            chrome.downloads.setShelfEnabled(true)
+        }, 1000 )
     })
 }
 

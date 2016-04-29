@@ -5,8 +5,14 @@
     "description": "Used alongside the JSTorrent BitTorrent Chrome app, adds extra functionality",
     "version": "0.1.0",
     "manifest_version": 2,
-    "minimum_chrome_version": "31",
+    "minimum_chrome_version": "40",
+    "options_ui": {
+        "page":"options.html",
+        "chrome_style":true,
+        "open_in_tab":false
+    },
     "permissions": [
+        "storage",
         "contextMenus",
         "downloads",
         "downloads.open",

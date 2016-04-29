@@ -1,4 +1,5 @@
 {
+    "key": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDCvpsh4qvVEOcUZPeucJJ5VASn8fIOGsoQIXnIewzRcqi3Nwj/4WttouI8Fp2OlNxjH6rkaFOSaUPv5n0j20M7clmTjFPmJtbdKKBdVnE5g1jRpkzwMPMV8fpP5IyyTy0hSkK1FAWuxnlBmOMLSAeqCsVH4cYO9s2ilFMNMEG04wIDAQAB",
     "default_locale":"en",
     "name": "__MSG_extName__",
     "short_name": "__MSG_extName__",
@@ -59,7 +60,7 @@
     },
     "app": {
         "background": {
-            "scripts": ["conf.js", "common.js", "background.js"]
+            "scripts": ["conf.js", "common.js", "js/log-full.js", "async.min.js", "notifications.js", "js/options.js", "session.js", "background.js"]
         }
     },
     "url_handlers": {

@@ -89,7 +89,7 @@ File.prototype = {
     onComplete: function() {
         //console.log('file complete event',this)
         var UI = this.torrent.client.app.UI
-        if (UI.detailtype == 'files' && UI.detailtable) {
+        if (UI && UI.detailtype == 'files' && UI.detailtable) {
             UI.detailtable.on_change(this,null,null,'Action') // update action on this
         }
         reportFileDownload(this)

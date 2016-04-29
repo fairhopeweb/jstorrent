@@ -296,6 +296,7 @@ var CollectionProto = {
             }
         },this))
     },
+    foeach: function(f) { this.each(f) },
     each: function(iterfunc) {
         var items = []
 
