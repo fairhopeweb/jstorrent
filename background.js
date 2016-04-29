@@ -353,9 +353,9 @@ chrome.runtime.onMessageExternal.addListener(function(request, sender, sendRespo
     } else if (request && request.command == 'getStatus') {
         var resp = { version: chrome.runtime.getManifest().version
                    }
-        var a = app()
-        if (a && a.webapp) {
-            resp.webapp = a.webapp.get_info()
+        var a = session
+        if (a && a.client && a.client.webapp) {
+            resp.webapp = a.client.webapp.get_info()
         }
         sendResponse(resp)
     } else {
@@ -381,12 +381,12 @@ chrome.runtime.onConnectExternal.addListener( function(port) {
         }
         window.mediaPort = port
         port.onMessage.addListener( function(msg) {
-            var a = app()
-            if (a) {
+            var a = session
+            if (a && a.client) {
                 a.client.handleExternalMessage(msg, port)
             } else {
-                port.postMessage({error:"no app"})
-                console.warn('no app, could not handle external message')
+                port.postMessage({error:"no client"})
+                console.warn('no client, could not handle external message')
             }
         })
         port.onDisconnect.addListener( function(msg) {
@@ -433,3 +433,5 @@ chrome.app.runtime.onRestarted.addListener( function(evt) {
 if (chrome.runtime.setUninstallURL && ! DEVMODE) {
     setup_uninstall()
 }
+
+console.assert(chrome.app.window.getAll().length == 0)

@@ -242,9 +242,11 @@ AppForeground.prototype = {
             if (k == "Reset") {
                 window.L = reset_logging_flags()
                 clientwin.L = reset_logging_flags()
+                bgwin.L = reset_logging_flags()
                 return
             }
             clientwin.L[k].show = ! clientwin.L[k].show
+            bgwin.L[k].show = ! bgwin.L[k].show
             L[k].show = ! L[k].show
         } else if (cls == jstorrent.PeerConnection) {
             if (id == 'Disconnect') item.disconnect()
@@ -313,6 +315,8 @@ AppForeground.prototype = {
         })
     },
     bind_misc_client_torrent: function() {
+        // these are not unbound! problem!!
+        
         this.client.torrents.on('error', _.bind(this.onTorrentError, this))
         this.client.torrents.on('started', _.bind(this.onTorrentStart, this))
         this.client.torrents.on('havemetadata', _.bind(this.onTorrentHaveMetadata, this))

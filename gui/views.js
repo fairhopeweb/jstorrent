@@ -46,7 +46,7 @@ function UI(opts) {
         var is_mkv = val.get_extension() == 'mkv'
 
         var parts = []
-        if (is_mkv && app.webapp) {
+        if (is_mkv && app.client.webapp) {
             // mkv are not opening inline for some reason. use the stream page instead.
             parts.push('<a class="action-stream" href="#"><span class="glyphicon glyphicon-play"></span>Stream(beta)</a>')
         } else if (val.isComplete()) {
@@ -60,7 +60,7 @@ function UI(opts) {
             } else if (findapps) {
                 parts.push('<a class="action-findapp" href="#"><span class="glyphicon glyphicon-th-large"></span>Get App</a>')
             }
-        } else if (streamable && app.webapp) {
+        } else if (streamable && app.client.webapp) {
             parts.push('<a class="action-stream" href="#"><span class="glyphicon glyphicon-play"></span>Stream(beta)</a>')
         }
         return parts.join(' ')
@@ -412,6 +412,7 @@ function MessagesView(opts) {
     this.opts = opts
     this.elt = $('#'+this.opts.domid)
     clientwin.LOGLISTENERS.push( this.onNewLog.bind(this) )
+    bgwin.LOGLISTENERS.push( this.onNewLog.bind(this) )
     LOGLISTENERS.push( this.onNewLog.bind(this) )
     this.render()
     //window.LOGLISTENER = this.onNewLog.bind(this)
@@ -437,6 +438,7 @@ MessagesView.prototype = {
     destroy: function() {
         this.elt.html('')
         clientwin.LOGLISTENERS = []
+        bgwin.LOGLISTENERS = []
         LOGLISTENERS = []
         $('#detailGrid')[0].style.overflow = 'hidden'
         $('#detailGrid')[0].style.padding = '0px'
@@ -452,6 +454,8 @@ MessagesView.prototype = {
             return '[' + arg.map(function(e) { this.stringifyArg(e) }.bind(this)).join(',') + ']'
         } else if (arg.simpleSerializer) {
             return arg.simpleSerializer()
+        } else if (typeof arg == 'function') {
+            return arg.toString().slice(0,100)
         } else {
             if (true) {
                 try {
@@ -498,16 +502,22 @@ MessagesView.prototype = {
     render: function() {
         this.elt.show()
         // show our own loghistory too? (no timestamps ...)
-        
-        if (clientwin.LOGHISTORY) {
-            var unshown = clientwin.LOGHISTORY.totalrecorded - clientwin.LOGHISTORY.filled
-            if (unshown > 0) {
-                this.onNewLog(['%cWarn','color:orange',unshown + ' previous messages not shown'])
-            }
-            
-            for (var i=0; i<clientwin.LOGHISTORY.filled; i++) {
-                var line = clientwin.LOGHISTORY.get(-clientwin.LOGHISTORY.filled+1+i)
-                this.onNewLog(line)
+
+        var histories = [bgwin.LOGHISTORY,clientwin.LOGHISTORY]
+        //var histories = [clientwin.LOGHISTORY]
+
+        for (var i=0; i<histories.length; i++) {
+            var h = histories[i]
+            if (h) {
+                var unshown = h.totalrecorded - h.filled
+                if (unshown > 0) {
+                    this.onNewLog(['%cWarn','color:orange',unshown + ' previous messages not shown'])
+                }
+                
+                for (var i=0; i<h.filled; i++) {
+                    var line = h.get(-h.filled+1+i)
+                    this.onNewLog(line)
+                }
             }
         }
     }
@@ -539,7 +549,7 @@ GeneralInfoView.prototype = {
             s += '<label>Links</label>'
             s += ('<li>magnet link: <a target="_blank" href="'+magnet+'">' + _.escape(magnet) +  '</a></li>')
             s += ('<li>share link: <a target="_blank" href="'+this.torrent.getShareLink()+'">JSTorrent.com web link for sharing</a></li>')
-            if (app.options.get('web_server_enable') && app.webapp && ! this.torrent.multifile && this.torrent.metadata) {
+            if (app.options.get('web_server_enable') && app.client.webapp && ! this.torrent.multifile && this.torrent.metadata) {
                 var streamUrl = this.torrent.getStreamPlayerPageURL()
                 if (streamUrl) {
                     s += ('<li>Stream Page: <a target="_blank" href="'+streamUrl+'">Video Player</a></li>') // now in files tab

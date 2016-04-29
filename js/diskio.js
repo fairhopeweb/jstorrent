@@ -1301,6 +1301,7 @@
                 this.items.splice(this.items.indexOf(cur),1)
             }
             this.trigger('remove')
+            this.queueActive = false
         },
     }
 

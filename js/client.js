@@ -128,9 +128,14 @@ function Client(opts) {
     this.portCtr = 0
 
     this.webapp = null
+    this.maybeStartWebApp()
 }
 
 Client.prototype = {
+    isActive: function() {
+        return this.activeTorrents.items.length > 0 ||
+            this.webapp && Object.keys(this.webapp.streams).length > 0
+    },
     cleanup: function() {
         // make sure no event listeners etc...
     },
@@ -157,9 +162,12 @@ Client.prototype = {
             ]
             wopts.handlers = handlers
             this.webapp = new WSC.WebApplication(wopts)
-            this.webapp._stop_callback = this.webappOnStop.bind(this)
-            this.webapp.start(this.webappOnStart.bind(this))
+            //this.webapp._stop_callback = this.webappOnStop.bind(this)
+            this.webapp.start(this.onWebAppStart.bind(this))
         }
+    },
+    onWebAppStart: function(result) {
+        console.log(L.CLIENT, "Webapp started",result)
     },
     externalIP: function() {
         if (this.upnp && this.upnp.validGateway) {

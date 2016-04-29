@@ -1790,15 +1790,15 @@ Torrent.prototype = {
         if (this.metadata && ! this.multifile && filenum === undefined) {
             filenum = 0
         }
-        if (! this.client.app.webapp) { debugger; return }
+        if (! this.client.webapp) { debugger; return }
         var token = ''
         /*
         var s = 'abcdefghijklmnopqrstuvwxyz'
         for (var i=0; i<20; i++) {
             token += s[Math.floor(Math.random() * s.length)]
         }
-        this.client.app.webapp.token = token */
-        //var url = 'http://127.0.0.1:' + this.client.app.webapp.port + '/package/gui/media.html?hash=' + this.hashhexlower + '&token=' + token + '&id=' + chrome.runtime.id
+        this.client.webapp.token = token */
+        //var url = 'http://127.0.0.1:' + this.client.webapp.port + '/package/gui/media.html?hash=' + this.hashhexlower + '&token=' + token + '&id=' + chrome.runtime.id
         var url = jstorrent.constants.jstorrent_media_url + '#hash=' + encodeURIComponent(this.hashhexlower) + '&id=' + encodeURIComponent(chrome.runtime.id)
         if (token) {
             url += '&token=' + encodeURIComponent(token)
@@ -1812,7 +1812,7 @@ Torrent.prototype = {
         return url
     },
     getProxyURL: function() {
-        return 'http://127.0.0.1:' + this.client.app.webapp.port + '/proxy?hash=' + this.hashhexlower
+        return 'http://127.0.0.1:' + this.client.webapp.port + '/proxy?hash=' + this.hashhexlower
     },
     getShareLink: function() {
         var url = jstorrent.constants.jstorrent_share_base + '/share/#hash=' + this.hashhexlower + '&dn=' + encodeURIComponent(this.get('name')) + '&magnet_uri=' + encodeURIComponent(this.getMagnetLink())

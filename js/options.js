@@ -12,11 +12,15 @@
                 'description': 'your list of torrents will be synchronized across your devices'
             },
             run_in_background: {
+                name:"Download in background",
+                help:"Downloads will continue even if you close the JSTorrent window",
                 default:true,
                 type:'bool'
             },
             start_in_background: {
-                default:true,
+                name:"Startup when system starts",
+                help:"JSTorrent will automatically start running in the background when you login",
+                default:false,
                 type:'bool'
             },
             download_rate_limit: {
@@ -102,6 +106,7 @@
             },
             'report_to_trackers_override': {
                 'default': false,
+                visible:false,
                 'name': 'Spoofing - report to private trackers as uTorrent',
                 'type': 'bool'
                 //            'children': [ 'report_to_trackers_override_as' ]

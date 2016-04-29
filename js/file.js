@@ -335,7 +335,7 @@ File.prototype = {
         
     },
     getStreamURL: function() {
-        return 'http://127.0.0.1:' + this.torrent.client.app.webapp.port + '/stream' + '?hash=' + this.torrent.hashhexlower + '&file=' + this.num
+        return 'http://127.0.0.1:' + this.torrent.client.webapp.port + '/stream' + '?hash=' + this.torrent.hashhexlower + '&file=' + this.num
     },
     getBlobURL: function(callback) {
         this.getEntry( function(entry) {

@@ -20,6 +20,13 @@
         this.client = false
         this[MAINWIN] = false
         this.registerEvent(event)
+
+        this.onClientError_ = this.onClientError.bind(this)
+        this.onTorrentComplete_ = this.onTorrentComplete.bind(this)
+        this.onTorrentProgress_ = this.onTorrentProgress.bind(this)
+        this.onTorrentStart_ = this.onTorrentStart.bind(this)
+        this.onTorrentStop_ = this.onTorrentStop.bind(this)
+        this.onTorrentHaveMetadata_ = this.onTorrentHaveMetadata.bind(this)
         
         runParallel( [ this.getPermissions.bind(this),
                        this.getLastState.bind(this),
@@ -33,18 +40,48 @@
                 cb()
             }.bind(this))
         },
+        onTorrentComplete: function(evt) {
+            console.log('torrent complete',evt)
+        },
+        onTorrentProgress: function(torrent) {
+            console.log('torrent progress',torrent.get('name'), Math.floor(100 * torrent.get('complete')))
+        },
+        onClientError: function(evt,e) {
+            console.log('on client error',evt,e)
+        },
+        onTorrentStart: function(torrent) {
+            console.log('torrent start',torrent)
+        },
+        onTorrentStop: function(torrent) {
+            console.log('torrent stop',torrent)
+        },
+        onTorrentHaveMetadata: function(torrent) {
+            console.log('torrent has metadata',torrent)
+        },
+        bindClientEvents: function() {
+            this.client.on('error', this.onClientError_)
+            this.client.torrents.on('error', this.onClientError_)
+            this.client.torrents.on('complete', this.onTorrentComplete_)
+            this.client.torrents.on('progress', this.onTorrentProgress_)
+            this.client.torrents.on('started', this.onTorrentStart_)
+            this.client.torrents.on('havemetadata', this.onTorrentHaveMetadata_)
+            this.client.torrents.on('stopped', this.onTorrentStop_)
+        },
         debugState: function() {
+            return
             return {client:this.client,
                     MAINWIN:this[MAINWIN],
                     analytics:this.analytics,
-                    UI:this.UI,
                     launching:this.launching}
         },
         onWindowClosed: function(id) {
             console.clog(L.SESSION,'window closed',id,this.debugState())
             this[id] = null
             if (id == MAINWIN) {
-                this.UI = null
+                var win = chrome.app.window.get(id).contentWindow
+                var fgapp = win.fgapp
+                // client still has event listeners with fgapp, and they are being sent, but ignored. hm
+                
                 var opts = chrome.app.window.get('options')
                 if (opts) { opts.close() }
                 var help = chrome.app.window.get('help')
@@ -65,20 +102,13 @@
         },
         notify: function(msg, prio) {
             console.log('app notify',msg,'prio',prio)
-            if (this.client && this.client.fgapp) {
-                this.client.fgapp.notify(msg,prio)
-            }
         },
         createNotification: function(opts) {
             console.log('create notification',opts)
-            if (this.client && this.client.fgapp) {
-                this.client.fgapp.createNotification(opts)
-            }
         },
         shutdown: function() {
             killAllSockets()
             this.analytics = null
-            this.UI = null
             if (this.client) {
                 //this.client.fgapp.cleanup()
                 this.client.fgapp = null
@@ -109,7 +139,7 @@
             if (cbs) cbs.forEach( function(cb){cb()} )
         },
         registerEvent: function(event) {
-            console.clog(L.SESSION,'register event',event,this.debugState())
+            //console.clog(L.SESSION,'register event',event,this.debugState())
             this.events.push(event)
             this.runEvents()
         },
@@ -153,6 +183,7 @@
                                          function(win){
                                              win.onClosed.addListener(this.onWindowClosed.bind(this,id))
                                          }.bind(this))
+            } else {
             }
         },
         createAnalytics: function() {
@@ -196,6 +227,8 @@
         onClientPageInit: function(win) {
             console.clog(L.SESSION,'client page created client',win.client)
             this.client = win.client
+            this.lastclient = win.client // debug how long this reference stays around
+            this.bindClientEvents()
             if (this.wantsUI) {
                 this.createUI()
             } else {
@@ -235,8 +268,12 @@
             }
         },
         think: function() {
-            //console.clog(L.SESSION,'think')
-            if (this.client && this.client.activeTorrents.items.length == 0 && ! chrome.app.window.get(MAINWIN) && ! this.launching) {
+            if (this.launching) {
+                
+            } else if (! chrome.app.window.get(MAINWIN) && ! this.options.get('run_in_background')) {
+                console.log('shutting down, background mode disabled')
+                this.shutdown()
+            } else if (this.client && ! this.client.isActive() && ! chrome.app.window.get(MAINWIN)) {
                 console.clog(L.SESSION,'shut it down?',this.debugState())
                 this.shutdown()
             }

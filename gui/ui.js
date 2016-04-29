@@ -3,11 +3,14 @@ var session = null
 var fgapp = null
 var app = null
 var client = null
-var clientwin = chrome.app.window.get('client').contentWindow
+var bgwin = null
+var clientwin = null
 
 function onready() {
-    chrome.runtime.getBackgroundPage( function(bg) {
-        session = bg.session
+    chrome.runtime.getBackgroundPage( function(backgroundPage) {
+        clientwin = chrome.app.window.get('client').contentWindow
+        bgwin = backgroundPage
+        session = bgwin.session
         client = clientwin.client
         fgapp = new jstorrent.AppForeground
         app = fgapp
@@ -26,6 +29,8 @@ function onready() {
             })
         }
         onappready()
-        bg.session.onUIPageInit(window)
+        bgwin.session.onUIPageInit(window)
+
+        
     })
 }

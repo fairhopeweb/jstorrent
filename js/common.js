@@ -174,14 +174,6 @@ function tryauth() {
 
     
 
-/*
-function reload() {
-    if (app) { app.unminimize() }
-    if (app && app.webapp) { app.webapp.stop() }
-
-    chrome.runtime.reload()
-}
-*/
 var reload = chrome.runtime.reload
 
 function ui8IndexOf(arr, s, startIndex) {
