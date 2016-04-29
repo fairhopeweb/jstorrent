@@ -397,11 +397,11 @@ UI.prototype = {
                         // XXX TODO -- make torrent list refresh once metadata is completed...
                         this.detailtable.grid.setData([])
                     }
-                    this.detailtable.grid.onClick.subscribe( _.bind(fgapp.handle_click, app, 'files', torrent[type]) )
+                    this.detailtable.grid.onClick.subscribe( _.bind(fgapp.handle_click, fgapp, 'files', torrent[type]) )
                 } else if (this.detailtype == 'peers') {
-                    this.detailtable.grid.onDblClick.subscribe( _.bind(fgapp.handle_dblclick, app, 'peers', torrent[type]) )
+                    this.detailtable.grid.onDblClick.subscribe( _.bind(fgapp.handle_dblclick, fgapp, 'peers', torrent[type]) )
                 } else if (this.detailtype == 'swarm') {
-                    this.detailtable.grid.onDblClick.subscribe( _.bind(fgapp.handle_dblclick, app, 'swarm', torrent[type]) )
+                    this.detailtable.grid.onDblClick.subscribe( _.bind(fgapp.handle_dblclick, fgapp, 'swarm', torrent[type]) )
                 }
             }
         }

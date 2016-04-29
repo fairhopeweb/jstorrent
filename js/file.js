@@ -75,10 +75,11 @@ File.prototype = {
                     app.createNotification({message:"Chrome can't play this \"" + this.get_extension() + "\" file.",
                                             details:"Look instead for mp4 files with x264 encoding"})
                 } else {
+                    /*
                     app.createNotification({message:chrome.i18n.getMessage("PlayFileWarningTitle"),
                                             id:'play-file-warning',
                                             details:chrome.i18n.getMessage("PlayFileWarningDetails")})
-
+                    */
                     var url = (window.URL || window.webkitURL).createObjectURL(file)
                     var msg = {command:'openWindow',url:url}
                     chrome.runtime.sendMessage(msg)

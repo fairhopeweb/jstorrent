@@ -57,12 +57,14 @@
             }
         },
         shutdown: function() {
-            this.analytics = null
-            this.UI = null
-            if (this.client) {
-                this.client.fgapp = null
+            if (false) {
+                this.analytics = null
+                this.UI = null
+                if (this.client) {
+                    this.client.fgapp = null
+                }
+                this.client = null
             }
-            this.client = null
             
             var cwin = chrome.app.window.get('client')
             if (cwin) cwin.close()
@@ -201,7 +203,7 @@
         },
         think: function() {
             //console.clog(L.SESSION,'think')
-            if (this.client && this.client.activeTorrents.items.length == 0 && ! chrome.app.window.get(MAINWIN)) {
+            if (this.client && this.client.activeTorrents.items.length == 0 && ! chrome.app.window.get(MAINWIN) && ! this.launching) {
                 console.clog(L.SESSION,'shut it down.')
                 this.shutdown()
             }
@@ -223,6 +225,8 @@
                     this.launch(event)
                 }
                 break
+            default:
+                console.log('other/unrecognized runtime event',event)
             }
         }
     }

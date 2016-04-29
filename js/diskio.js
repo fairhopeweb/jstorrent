@@ -401,7 +401,7 @@
     //DiskIO.debugtimeout = 4000
     //DiskIO.allowedJobTimeShort = 8000 // most jobs dont need much time
 
-    DiskIO.allowedJobTime = 60000 * 5 // 30 seconds should be enough... ? // 5 minutes
+    DiskIO.allowedJobTime = 60000 * 5 // 30 seconds should be enough... ? // 5 minutes (!!!)
     // writes after large truncates can take a long time, though.
     //DiskIO.getentrytimeout = 5000
 

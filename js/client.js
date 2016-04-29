@@ -126,9 +126,38 @@ function Client(opts) {
 
     this.ports = {}
     this.portCtr = 0
+
+    this.webapp = null
 }
 
 Client.prototype = {
+    maybeStartWebApp: function() {
+        if (! window.WSC) {
+            console.warn('no js/web-server-chrome folder?')
+            // require a specific WSC version?
+        } else if (WSC.WebApplication && this.app.options.get('web_server_enable')) {
+            // :-( options not yet loaded
+            // let this work without submodule
+            var wopts = {}
+            wopts.port = 8543
+            wopts.optPreventSleep = false
+            wopts.optAllInterfaces = false
+            wopts.optTryOtherPorts = true
+            wopts.optRetryInterfaces = false
+            wopts.useCORSHeaders = true // needed for subtitles
+            //opts.optStopIdleServer = 1000 * 30 // 20 seconds
+            var handlers = [
+                ['/favicon.ico',jstorrent.FavIconHandler],
+                ['/stream.*',jstorrent.StreamHandler],
+                ['/package/(.*)',jstorrent.PackageHandler]
+                //        ['.*', jstorrent.WebHandler]
+            ]
+            wopts.handlers = handlers
+            this.webapp = new WSC.WebApplication(wopts)
+            this.webapp._stop_callback = this.webappOnStop.bind(this)
+            this.webapp.start(this.webappOnStart.bind(this))
+        }
+    },
     externalIP: function() {
         if (this.upnp && this.upnp.validGateway) {
             return this.upnp.validGateway.device.externalIP

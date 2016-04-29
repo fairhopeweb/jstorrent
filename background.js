@@ -402,23 +402,10 @@ chrome.runtime.onConnectExternal.addListener( function(port) {
 
 chrome.runtime.onSuspend.addListener( function(evt) {
     runtimeEvent({type:'onSuspend',data:evt})
-    var a = app()
-    if (a) {
-        a.runtimeMessage('onSuspend')
-    }
-    console.log('onSuspend',evt)
-    // maybe try to stop it?
-    // triggerKeepAwake()
 })
 
 chrome.runtime.onSuspendCanceled.addListener( function(evt) {
     runtimeEvent({type:'onSuspendCanceled',data:evt})
-
-    var a = app()
-    if (a) {
-        a.runtimeMessage('onSuspendCanceled')
-    }
-    console.log('onSuspendCanceled',evt)
 })
 /* // this will cause the background page to wake up every time it changes. not necessary
 if (chrome.idle && chrome.idle.onStateChanged) {

@@ -21,9 +21,6 @@ function AppForeground(opts) {
     if (fullapp) {
         this.options = new jstorrent.Options({app:this}); // race condition, options not yet fetched...
     }
-    this.webapp = null
-
-    this.analytics = null
 
     // need to store a bunch of notifications keyed by either torrents or other things...
     if (fullapp) {
@@ -100,20 +97,6 @@ AppForeground.prototype = {
         console.clog(L.SYSTEM, 'idle state changed',info, ', online:',this.onLine())
         // TODO - if online status changes from offline to back online, refresh upnp (what else to do?)
     },
-    webappOnStop: function(info) {
-        console.clog(L.APP,'webapp stopped',info)
-    },
-    webappOnStart: function(info) {
-        console.clog(L.APP,'webapp started',info)
-    },
-    close: function() {
-        // app wants to close
-        // maybe do some cleanup stuff?
-        if (this.webapp) {
-            this.webapp.stop()
-        }
-        window.close()
-    },
     runtimeMessage: function(msg) {
         console.warn('runtime message!',msg)
         if (msg == 'onSuspendCanceled') {
@@ -150,44 +133,10 @@ AppForeground.prototype = {
             }
 
             // stop listening, destroy all sockets
-            if (this.webapp) {
-                this.webapp.stop()
+            if (this.client.webapp) {
+                this.client.webapp.stop()
             }
         }
-    },
-    maybeStartWebApp: function() {
-        if (! window.WSC) {
-            console.warn('no js/web-server-chrome folder?')
-            // require a specific WSC version?
-        } else if (this.opts && this.opts.tab) {
-            // dont start server for browser tab instance
-        } else if (WSC.WebApplication && this.options.get('web_server_enable')) {
-            // :-( options not yet loaded
-            // let this work without submodule
-            var wopts = {}
-            wopts.port = 8543
-            wopts.optPreventSleep = false
-            wopts.optAllInterfaces = false
-            wopts.optTryOtherPorts = true
-            wopts.optRetryInterfaces = false
-            wopts.useCORSHeaders = true // needed for subtitles
-            //opts.optStopIdleServer = 1000 * 30 // 20 seconds
-            var handlers = [
-                ['/favicon.ico',jstorrent.FavIconHandler],
-                ['/stream.*',jstorrent.StreamHandler],
-                ['/package/(.*)',jstorrent.PackageHandler]
-                //        ['.*', jstorrent.WebHandler]
-            ]
-            wopts.handlers = handlers
-            this.webapp = new WSC.WebApplication(wopts)
-            this.webapp._stop_callback = this.webappOnStop.bind(this)
-            this.webapp.start(this.webappOnStart.bind(this))
-        }
-    },
-    on_options_loaded: function() {
-        this.maybeStartWebApp()
-        this.analytics = new jstorrent.Analytics({app:this})
-        this.analytics.sendEvent('acceptLanguages',window.navigator.language,this.accept_languages)
     },
     onContextMenuNoItem: function(grid, info, evt) {
         chrome.contextMenus.removeAll()
@@ -287,7 +236,12 @@ AppForeground.prototype = {
             // message pane
             var k = c.menuItemId
             // want to send this to client.html
-            if (k == "Reset") { return window.L = reset_logging_flags() }
+            if (k == "Reset") {
+                window.L = reset_logging_flags()
+                clientwin.L = reset_logging_flags()
+                return
+            }
+            clientwin.L[k].show = ! clientwin.L[k].show
             L[k].show = ! L[k].show
         } else if (cls == jstorrent.PeerConnection) {
             if (id == 'Disconnect') item.disconnect()
@@ -480,7 +434,7 @@ AppForeground.prototype = {
         var streamable = file.streamable()
         var complete = file.isComplete()
         var openable = file.openable()
-        this.analytics.sendEvent('FileAction',action)
+        app.analytics.sendEvent('FileAction',action)
 
         if (action == 'action-open') {
             if (streamable) {
