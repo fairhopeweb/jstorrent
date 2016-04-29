@@ -241,7 +241,7 @@
         get_announce_payload: function(connectionId, event) {
             var doExtension = true
             var addNoCrypto = true
-            var addIPV6 = jstorrent.options.enable_ipv6
+            var addIPV6 = this.torrent.client.app.options.get('enable_ipv6')
             var transactionId = Math.floor(Math.random() * Math.pow(2,32))
             var ACTIONS = {announce:1,
                            scrape:2}

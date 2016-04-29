@@ -237,7 +237,6 @@ UI.prototype = {
             if (row !== undefined) {
                 this.torrenttable.grid.scrollRowIntoView(row);
                 this.torrenttable.grid.setSelectedRows([row])
-                //this.torrenttable.grid.flashRow(row, 300, 8);
             }
         }
         this.set_detail(this.detailtype, torrent)

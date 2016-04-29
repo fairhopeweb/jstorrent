@@ -2127,7 +2127,7 @@ if (typeof Slick === "undefined") {
                       return;
                   }
                   setTimeout(function () {
-                          $row.toggleClass(options.rowFlashingCssClass)
+                      $row.toggleClass(options.rowFlashingCssClass)
                       toggleRowClass(times - 1);
                   },
                              speed);

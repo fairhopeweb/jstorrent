@@ -124,10 +124,8 @@ jstorrent.options = {
     disable_trackers: false,
     slow_diskio: false,
     slow_hashcheck: false,
-    upnp: true,
     disable_pex: false,
     use_piece_cache: false,
-    enable_ipv6: true, // worry about DDOS? flood thing? (seems like utorrent ipv6 begins with ffff:xxxx:xxxx)
     seed_public_torrents: false, // default off
     allow_report_torrent_bug: false,
     reset_on_complete: false, // reset torrent state on torrent completion (testing)

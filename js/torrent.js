@@ -242,7 +242,7 @@ Torrent.prototype = {
     addCompactPeerBuffer: function(added,source,opts) {
         var ipv6 = opts && opts.ipv6
         var hostbytes = ipv6 ? 16 : 4
-        if (ipv6 && ! jstorrent.options.enable_ipv6) { return }
+        if (ipv6 && ! this.client.app.options.get('enable_ipv6')) { return }
         var portbytes = 2
         var eachbytes = hostbytes+portbytes
         console.assert(added.length%eachbytes==0)

@@ -864,7 +864,7 @@ PeerConnection.prototype = {
         // peer's listening port (DHT)?
         this.peerPort = new DataView(msg.payload, 5, 2).getUint16(0)
         //console.log('got port msg',this.peerPort)
-        if (this.client.app.options.get('debug_dht')) {
+        if (this.client.app.options.get('enable_dht')) {
             this.client.dht.ping(this.peer.host, this.peerPort)
         }
     },

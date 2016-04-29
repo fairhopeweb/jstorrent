@@ -12,12 +12,17 @@ function Client(opts) {
 
     this.ready = false
     this.app = opts.app
+    this.options = this.app.options
     this.id = opts.id
     this.entryCache = new jstorrent.EntryCache
     this.fileMetadataCache = new jstorrent.FileMetadataCache
-    this.upnp = new jstorrent.UPNP({client:this})
-    this.dht = new jstorrent.DHT({client:this})
-    if (jstorrent.options.upnp) {
+    this.dht = null
+    this.upnp = null
+    if (this.app.options.get('enable_dht')) {
+        this.dht = new jstorrent.DHT({client:this})
+    }
+    if (this.app.options.get('enable_upnp')) {
+        this.upnp = new jstorrent.UPNP({client:this})
         this.upnp.reset()
     }
     this.activeTorrents = new jstorrent.Collection({__name__: 'Torrents', 

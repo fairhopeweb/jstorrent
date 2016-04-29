@@ -14,6 +14,7 @@ function onready() {
         client = clientwin.client
         fgapp = new jstorrent.AppForeground
         app = fgapp
+        client.fgapp = fgapp
         fgapp.notifications = session.notifications
         fgapp.client = client
         fgapp.options = session.options

@@ -11,15 +11,21 @@
                 'type':'bool',
                 'description': 'your list of torrents will be synchronized across your devices'
             },
-            run_in_background: {
+            download_in_background: {
                 name:"Download in background",
                 help:"Downloads will continue even if you close the JSTorrent window",
                 default:true,
                 type:'bool'
             },
             start_in_background: {
-                name:"Startup when system starts",
+                name:"Start when Chrome starts",
                 help:"JSTorrent will automatically start running in the background when you login",
+                default:false,
+                type:'bool'
+            },
+            run_in_background: {
+                name:"Allow running when Chrome closes",
+                help:"JSTorrent will continue to run when you close Chrome",
                 default:false,
                 type:'bool'
             },
@@ -46,7 +52,8 @@
             'prevent_sleep': {
                 'default': true,
                 'type': 'bool',
-                'name': 'Prevent system standby when downloading'
+                'name': 'Prevent system standby when downloading',
+                'help': 'Prevent your computer from going into sleep mode while downloading'
             },
 
             /*
@@ -97,12 +104,8 @@
             'new_torrents_auto_start': {
                 'name': 'Automatically start downloading new torrents',
                 'default': true,
+                visible: false,
                 'type': 'bool'
-            },
-            'report_anonymous_usage': {
-                'default': true,
-                'type': 'bool',
-                'editable': false
             },
             'report_to_trackers_override': {
                 'default': false,
@@ -119,7 +122,7 @@
             'auto_add_public_trackers': {
                 'default':true,
                 'name':'Add public trackers automatically',
-                'help':'If no peers are found, automatically add some public trackers to look for more peers.',
+                'help':'If no peers are found, automatically add some public trackers find more peers.',
                 'visible':true,
                 'type':'bool'
             },
@@ -175,11 +178,24 @@
                 'type': 'bool',
                 'name': 'Enable web server'
             },
-            'debug_dht': {
+            'enable_upnp': {
+                'visible': false,
+                'default': true,
+                'type': 'bool',
+                'name': 'Enable UPNP',
+                'help': 'UPNP lets you automatically open a port to accept incoming connections'
+            },
+            'enable_dht': {
                 'visible': false,
                 'default': false,
                 'type': 'bool',
-                'name': 'debugging dht'
+                'name': 'Enable DHT',
+                'help': 'Distributed Hash Table lets you find peers when no trackers are available'
+            },
+            'enable_ipv6': {
+                'visible': false,
+                'default': true,
+                'type': 'bool'
             }
             
         }

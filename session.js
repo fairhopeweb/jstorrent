@@ -41,22 +41,22 @@
             }.bind(this))
         },
         onTorrentComplete: function(evt) {
-            console.log('torrent complete',evt)
+            console.clog(L.SESSION,'torrent complete',evt)
         },
         onTorrentProgress: function(torrent) {
-            console.log('torrent progress',torrent.get('name'), Math.floor(100 * torrent.get('complete')))
+            console.clog(L.SESSION,'torrent progress',torrent.get('name'), Math.floor(100 * torrent.get('complete')))
         },
         onClientError: function(evt,e) {
-            console.log('on client error',evt,e)
+            console.clog(L.SESSION,'on client error',evt,e)
         },
         onTorrentStart: function(torrent) {
-            console.log('torrent start',torrent)
+            console.clog(L.SESSION,'torrent start',torrent)
         },
         onTorrentStop: function(torrent) {
-            console.log('torrent stop',torrent)
+            console.clog(L.SESSION,'torrent stop',torrent)
         },
         onTorrentHaveMetadata: function(torrent) {
-            console.log('torrent has metadata',torrent)
+            console.clog(L.SESSION,'torrent has metadata',torrent)
         },
         bindClientEvents: function() {
             this.client.on('error', this.onClientError_)
@@ -81,7 +81,7 @@
                 var win = chrome.app.window.get(id).contentWindow
                 var fgapp = win.fgapp
                 // client still has event listeners with fgapp, and they are being sent, but ignored. hm
-                
+                this.client.fgapp = null
                 var opts = chrome.app.window.get('options')
                 if (opts) { opts.close() }
                 var help = chrome.app.window.get('help')
@@ -227,7 +227,7 @@
         onClientPageInit: function(win) {
             console.clog(L.SESSION,'client page created client',win.client)
             this.client = win.client
-            this.lastclient = win.client // debug how long this reference stays around
+            //this.lastclient = win.client // debug how long this reference stays around
             this.bindClientEvents()
             if (this.wantsUI) {
                 this.createUI()
@@ -270,7 +270,7 @@
         think: function() {
             if (this.launching) {
                 
-            } else if (! chrome.app.window.get(MAINWIN) && ! this.options.get('run_in_background')) {
+            } else if (! chrome.app.window.get(MAINWIN) && ! this.options.get('download_in_background')) {
                 console.log('shutting down, background mode disabled')
                 this.shutdown()
             } else if (this.client && ! this.client.isActive() && ! chrome.app.window.get(MAINWIN)) {
