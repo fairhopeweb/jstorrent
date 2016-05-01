@@ -447,7 +447,7 @@ Client.prototype = {
             case 'getAddress':
                 // wait until upnp is ready?
                 if (this.upnp.searching) {
-                    setTimeout( this.onupnp.bind(this), 2000 )
+                    setTimeout( onupnp.bind(this), 2000 )
                 } else {
                     onupnp.call(this)
                 }
