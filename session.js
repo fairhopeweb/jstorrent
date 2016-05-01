@@ -124,6 +124,15 @@
         onTorrentHaveMetadata: function(torrent) {
             console.clog(L.SESSION,'torrent has metadata',torrent)
         },
+        prettyDeviceName: function() {
+            var GBRAM = Math.floor( this.memoryInfo.capacity / (Math.pow(1024,3)) )
+            var CPU = this.cpuInfo.modelName
+            var OS = this.platformInfo.os
+            return [OS,
+                    navigator.platform,
+                    CPU,
+                    GBRAM]
+        },
         bindClientEvents: function() {
             this.client.on('error', this.onClientError_)
             this.client.torrents.on('error', this.onClientError_)
@@ -236,6 +245,7 @@
                     guid: this.GUID,
                     scopes: oauth.scopes.join(' '),
                     token: oauth.token,
+                    device: this.prettyDeviceName(),
                     gcmid: gcmid
                 }
                 var xhr = new XMLHttpRequest
