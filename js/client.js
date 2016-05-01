@@ -137,6 +137,14 @@ function Client(opts) {
 }
 
 Client.prototype = {
+    simpleGet: function(url) {
+        var xhr = new WSC.ChromeSocketXMLHttpRequest
+        xhr.open("GET",url)
+        xhr.onload = xhr.onerror = function(evt) {
+            console.log('got url',evt)
+        }
+        xhr.send()
+    },
     isActive: function() {
         return this.activeTorrents.items.length > 0 ||
             this.webapp && Object.keys(this.webapp.streams).length > 0

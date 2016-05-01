@@ -424,6 +424,7 @@ function MessagesView(opts) {
 MessagesView.prototype = {
     // XXX how many methods must we define?
     onContextMenu: function(evt) {
+        chrome.contextMenus.removeAll()
         window.contextMenuContextItem = 'messages'
         var actions = Object.keys(L)
         actions.forEach(function(action){

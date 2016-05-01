@@ -1,3 +1,8 @@
+if (! window.jstorrent) { window.jstorrent = {} }
+
+jstorrent.gcm_identity_server = 'https://www.jstorrent.com'
+jstorrent.gcm_appid = "432934632994"
+
 function reset_logging_flags() {
     var L = {
         INIT: { color: '#cef', show: true },
@@ -155,4 +160,4 @@ function debugSockets() {
         console.log('current udp sockets',d)
     })
 }
-
+var GCMSERVERID = "432934632994"

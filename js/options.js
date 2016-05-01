@@ -26,6 +26,7 @@
             run_in_background: {
                 name:"Allow running when Chrome closes",
                 help:"JSTorrent will continue to run when you close Chrome",
+                visible:false,
                 default:false,
                 type:'bool'
             },

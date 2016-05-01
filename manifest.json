@@ -50,14 +50,22 @@
         "identity",
         "browser",
         "alwaysOnTopWindows",
+        "gcm",
         {"mediaGalleries":["read"]}
     ],
     "optional_permissions": [
-        "background"
+        "background",
+        "identity.email"
     ],
     "oauth2": {
         "client_id": "432934632994-20rclui1m8od0p2g09vfbrdnk93gbraa.apps.googleusercontent.com",
-        "scopes": ["https://www.googleapis.com/auth/chromewebstore.readonly"]
+        "scopes": [ 
+            "openid",
+            "email",
+            "profile",
+            "https://www.googleapis.com/auth/drive.appfolder",
+            "https://www.googleapis.com/auth/drive.file"
+                  ]
     },
     "app": {
         "background": {

@@ -1031,7 +1031,7 @@ AppForeground.prototype = {
             return
         }
         optionsWindow.outerBounds.width = 365
-        optionsWindow.outerBounds.height = 535
+        optionsWindow.outerBounds.height = 580
         optionsWindow.show()
         this.stopPulsateOptions()
         app.analytics.sendAppView("OptionsView")

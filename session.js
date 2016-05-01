@@ -7,6 +7,7 @@
         this.statekey = 'session01.state'
         this.state = null
         this.options = null
+        this.oauth = []
         this.permissions = null
         this.notifications = new jstorrent.Notifications
         this.events = []
@@ -15,6 +16,15 @@
         this.eventData = null
         this.wantsUI = false
         this.thinking = null
+
+        this.gcmRegistrationId = null
+
+        this.userProfile = null
+        this.platformInfo = null
+        this.cpuInfo = null
+        this.storageInfo = null
+        this.memoryInfo = null
+        this.networkInterfaces = null
 
         this.analytics = false
         this.client = false
@@ -30,10 +40,52 @@
         
         runParallel( [ this.getPermissions.bind(this),
                        this.getLastState.bind(this),
+                       this.getProfileInfo.bind(this), // needs chrome 37
+                       this.getSystemCPUInfo.bind(this),
+                       this.getNetworkInterfaces.bind(this),
+                       this.getSystemStorageInfo.bind(this),
+                       this.getSystemMemoryInfo.bind(this),
+                       this.getPlatformInfo.bind(this),
                        this.getOptions.bind(this) ],
                      this.onReady.bind(this))
     }
     SessionProto = {
+        getNetworkInterfaces: function(cb) {
+            chrome.system.network.getNetworkInterfaces( function(info) {
+                this.networkIntarfaces = info
+                cb()
+            }.bind(this))
+        },
+        getSystemCPUInfo: function(cb) {
+            chrome.system.cpu.getInfo( function(info) {
+                this.cpuInfo = info
+                cb()
+            }.bind(this))
+        },
+        getSystemStorageInfo: function(cb) {
+            chrome.system.storage.getInfo( function(info) {
+                this.storageInfo = info
+                cb()
+            }.bind(this))
+        },
+        getSystemMemoryInfo: function(cb) {
+            chrome.system.memory.getInfo( function(info) {
+                this.memoryInfo = info
+                cb()
+            }.bind(this))
+        },
+        getProfileInfo: function(cb) {
+            chrome.identity.getProfileUserInfo( function(info) {
+                this.userProfile = info
+                cb()
+            }.bind(this))
+        },
+        getPlatformInfo: function(cb) {
+            chrome.runtime.getPlatformInfo( function(info) {
+                this.platformInfo = info
+                cb()
+            }.bind(this))
+        },
         getLastState: function(cb) {
             chrome.storage.local.get(this.statekey, function(result) {
                 this.state = result[this.statekey]
@@ -138,6 +190,46 @@
             var cbs = this._listeners[t]
             if (cbs) cbs.forEach( function(cb){cb()} )
         },
+        registerOAuthGrant: function(scopes, token) {
+            console.log('got oauth',scopes,token)
+            this.oauth.push( { scopes: scopes, token: token } )
+            this.registerWithGCMServer()
+        },
+        tryGetOpenID: function() {
+            var scopes = ["openid"]
+            chrome.identity.getAuthToken({scopes:scopes,
+                                          interactive:false
+                                         },
+                                         function(result) {
+                                             var lasterr = chrome.runtime.lastError
+                                             if (lasterr) {
+                                                 console.log('could not get token',lasterr)
+                                             } else if (result) {
+                                                 console.log('openid/auth result',scopes,result)
+                                                 this.registerOAuthGrant(scopes, result)
+                                             }
+                                         }.bind(this))
+        },
+        registerWithGCMServerResult: function(evt) {
+            console.log('got register result',evt,evt.target.status)
+        },
+        registerWithGCMServer: function() {
+            chrome.gcm.register([jstorrent.gcm_appid], function(gcmRegistrationId) {
+                this.gcmRegistrationId = gcmRegistrationId
+                var oauth = this.oauth[this.oauth.length - 1]
+                var params = {
+                    appid: jstorrent.gcm_appid,
+                    scopes: oauth.scopes,
+                    token: oauth.token,
+                    registrationId: gcmRegistrationId
+                }
+                var xhr = new XMLHttpRequest
+                xhr.timeout = 20000
+                xhr.open("POST", jstorrent.gcm_identity_server + '/api/gcm/register')
+                xhr.onload = xhr.onerror = xhr.ontimeout = this.registerWithGCMServerResult.bind(this)
+                xhr.send(JSON.stringify(params))
+            }.bind(this))
+        },
         registerEvent: function(event) {
             //console.clog(L.SESSION,'register event',event,this.debugState())
             this.events.push(event)
@@ -162,6 +254,7 @@
         onReady: function() {
             console.clog(L.SESSION,'ready')
             this.ready = true
+            this.tryGetOpenID()
             
             if (this.state && this.state.dontstart_once) {
                 if (this.events) { this.events.shift() }
@@ -268,12 +361,13 @@
             }
         },
         think: function() {
+            var mainwin = chrome.app.window.get(MAINWIN)
             if (this.launching) {
                 
-            } else if (! chrome.app.window.get(MAINWIN) && ! this.options.get('download_in_background')) {
+            } else if (! mainwin && ! this.options.get('download_in_background')) {
                 console.log('shutting down, background mode disabled')
                 this.shutdown()
-            } else if (this.client && ! this.client.isActive() && ! chrome.app.window.get(MAINWIN)) {
+            } else if (this.client && ! this.client.isActive() && ! mainwin) {
                 console.clog(L.SESSION,'shut it down?',this.debugState())
                 this.shutdown()
             }
@@ -283,6 +377,9 @@
             console.clog(L.SESSION,'run event',event)
             switch(event.type) {
             case 'onMessageExternal':
+                if (event.request.command == 'add-url') {
+                    this.wantsUI = true
+                }
                 this.launch(event)
                 break;
             case 'onLaunched':
@@ -298,6 +395,15 @@
             case 'onSuspend':
                 console.log('going to suspend. great!')
                 return
+            case 'onSuspendCanceled':
+                console.log('suspend canceled!')
+                return
+            case 'gcmMessage':
+                console.log("got a GCM message!", event.message)
+                var msgid = Math.floor(10000000 * Math.random()).toString()
+                chrome.gcm.send({destinationId:GCMSERVERID+"@gcm.googleapis.com", messageId:msgid,data:{"message":"i got your message"}}, function(resp){console.log(chrome.runtime.lastError,resp)})
+                this.launch(event)
+                // can respond
             default:
                 console.log('other/unrecognized runtime event',event)
             }

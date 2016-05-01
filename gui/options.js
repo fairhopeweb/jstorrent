@@ -1,6 +1,23 @@
 document.addEventListener("DOMContentLoaded", onready);
 var options = null
+var session = null
 var app = null
+
+function get_openid(callback) {
+    var scopes = [
+        "openid"
+    ]
+
+    // this requires user signed into chrome, whichk ind of sucks...
+    chrome.identity.getAuthToken({scopes:scopes,
+                                  interactive:true
+                                 },
+                                 function(result) {
+                                     session.registerOAuthGrant(scopes, result)
+                                     console.log('openid/auth result',scopes,result)
+                                     if (callback) { callback() }
+                                 })
+}
 
 function bind_events() {
     $('[data-toggle="tooltip"]').tooltip({'delay': { show: 50, hide: 200 }})
@@ -9,6 +26,10 @@ function bind_events() {
     $('#button-setup-magnet').click( function(evt) {
         chrome.browser.openTab({url:'http://jstorrent.com/magnet/'})
         evt.preventDefault()
+    })
+    $('#button-setup-remote').click( function(evt) {
+        // show loading spinner..
+        get_openid()
     })
     
     $('#button-choose-download').click( function(evt) {
@@ -199,6 +220,7 @@ function onready() {
 
     getBackgroundAndApp( function(bg, app, tries) {
         window.app = app
+        window.session = app
         console.log('got bg and app',bg, app, 'after',tries,'tries')
         setTimeout( function() {
             bg.checkForUpdateMaybe()

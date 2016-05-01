@@ -17,12 +17,40 @@ $(document).ready( function() {
     //document.getElementById('sponsor').addEventListener('click', purchase)
 
     chrome.runtime.getBackgroundPage( function(bg) {
-        bg.window.windowManager.getMainWindow(function(window){
-            document.getElementById('version').innerText = window.contentWindow.client.version
-            document.getElementById('user-agent').innerText = navigator.userAgent;
-            document.getElementById('x-user-agent').innerText = window.contentWindow.client.getUserAgent();
-            document.getElementById('peerid').innerText = window.contentWindow.client.peeridbytes_begin;
-        })
-    })
+        var client = bg.session.client
+        document.getElementById('version').innerText = client.version
+        document.getElementById('user-agent').innerText = navigator.userAgent;
+        document.getElementById('x-user-agent').innerText = client.getUserAgent();
+        document.getElementById('peerid').innerText = client.peeridbytes_begin;
 
+        var oauth = document.getElementById('oauthscope')
+        var scopes = [
+
+// "https://www.googleapis.com/auth/drive.appfolder",
+                      "openid",
+//                      "email",
+//                      "profile",
+//                      "https://www.googleapis.com/auth/drive.file"
+            ]
+        oauth.addEventListener('click',function() {
+            
+            chrome.identity.getAuthToken({scopes:scopes,
+                                          interactive:true
+                                         },
+                                         function(result) {
+                                             console.log('auth result',result)
+                                         })
+        })
+
+        
+        if (! bg.session.userProfile.email) {
+            var signup = document.getElementById('signup')
+            document.getElementById('signup_div').style.display=''
+            signup.addEventListener('click',function() {
+                chrome.permissions.request({permissions:['identity.email']}, function(result) {
+                    console.log('permission result',result)
+                })
+            })
+        }
+    })
 })

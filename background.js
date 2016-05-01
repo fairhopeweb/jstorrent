@@ -254,6 +254,20 @@ function checkForUpdateMaybe() {
     })
 }
 
+chrome.gcm.onSendError.addListener(function(err) {
+    console.error('gcm send error',err)
+})
+chrome.gcm.onMessage.addListener(function(message) {
+    console.log("GCM message",message)
+    runtimeEvent({type:"gcmMessage", message:message})
+});
+chrome.gcm.onMessagesDeleted.addListener(messagesDeleted);
+
+function messagesDeleted() {
+    // All messages have been discarded from GCM. Sync with
+    // your application server to recover from the situation.
+}
+
 chrome.runtime.onInstalled.addListener(function(details) {
     runtimeEvent({type:'onInstalled',data:details})
     //console.log('onInstalled',details)

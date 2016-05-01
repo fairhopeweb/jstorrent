@@ -1,3 +1,5 @@
+- extension showing popup when it's synced before JST full
+
 - limit reconnect attempts on peers for small swarm (back-off)
 - add source to peer (eg got from pex, tracker, dht, etc)
 - add tests for encode/decode various infodicts with/without utf-8 and other keys. infodict should work even with completely random binary string data
