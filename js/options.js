@@ -30,6 +30,11 @@
                 default:false,
                 type:'bool'
             },
+            dont_shutdown: {
+                visible:true,
+                default:true,
+                type:'bool'
+            },
             download_rate_limit: {
                 'name': 'Max Download (kB/s) 0:unlimited',
                 'help': 'Set a limit to maximum download speed per torrent. The value of 0 means no limit.',

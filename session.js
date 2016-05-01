@@ -390,6 +390,8 @@
             }
         },
         think: function() {
+            if (this.options.get('dont_shutdown')) { return }
+            
             // TODO when ui open, stop interval
             var mainwin = chrome.app.window.get(MAINWIN)
             if (this.launching) {
