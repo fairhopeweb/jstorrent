@@ -99,6 +99,12 @@
                 'maxval':5,
                 'type':'int'
             },
+            'listen_port': {
+                'default': 10389,
+                'minval':1025,
+                'maxval':Math.pow(2,16)-1,
+                'type':'int'
+            },
             'maxconns': {
                 'name': 'Connections Per Torrent',
                 'help': 'The maximum number of peers to download from. Higher numbers can potentially result in faster downloads, but use more system resources',

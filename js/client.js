@@ -123,7 +123,7 @@ function Client(opts) {
     this.on('ready', _.bind(this.onReady, this))
 
     this.listenSock = null
-    this.listenPort = 10389 // TODO retry on other ports
+    this.listenPort = this.session.options.get('listen_port') // TODO retry on other ports
     // TODO only setup UPNP after this
     this.listening = false
     //this.setupListen() // only setup when active torrents, shutdown when no active torrents

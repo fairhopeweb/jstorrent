@@ -1,3 +1,5 @@
+// multiple devices are using the same extenal port. need to retry for other ports, or randomize chosen port based on GUID would be easiest.
+
 // inspiration from https://github.com/indutny/node-nat-upnp
 (function() {
     function flatParseNode(node) {
