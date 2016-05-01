@@ -399,6 +399,23 @@
                 this.shutdown()
             }
         },
+        sendGCM: function(data) {
+            var msgid = makemsgid()
+            var dst = jstorrent.gcm_appid  + "@gcm.googleapis.com"
+            console.log('sending msg',msgid,'to',dst)
+            chrome.gcm.send( {destinationId:dst,
+                              messageId:msgid,
+                              timeToLive: 20, // 60 seconds
+                              data:data
+                             }, function(resp){
+                                 var lasterr = chrome.runtime.lastError
+                                 if (lasterr) {
+                                     console.error('error sending gcm',lasterr)
+                                 } else {
+                                     console.log('sent message',resp)
+                                 }
+                             })
+        },
         runEvent: function(event) {
             this.eventData = event
             console.clog(L.SESSION,'run event',event)
@@ -426,9 +443,8 @@
                 console.log('suspend canceled!')
                 return
             case 'gcmMessage':
-                console.log("got a GCM message!", event.message)
-                var msgid = Math.floor(10000000 * Math.random()).toString()
-                chrome.gcm.send({destinationId:jstorrent.gcm_appid+"@gcm.googleapis.com", messageId:msgid,data:{"message":"i got your message"}}, function(resp){console.log(chrome.runtime.lastError,resp)})
+                console.log("got a GCM message!", event.message.data)
+                this.sendGCM({'foobar':'hello'})
                 this.launch(event)
                 // can respond
             default:

@@ -259,7 +259,20 @@ chrome.gcm.onSendError.addListener(function(err) {
 })
 chrome.gcm.onMessage.addListener(function(message) {
     console.log("GCM message",message)
-    runtimeEvent({type:"gcmMessage", message:message})
+    if (message.data.ping) {
+        var msgid = makemsgid()
+        var dst = jstorrent.gcm_appid+"@gcm.googleapis.com"
+        console.log('send pong to',dst)
+        chrome.gcm.send( {destinationId:dst,
+                          messageId:msgid,
+                          timeToLive: 20,
+                          data:{'pong':'1'}
+                         }, function(resp){
+                             console.log(chrome.runtime.lastError,resp)
+                         })
+    } else {
+        //runtimeEvent({type:"gcmMessage", message:message})
+    }
 });
 chrome.gcm.onMessagesDeleted.addListener(messagesDeleted);
 

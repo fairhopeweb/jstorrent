@@ -172,3 +172,18 @@ function makeguid() {
     };
     return (S4(buf[0])+S4(buf[1])+"-"+S4(buf[2])+"-"+S4(buf[3])+"-"+S4(buf[4])+"-"+S4(buf[5])+S4(buf[6])+S4(buf[7]));
 }
+function makemsgid_() {
+    return Math.floor(Math.random() * 10000000).toString()
+}
+function makemsgid() {
+    var buf = new Uint16Array(4);
+    window.crypto.getRandomValues(buf);
+    var S4 = function(num) {
+        var ret = num.toString(16);
+        while(ret.length < 4){
+            ret = "0"+ret;
+        }
+        return ret;
+    }
+    return S4(buf[0])+S4(buf[1])+S4(buf[2])+S4(buf[3])
+}
