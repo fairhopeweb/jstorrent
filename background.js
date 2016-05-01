@@ -260,6 +260,7 @@ chrome.gcm.onSendError.addListener(function(err) {
 chrome.gcm.onMessage.addListener(function(message) {
     console.log("GCM message",message)
     if (message.data.ping) {
+        // should also have reqid maybe.
         var msgid = makemsgid()
         var dst = jstorrent.gcm_appid+"@gcm.googleapis.com"
         console.log('send pong to',dst)
@@ -271,7 +272,7 @@ chrome.gcm.onMessage.addListener(function(message) {
                              console.log(chrome.runtime.lastError,resp)
                          })
     } else {
-        //runtimeEvent({type:"gcmMessage", message:message})
+        runtimeEvent({type:"gcmMessage", message:message})
     }
 });
 chrome.gcm.onMessagesDeleted.addListener(messagesDeleted);

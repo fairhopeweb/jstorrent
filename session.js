@@ -378,7 +378,10 @@
             this.launching = true
             if (this[MAINWIN]) {
                 // have all windows already
-                chrome.app.window.get(MAINWIN).focus()
+                
+                if (data.type != 'gcmMessage') {// only for some types of events
+                    chrome.app.window.get(MAINWIN).focus()
+                }
                 this.launchDone()
             } else if (this.wantsUI && this.analytics && this.client) {
                 this.createUI()
@@ -425,12 +428,12 @@
                     this.wantsUI = true
                 }
                 this.launch(event)
-                break;
+                break
             case 'onLaunched':
                 this.wantsUI = true
                 console.log('wants UI')
                 this.launch(event)
-                break;
+                break
             case 'onInstalled':
                 if (this.options.get('start_in_background')) {
                     this.launch(event)
@@ -438,15 +441,25 @@
                 break
             case 'onSuspend':
                 console.log('going to suspend. great!')
-                return
+                break
             case 'onSuspendCanceled':
                 console.log('suspend canceled!')
-                return
+                break
             case 'gcmMessage':
                 console.log("got a GCM message!", event.message.data)
-                this.sendGCM({'foobar':'hello'})
-                this.launch(event)
+                var reqid = event.message.data.reqid || ''
+                var data = event.message.data
+                if (data.command == 'getAddress') {
+                    this.wantsUI = false
+                    this.launch(event)
+                } else {
+                    self.sendGCM({'reqid':reqid,
+                                  'error':'unhandled request'})
+                }
+                //this.sendGCM({'foobar':'hello'})
+                //this.launch(event)
                 // can respond
+                break
             default:
                 console.log('other/unrecognized runtime event',event)
             }

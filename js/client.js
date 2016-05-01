@@ -12,6 +12,7 @@ function Client(opts) {
 
     this.ready = false
     this.app = opts.app
+    this.session = opts.app
     this.options = this.app.options
     this.id = opts.id
     this.entryCache = new jstorrent.EntryCache
@@ -437,7 +438,30 @@ Client.prototype = {
         } else if (launchData.type == 'drop') {
             this.handleLaunchWithItem(item)
         } else if (launchData.type == 'debugger') {
-            
+        } else if (launchData.type == 'gcmMessage') {
+            var data = launchData.message.data
+            var reqid = data.reqid
+            assert(reqid)
+            var command = data.command
+            switch(command) {
+            case 'getAddress':
+                // wait until upnp is ready?
+                if (this.upnp.searching) {
+                    setTimeout( this.onupnp.bind(this), 2000 )
+                } else {
+                    onupnp.call(this)
+                }
+                function onupnp() {
+                    this.session.sendGCM({reqid:reqid,
+                                          ip:this.externalIP(),
+                                          port:this.externalPort().toString()})
+                }
+                break
+            default:
+                this.session.sendGCM({reqid:reqid,
+                                      'error':'unhandled'
+                                     })
+            }
         } else {
             //debugger
         }

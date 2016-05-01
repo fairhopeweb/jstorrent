@@ -21,6 +21,7 @@
         this.validGateway = null
         this.interfaces = null
         this.mapping = null
+        this.searching = false
     }
     UPNP.prototype = {
         getInternalAddress: function() {
@@ -44,6 +45,7 @@
             }
         },
         reset: function() {
+            this.searching = true
             chrome.system.network.getNetworkInterfaces( function(interfaces) {
                 this.interfaces = interfaces
                 this.devices = []
@@ -53,6 +55,7 @@
             }.bind(this) )
         },
         onSearchStop: function(info) {
+            this.searching = false
             this.getIP( function() {
                 this.getMappings( function(mappings) {
                     // check if already exists nice mapping we can use.
