@@ -129,7 +129,7 @@
                     ['NewInternalClient',this.getInternalAddress()],
                     ['NewInternalPort',port],
                     ['NewLeaseDuration',0],
-                    ['NewPortMappingDescription','JSTorrent '+prot+' (upnp.js)'],
+                    ['NewPortMappingDescription','JSTorrent '+prot+' ('+this.getInternalAddress()+')'],
                     ['NewProtocol',prot],
                     ['NewRemoteHost',""]
                 ]

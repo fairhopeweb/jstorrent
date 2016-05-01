@@ -125,7 +125,7 @@
             console.clog(L.SESSION,'torrent has metadata',torrent)
         },
         prettyDeviceName: function() {
-            var GBRAM = Math.floor( this.memoryInfo.capacity / (Math.pow(1024,3)) )
+            var GBRAM = ( this.memoryInfo.capacity / (Math.pow(1024,3)) ).toFixed(1)
             var CPU = this.cpuInfo.modelName
             var OS = this.platformInfo.os
             return [OS,
