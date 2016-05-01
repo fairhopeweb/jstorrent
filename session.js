@@ -5,6 +5,7 @@
         // setup listen for gcm messages if setting wants it.
         this.id = 'app01'
         this.statekey = 'session01.state'
+        this.GUID = null
         this.state = null
         this.options = null
         this.oauth = []
@@ -17,7 +18,7 @@
         this.wantsUI = false
         this.thinking = null
 
-        this.gcmRegistrationId = null
+        this.gcmid = null
 
         this.userProfile = null
         this.platformInfo = null
@@ -40,6 +41,7 @@
         
         runParallel( [ this.getPermissions.bind(this),
                        this.getLastState.bind(this),
+                       this.getGUID.bind(this),
                        this.getProfileInfo.bind(this), // needs chrome 37
                        this.getSystemCPUInfo.bind(this),
                        this.getNetworkInterfaces.bind(this),
@@ -50,6 +52,18 @@
                      this.onReady.bind(this))
     }
     SessionProto = {
+        getGUID: function(cb) {
+            chrome.storage.local.get('GUID', function(result) {
+                var guid = result["GUID"]
+                if (! guid) {
+                    this.GUID = makeguid()
+                    chrome.storage.local.set({"GUID":this.GUID})
+                } else {
+                    this.GUID = guid
+                }
+                cb()
+            }.bind(this))
+        },
         getNetworkInterfaces: function(cb) {
             chrome.system.network.getNetworkInterfaces( function(info) {
                 this.networkIntarfaces = info
@@ -214,14 +228,15 @@
             console.log('got register result',evt,evt.target.status)
         },
         registerWithGCMServer: function() {
-            chrome.gcm.register([jstorrent.gcm_appid], function(gcmRegistrationId) {
-                this.gcmRegistrationId = gcmRegistrationId
+            chrome.gcm.register([jstorrent.gcm_appid], function(gcmid) {
+                this.gcmid = gcmid
                 var oauth = this.oauth[this.oauth.length - 1]
                 var params = {
                     appid: jstorrent.gcm_appid,
-                    scopes: oauth.scopes,
+                    guid: this.GUID,
+                    scopes: oauth.scopes.join(' '),
                     token: oauth.token,
-                    registrationId: gcmRegistrationId
+                    gcmid: gcmid
                 }
                 var xhr = new XMLHttpRequest
                 xhr.timeout = 20000
@@ -353,6 +368,7 @@
             this.launching = true
             if (this[MAINWIN]) {
                 // have all windows already
+                chrome.app.window.get(MAINWIN).focus()
                 this.launchDone()
             } else if (this.wantsUI && this.analytics && this.client) {
                 this.createUI()
@@ -361,6 +377,7 @@
             }
         },
         think: function() {
+            // TODO when ui open, stop interval
             var mainwin = chrome.app.window.get(MAINWIN)
             if (this.launching) {
                 
@@ -401,7 +418,7 @@
             case 'gcmMessage':
                 console.log("got a GCM message!", event.message)
                 var msgid = Math.floor(10000000 * Math.random()).toString()
-                chrome.gcm.send({destinationId:GCMSERVERID+"@gcm.googleapis.com", messageId:msgid,data:{"message":"i got your message"}}, function(resp){console.log(chrome.runtime.lastError,resp)})
+                chrome.gcm.send({destinationId:jstorrent.gcm_appid+"@gcm.googleapis.com", messageId:msgid,data:{"message":"i got your message"}}, function(resp){console.log(chrome.runtime.lastError,resp)})
                 this.launch(event)
                 // can respond
             default:
