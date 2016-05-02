@@ -37,7 +37,7 @@ function bind_events() {
 
         chrome.fileSystem.chooseEntry(opts,
                                       function(entry){
-                                          options.on_choose_download_directory(entry)
+                                          app.client.set_default_download_location(entry)
                                           updateLocation()
                                           if (pulsateInterval) {
                                               clearInterval(pulsateInterval)

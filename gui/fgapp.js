@@ -538,7 +538,7 @@ AppForeground.prototype = {
                                  onClick: _.bind(function() {
                                      this.stopPulsateOptions()
                                      chrome.fileSystem.chooseEntry({type:'openDirectory'},
-                                                                   _.bind(this.set_default_download_location,this)
+                                                                   _.bind(this.client.set_default_download_location,this.client)
                                                                   )
                                      
                                  },this)})
@@ -1119,31 +1119,6 @@ AppForeground.prototype = {
     },
     help_window_closed: function() {
         this.help_window = null
-    },
-    set_default_download_location: function(entry) {
-        if (! entry) {
-            this.createNotification({details:"No download folder was selected."})
-            return
-        }
-
-        // clear the other notifications
-        var id = 'notifyneeddownload'
-        if (this.notifications.get(id)) {
-            chrome.notifications.clear(id,function(){})
-        }
-
-        //console.log("Set default download location to",entry)
-        var s = jstorrent.getLocaleString(jstorrent.strings.NOTIFY_SET_DOWNLOAD_DIR, entry.name)
-        this.createNotification({details:s, id:"notifyselected", priority:0})
-        setTimeout(_.bind(function(){
-            if (this.notifications.get("notifyselected")) {
-                chrome.notifications.clear("notifyselected",function(){})
-            }
-        },this),2000)
-        var disk = new jstorrent.Disk({entry:entry, parent: this.client.disks, brandnew: true})
-        this.client.disks.add(disk)
-        this.client.disks.setAttribute('default',disk.get_key())
-        this.client.disks.save()
     },
     warnGoogleDrive: function() {
         this.createNotification({message:"Google Drive Warning",details:"Saving to Google Drive will slow down your download speed significantly. If it gives an error, try restarting JSTorrent."})

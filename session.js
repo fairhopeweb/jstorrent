@@ -377,11 +377,13 @@
             if (! this.thinking) {
                 this.thinking = setInterval(this.think.bind(this), 10000)
             }
-            if (this.launching) { return }
+            if (this.launching) {
+                console.warn('call to launch with',data,'but already launching')
+                return
+            }
             this.launching = true
             if (this[MAINWIN]) {
                 // have all windows already
-                
                 if (data.type != 'gcmMessage') {// only for some types of events
                     chrome.app.window.get(MAINWIN).focus()
                 }
@@ -389,7 +391,7 @@
             } else if (this.wantsUI && this.analytics && this.client) {
                 this.createUI()
             } else {
-                this.createAnalytics()
+                this.createAnalytics() // made it a separate page because analytics bundle seems to prevent sleep.
             }
         },
         think: function() {
@@ -451,26 +453,19 @@
                 console.log('suspend canceled!')
                 break
             case 'gcmMessage':
-                console.log("got a GCM message!", event.message.data)
-                var reqid = event.message.data.reqid || ''
-                var data = event.message.data
-                if (data.command == 'getAddress') {
-                    this.wantsUI = false
-                    this.launch(event)
-                } else if (data.command == 'getTorrents') {
-                    this.wantsUI = false
-                    this.launch(event)
-                } else {
-                    this.sendGCM({'reqid':reqid,
-                                  'error':'unhandled request'})
-                }
-                //this.sendGCM({'foobar':'hello'})
-                //this.launch(event)
-                // can respond
-                break
+                this.handleGCM(event)
             default:
                 console.log('other/unrecognized runtime event',event)
             }
+        },
+        handleGCM: function(event) {
+            // gets handled in js/client.js
+            var data = event.message.data
+            var reqid = data.reqid
+            console.assert(reqid)
+            data.request = JSON.parse(data.request)
+            console.log("got a GCM message!", data)
+            this.launch(event)
         }
     }
     for (var m in SessionProto) Session.prototype[m] = SessionProto[m]

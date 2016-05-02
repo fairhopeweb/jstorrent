@@ -93,13 +93,14 @@ function Client(opts) {
             if (this.disks.items.length == 0) {
                 console.log('disks length == 0')
                 if (this.fgapp) {
-                    this.fgapp.notifyNeedDownloadDirectory()
+                    //this.fgapp.notifyNeedDownloadDirectory()
                 }
                 loadTorrents()
             }
             // XXX - install a timeout ??
         },this))
     } else {
+        debugger
         // probably need to guard behind document.addEventListener('deviceready', callback, false)
         // phonegap/cordova port, we use HTML5 filesystem since it is not sandboxed :-)
         var disk = new jstorrent.Disk({key:'HTML5:persistent', client:this})
@@ -141,8 +142,8 @@ Client.prototype = {
     serializeTorrentsMini: function(max_size) {
         // stripped down state for use with 4096 bytes
         if (max_size === undefined) {
-            //max_size = Math.floor(chrome.gcm.MAX_MESSAGE_SIZE * 0.8) // to be safe
-            max_size = 400
+            var overhead = 100 // n, i, msgid, etc
+            max_size = Math.floor(chrome.gcm.MAX_MESSAGE_SIZE - overhead ) // 
         }
         var tkeys = 'state downloaded size downspeed'.split(' ')
         var numinrow = tkeys.length + 2
@@ -154,7 +155,7 @@ Client.prototype = {
             var t = this.torrents.items[i]
             var name = t._attributes.name
             var tarr = [t.hashhexlower, name]
-            sz += 3 + numinrow + t.hashhexlower.length + (new TextEncoder('utf-8')).encode(name).length
+            sz += 3 + numinrow + t.hashhexlower.length + name.length // (new TextEncoder('utf-8')).encode(name).length // supposedly multibyte chars count as one byte
             for (var j=0; j<tkeys.length; j++) {
                 var attr = t._attributes[tkeys[j]]
                 if (attr === undefined || attr === null) {
@@ -481,43 +482,72 @@ Client.prototype = {
         } else if (launchData.type == 'debugger') {
         } else if (launchData.type == 'gcmMessage') {
             var data = launchData.message.data
-            var reqid = data.reqid
-            assert(reqid)
-            var command = data.command
-            switch(command) {
-            case 'getAddress':
-                // wait until upnp is ready?
-                if (this.upnp.searching) {
-                    setTimeout( onupnp.bind(this), 3000 ) // could take longer ?
-                } else {
-                    onupnp.call(this)
-                }
-                function onupnp() {
-                    this.session.sendGCM({reqid:reqid,
-                                          ip:this.externalIP()||'',
-                                          port:this.externalPort().toString()})
-                }
-                break
-            case 'getTorrents':
-                var chunks = this.serializeTorrentsMini()
-                var n = chunks.length
-                for (var i=0; i<n; i++) {
-                    var data = {reqid:reqid,
-                                i:i.toString(),
-                                n:n.toString(),
-                                torrents:JSON.stringify(chunks[i])
-                               }
-                    this.session.sendGCM(data)
-                }
-                break;
-            default:
-                this.session.sendGCM({reqid:reqid,
-                                      'error':'unhandled'
-                                     })
-            }
+            this.handleGCMRequest(data)
         } else {
+            console.log('unhandled launch data',launchData)
             //debugger
         }
+    },
+    handleGCMRequest: function(data) {
+        // old version, use handleRequest now
+        var reqid = data.reqid
+        var q = data.request.q
+        switch(q) {
+        case 'getAddress':
+            // wait until upnp is ready?
+            if (this.upnp.searching) {
+                setTimeout( onupnp.bind(this), 3000 ) // could take longer ?
+            } else {
+                onupnp.call(this)
+            }
+            function onupnp() {
+                this.session.sendGCM({reqid:reqid,
+                                      ip:this.externalIP()||'',
+                                      port:this.externalPort().toString()})
+            }
+            break
+        case 'getTorrents':
+            var chunks = this.serializeTorrentsMini()
+            var n = chunks.length
+            for (var i=0; i<n; i++) {
+                var data = {reqid:reqid,
+                            i:i.toString(),
+                            n:n.toString(),
+                            torrents:JSON.stringify(chunks[i])
+                           }
+                this.session.sendGCM(data)
+            }
+            break;
+        default:
+            this.session.sendGCM({reqid:reqid,
+                                  'error':'unhandled'
+                                 })
+        }
+    },
+    set_default_download_location: function(entry) {
+        if (! entry) {
+            this.fgapp.createNotification({details:"No download folder was selected."})
+            return
+        }
+
+        // clear the other notifications
+        var id = 'notifyneeddownload'
+        if (this.fgapp.notifications.get(id)) {
+            chrome.notifications.clear(id,function(){})
+        }
+
+        //console.log("Set default download location to",entry)
+        var s = jstorrent.getLocaleString(jstorrent.strings.NOTIFY_SET_DOWNLOAD_DIR, entry.name)
+        this.fgapp.createNotification({details:s, id:"notifyselected", priority:0})
+        setTimeout(_.bind(function(){
+            if (this.fgapp.notifications.get("notifyselected")) {
+                chrome.notifications.clear("notifyselected",function(){})
+            }
+        },this),2000)
+        var disk = new jstorrent.Disk({entry:entry, parent: this.disks, brandnew: true})
+        this.disks.add(disk)
+        this.disks.setAttribute('default',disk.get_key())
+        this.disks.save()
     },
     addTorrentFromEntry: function(entry, callback) {
         // XXX - this is not saving the torrent file to the downloads directory, so on next load, it cannot load the metadata

@@ -23,12 +23,18 @@ function onready() {
             fgapp.bind_misc_client_torrent()
             var ui = new UI({client:client})
             fgapp.UI = ui
-            if (client.ready) {
+
+            function clientready() {
                 ui.restoreState()
+                if (client.disks.items.length == 0) {
+                    fgapp.notifyNeedDownloadDirectory()
+                }
+            }
+            
+            if (client.ready) {
+                clientready()
             } else {
-                client.on('ready', function() {
-                    ui.restoreState()
-                })
+                client.on('ready', clientready())
             }
             onappready()
             bgwin.session.onUIPageInit(window)
