@@ -1,4 +1,4 @@
-JSTorrent
+JSTorrent - The Torrent client for Google Chrome and ChromeOS
 =========
 
 https://chrome.google.com/webstore/detail/jstorrent/anhdpjpojoipgpmfanmedjghaligalgb (JSTorrent Available for install Chrome Web Store)
@@ -9,19 +9,23 @@ https://chrome.google.com/webstore/detail/bnceafpojmnimbnhamaeedgomdcgnbjk (Help
 
 JSTorrent is the original Chrome Packaged/Platform App for downloading
 torrents. It stands for "JavaScript Torrent." It is perfect for cheap
-ARM chromebooks when you need to torrent some stuff, but also very
-convenient for high end Chromebooks as well.
+ARM Chromebooks when you need to torrent some stuff, but also perfect
+for your $1200 high end Pixel. :-) While it is specifically designed
+to integrate well with ChromeOS, it will also run on Windows / Mac /
+Linux, or anywhere else you are able to install Google Chrome.
+
+JSTorrent is the world's most secure Torrent client. It runs in the
+Chrome sandbox, so it does not have access to any files on your system
+(except the Download folder you choose). With JSTorrent, you are in
+control.
 
 I don't frequently keep this readme very up to date. You can find the
-actual changelogs in the [https://chrome.google.com/webstore/detail/jstorrent/anhdpjpojoipgpmfanmedjghaligalgb](chrome web store).
+actual changelogs in the [https://chrome.google.com/webstore/detail/jstorrent/anhdpjpojoipgpmfanmedjghaligalgb](chrome web store), or sometimes in the [https://github.com/kzahel/jstorrent/blob/fresh/CHANGES.txt](CHANGES) file
 
 One of my main goals with this project is to get it nearly as fast as
-the other clients. Some bottlenecks at this point include SHA1 hashing
-as well as suboptimal peer selection. And I can move sha1 hashing to
-pNaCl or look into finding a speedier emscripten'ified SHA1. There's a
-tradeoff there since using NaCL means copying buffers into another
-process, where keeping it in javascript we can use transferable
-objects to web workers.
+the other clients. Disk I/O is pretty slow with the chrome APIs, which I am working on optimizing for.
+Some other bottlenecks at this point include SHA1 hashing (done in a worker)
+as well as suboptimal peer selection and queueing.
 
 I am frequently adding features and improvements to this project, and
 welcome user feedback, as it directs the future growth of the program.
@@ -30,7 +34,17 @@ This software was totally rewritten from scratch (Dec 2013). This is
 about the third time I've written a torrent client, so it should be
 the least buggy of them all :-)
 
-I'm currently charging $2 for the install on the chrome web store. But you can also run it from source here. I want to do some kind of donate/freemium model, once I can figure out this: http://stackoverflow.com/questions/21147236/get-user-openid-url-without-user-interaction (I want to be able to detect users who already paid $2)
+I'm currently charging $3 for the install on the chrome web store. But
+you can also run it from source here. I want to do some kind of
+donate/freemium model, once I can figure out this:
+http://stackoverflow.com/questions/21147236/get-user-openid-url-without-user-interaction
+(I want to be able to detect users who already paid $3)
+
+The source code is available here for auditing and education
+purposes. I believe open software is great, and I would not ask any
+user to install something that they can't reasonably verify is not
+doing anything malicious. However, the license does permit
+redistribution of the source code in your own projects.
 
 Installation:
 ====
@@ -42,12 +56,12 @@ source too.
 * Click "load unpacked extension"
 * Browse to the unzipped file then press "Open"
 * You're done! (Note that you will not get updates this way, you will need to manually update)
-* NOTE***: This project now uses a submodule "web-server-chrome" (https://github.com/kzahel/web-server-chrome) so you probably have to download that project separately and put it in the "js" folder.
+* NOTE***: This project now uses a submodule "web-server-chrome" (https://github.com/kzahel/web-server-chrome) so you probably have to download that project separately and put it in the "js" folder. (you may need to rename folder from "web-server-chrome-master" to "web-server-chrome")
 
 Websites:
 ----
 
-http://jstorrent.com (hosted by github pages - https://github.com/JSTorrent/jstorrent.github.io)
+https://www.jstorrent.com
 
 https://google.com/+jstorrent (Official Google+ Community Page)
 
@@ -66,34 +80,29 @@ Special New Features
 Private tracker support notes for site admins
 =======
 
-Typically trackers will employ a "whitelist" and only allow certain
-BitTorrent clients. Since this software is relatively new, many
-trackers have not yet whitelisted JSTorrent. You will need to contact
-the administrators of your private tracker and give them the following
-information:
+Private tracker support is very lacking. I don't know of any sites
+that have whitelisted/allowed JSTorrent. I am working on addressing
+this, and improving the situation
 
-- JSTorrent reports itself to the tracker a "User-Agent" string the same as the underlying browser (e.g. something like "Mozilla/5.0 (X11; CrOS x86_64 4731.101.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.67 Safari/537.36"). (current limitations disallow changing this - see https://code.google.com/p/chromium/issues/detail?id=335934)
-- It adds an "X-User-Agent" string of the form: (JSTorrent/{version}) (current x-user-agent string version: "JSTorrent/2120")
-- Its peer id begins with "-JS{version}-", currently peer id begins with "-JS2120-"
+- The "User-Agent" header looks like: (JSTorrent/{version}) (current x-user-agent string version: "JSTorrent/2480") for version 2.4.8
+- The peer id begins with "-JS{version}-", currently peer id begins with "-JS2480-"
 
-Otherwise, you may try enabling "spoofing" in the options. Use at your own risk.
+I have disabled the spoofing feature.
 
 Todo
 =======
+- see [https://github.com/kzahel/jstorrent/blob/fresh/TODO.txt](TODO file)
 - too many things
-- figure out chrome.fileSystem getting in broken state bugs
-- implement cache for FileEntry and metadata to reduce chrome.fileSystem calls
+- figure out chrome.fileSystem getting in broken state bugs (persistently problematic)
 - smarter disk cache
 - better seeding disk access / read entire piece at a time
 - implement i8n
-- pNaCL sha1 hashing benchmark vs native JS
-- use chrome.identity and GCM for remote control (pushMessaging)
+- pNaCL sha1 hashing benchmark vs native JS vs window.crypto
+- use chrome.identity and GCM for remote control (pushMessaging) (in progress)
 - DHT
-- uPNP+bind/listen TCP - blocked on issue https://code.google.com/p/chromium/issues/detail?id=233052
+- uPNP+bind/listen TCP - (in progress)
 - SOCKS5 proxy support
-- headless operation
-
-[Donate to this project using bitcoin](https://coinbase.com/checkouts/0d6e86a8aebda055fb5697a5b397ba7d)
+- headless operation (in progress)
 
 Credits
 =======
