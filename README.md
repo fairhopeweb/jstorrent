@@ -4,9 +4,9 @@ JSTorrent
 <a target="_blank" href="https://chrome.google.com/webstore/detail/jstorrent/anhdpjpojoipgpmfanmedjghaligalgb">![Try it now in CWS](https://raw.github.com/GoogleChrome/chrome-app-samples/master/tryitnowbutton.png "Install JSTorrent")</a>
 
 
-https://chrome.google.com/webstore/detail/jstorrent/anhdpjpojoipgpmfanmedjghaligalgb (JSTorrent Available for install Chrome Web Store)
+[JSTorrent Available for install Chrome Web Store](https://chrome.google.com/webstore/detail/jstorrent/anhdpjpojoipgpmfanmedjghaligalgb)
 
-https://chrome.google.com/webstore/detail/bnceafpojmnimbnhamaeedgomdcgnbjk (Helper extension, adds right click "Add to JSTorrent" menu)
+Get the [JSTorrent Helper Extension](https://chrome.google.com/webstore/detail/jstorrent-helper-extensio/bnceafpojmnimbnhamaeedgomdcgnbjk), which adds a right click "Add to JSTorrent" menu for magnet links and .torrent files
 
 ---
 
@@ -23,7 +23,9 @@ Chrome sandbox, so it does not have access to any files on your system
 control.
 
 I don't frequently keep this readme very up to date. You can find the
-actual changelogs in the [https://chrome.google.com/webstore/detail/jstorrent/anhdpjpojoipgpmfanmedjghaligalgb](chrome web store), or sometimes in the [https://github.com/kzahel/jstorrent/blob/fresh/CHANGES.txt](CHANGES) file
+actual changelogs in the (Chrome Web Store listing)[https://chrome.google.com/webstore/detail/jstorrent/anhdpjpojoipgpmfanmedjghaligalgb], or sometimes in the [CHANGES.txt](https://github.com/kzahel/jstorrent/blob/fresh/CHANGES.txt)
+
+https://github.com/kzahel/jstorrent/blob/fresh/CHANGES.txt
 
 One of my main goals with this project is to get it nearly as fast as
 the other clients. Disk I/O is pretty slow with the chrome APIs, which I am working on optimizing for.
@@ -51,7 +53,7 @@ redistribution of the source code in your own projects.
 
 Installation:
 ====
-Most people would usually install by the Chrome Web Store ([https://chrome.google.com/webstore/detail/jstorrent/anhdpjpojoipgpmfanmedjghaligalgb](link)) but you can install from 
+Most people would usually install by the Chrome Web Store ([link](https://chrome.google.com/webstore/detail/jstorrent/anhdpjpojoipgpmfanmedjghaligalgb)) but you can install from 
 source too.
 * Click the "Download ZIP" button near the top of the page.***
 * Unzip it.
@@ -96,7 +98,7 @@ I have disabled the spoofing feature.
 
 Todo
 =======
-- see [https://github.com/kzahel/jstorrent/blob/fresh/TODO.txt](TODO file)
+- see [TODO.txt](https://github.com/kzahel/jstorrent/blob/fresh/TODO.txt)
 - too many things
 - figure out chrome.fileSystem getting in broken state bugs (persistently problematic)
 - smarter disk cache
