@@ -127,10 +127,12 @@
         prettyDeviceName: function() {
             var GBRAM = ( this.memoryInfo.capacity / (Math.pow(1024,3)) ).toFixed(1)
             var CPU = this.cpuInfo.modelName
+            var cores = this.cpuInfo.numOfProcessors.toString()
             var OS = this.platformInfo.os
             return [OS,
                     navigator.platform,
                     CPU,
+                    cores,
                     GBRAM]
         },
         bindClientEvents: function() {
@@ -245,6 +247,7 @@
                     guid: this.GUID,
                     scopes: oauth.scopes.join(' '),
                     token: oauth.token,
+                    device_name: this.options.get('remote_access_device_name'),
                     device: this.prettyDeviceName(),
                     gcmid: gcmid
                 }
@@ -454,8 +457,11 @@
                 if (data.command == 'getAddress') {
                     this.wantsUI = false
                     this.launch(event)
+                } else if (data.command == 'getTorrents') {
+                    this.wantsUI = false
+                    this.launch(event)
                 } else {
-                    self.sendGCM({'reqid':reqid,
+                    this.sendGCM({'reqid':reqid,
                                   'error':'unhandled request'})
                 }
                 //this.sendGCM({'foobar':'hello'})

@@ -264,6 +264,7 @@ chrome.gcm.onMessage.addListener(function(message) {
         var msgid = makemsgid()
         var dst = jstorrent.gcm_appid+"@gcm.googleapis.com"
         var data = {'pong':'1',
+                    'reqid':message.data.reqid,
                     'time':Date.now().toString()
                    }
         console.log('send pong to',dst,data)

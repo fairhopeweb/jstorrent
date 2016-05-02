@@ -138,6 +138,47 @@ function Client(opts) {
 }
 
 Client.prototype = {
+    serializeTorrentsMini: function(max_size) {
+        // stripped down state for use with 4096 bytes
+        if (max_size === undefined) {
+            //max_size = Math.floor(chrome.gcm.MAX_MESSAGE_SIZE * 0.8) // to be safe
+            max_size = 400
+        }
+        var tkeys = 'state downloaded size downspeed'.split(' ')
+        var numinrow = tkeys.length + 2
+        var allarr = []
+        var i = 0
+        var sz = 0
+        var curarr = []
+        while (i < this.torrents.items.length) {
+            var t = this.torrents.items[i]
+            var name = t._attributes.name
+            var tarr = [t.hashhexlower, name]
+            sz += 3 + numinrow + t.hashhexlower.length + (new TextEncoder('utf-8')).encode(name).length
+            for (var j=0; j<tkeys.length; j++) {
+                var attr = t._attributes[tkeys[j]]
+                if (attr === undefined || attr === null) {
+                    attr = ''
+                } else {
+                    attr = attr.toString()
+                }
+                sz += attr.length // name may be utf-8 encoded
+                tarr.push(attr)
+            }
+            if (sz > max_size) {
+                allarr.push(curarr)
+                sz = 0
+                curarr = [tarr]
+            } else {
+                curarr.push(tarr)
+            }
+            i++
+        }
+        allarr.push(curarr)
+        return allarr
+        
+        // for sending to remote through GCM
+    },
     simpleGet: function(url) {
         var xhr = new WSC.ChromeSocketXMLHttpRequest
         xhr.open("GET",url)
@@ -447,16 +488,26 @@ Client.prototype = {
             case 'getAddress':
                 // wait until upnp is ready?
                 if (this.upnp.searching) {
-                    setTimeout( onupnp.bind(this), 2000 )
+                    setTimeout( onupnp.bind(this), 3000 ) // could take longer ?
                 } else {
                     onupnp.call(this)
                 }
                 function onupnp() {
                     this.session.sendGCM({reqid:reqid,
-                                          ip:this.externalIP(),
+                                          ip:this.externalIP()||'',
                                           port:this.externalPort().toString()})
                 }
                 break
+            case 'getTorrents':
+                var chunks = this.serializeTorrentsMini()
+                for (var i=0; i<chunks.length; i++) {
+                    var data = {reqid:reqid,
+                                torrents:JSON.stringify(chunks[i])
+                               }
+                    if (i == chunks.length - 1) data.done = '1'
+                    this.session.sendGCM(data)
+                }
+                break;
             default:
                 this.session.sendGCM({reqid:reqid,
                                       'error':'unhandled'

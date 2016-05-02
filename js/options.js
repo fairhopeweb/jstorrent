@@ -42,6 +42,16 @@
                 default:false,
                 type:'bool'
             },
+            remote_access: {
+                visible:true,
+                default:true,
+                type:'bool'
+            },
+            remote_access_device_name: {
+                visible:true,
+                default:navigator.platform,
+                type:'string'
+            },
             download_rate_limit: {
                 'name': 'Max Download (kB/s) 0:unlimited',
                 'help': 'Set a limit to maximum download speed per torrent. The value of 0 means no limit.',

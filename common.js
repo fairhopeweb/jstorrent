@@ -113,7 +113,7 @@ function setup_debug_timeouts() {
         orig_clearInterval(id)
     }
 }
-if (DEVMODE) setup_debug_timeouts()
+if (false && DEVMODE) setup_debug_timeouts()
 function assert(bool) {
     if (! bool && DEVMODE) debugger // normally assert would throw exception
 }

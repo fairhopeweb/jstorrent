@@ -85,6 +85,9 @@ OptionDisplay.prototype = {
         } else if (this.opts.meta.type == 'int') {
             var tooltip = this.opts.meta.help ? ('<span data-toggle="tooltip" title="'+this.opts.meta.help+'"> '):' '
             s = '<div class="input"><label><input id="'+this.opts.key+'" size="3" type="number" min="'+this.opts.meta.minval+'" max="'+this.opts.meta.maxval+'" value="'+this.opts.val+'"></input>'+tooltip + this.getName() + '</span></label></div>'
+        } else if (this.opts.meta.type == 'string') {
+            var tooltip = this.opts.meta.help ? ('<span data-toggle="tooltip" title="'+this.opts.meta.help+'"> '):' '
+            s = '<div class="input"><label><input id="'+this.opts.key+'" type="text" value="'+this.opts.val+'"></input>'+tooltip + this.getName() + '</span></label></div>'
         } else {
             debugger
         }
@@ -142,6 +145,10 @@ OptionDisplay.prototype = {
                 evt.target.value = this.opts.meta['default']
                 this.opts.options.set(this.opts.key, this.opts.meta['default'])
             }
+        } else if (this.opts.meta.type == 'string') {
+            var val = evt.target.value
+            this.opts.options.set(this.opts.key, val)
+            console.log('set',this.opts.key,val)
         } else {
             console.log('unsupported set option', evt.target.value)
         }
@@ -193,6 +200,8 @@ function OptionsView(opts) {
             //$('input', el).change( _.bind(this.inputChanged, this) )
             if (cur.opts.meta.type == 'int') {
                 document.getElementById(cur.opts.key).addEventListener('input', cur.onInput.bind(cur) )
+            } else if (cur.opts.meta.type == 'string') {
+                document.getElementById(cur.opts.key).addEventListener('input', cur.inputChanged.bind(cur) )
             } else {
                 $('input[type=checkbox]', $el).change( cur.inputChanged.bind(cur) )
             }
