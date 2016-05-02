@@ -243,8 +243,8 @@
 
             if (meta && meta.force_disable) {
                 return false
-            if (val === undefined && meta && meta['default']) {
-                return this.app_options[k]['default']
+            } else if (val === undefined && meta && meta['default']) {
+                return meta['default']
             } else {
                 return val
             }
