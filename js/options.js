@@ -138,6 +138,7 @@
             },
             'report_to_trackers_override': {
                 'default': false,
+                force_disable:true,
                 visible:false,
                 'name': 'Spoofing - report to private trackers as uTorrent',
                 'type': 'bool'
@@ -238,7 +239,11 @@
         get: function(k) {
             // gets from cached copy, so synchronous
             var val = this.data[k]
-            if (val === undefined && this.app_options[k] && this.app_options[k]['default']) {
+            var meta = this.app_options[k]
+
+            if (meta && meta.force_disable) {
+                return false
+            if (val === undefined && meta && meta['default']) {
                 return this.app_options[k]['default']
             } else {
                 return val
