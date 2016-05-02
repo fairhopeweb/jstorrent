@@ -500,11 +500,13 @@ Client.prototype = {
                 break
             case 'getTorrents':
                 var chunks = this.serializeTorrentsMini()
-                for (var i=0; i<chunks.length; i++) {
+                var n = chunks.length
+                for (var i=0; i<n; i++) {
                     var data = {reqid:reqid,
+                                i:i.toString(),
+                                n:n.toString(),
                                 torrents:JSON.stringify(chunks[i])
                                }
-                    if (i == chunks.length - 1) data.done = '1'
                     this.session.sendGCM(data)
                 }
                 break;
