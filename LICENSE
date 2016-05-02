@@ -1,12 +1,13 @@
-TODO -- add real license
-
-Copyright 2013 Kyle Graehl
+Copyright 2013-2016 Kyle Graehl
 
 I provide no warranty for this software, it is provided AS IS.
 
 JSTorrent source codes are made available to you for research and
-educational purposes. And because honestly you can't hide JavaScript
-source code very well anyway. But this is proprietary software, and
-the author maintains the copyright over it.
+educational purposes, as well as to provide you with the ability to
+audit the code for security reasons. And because honestly you can't
+hide JavaScript source code very well anyway. But this is proprietary
+software, and the author maintains the copyright over it. You are not
+permitted to redistribute the software or source code.
 
-If you want to redistribute this software, please contact Kyle Graehl.
+If you want to redistribute this software or require another license,
+please contact Kyle Graehl.
