@@ -45,7 +45,7 @@ http://stackoverflow.com/questions/21147236/get-user-openid-url-without-user-int
 The source code is available here for auditing and education
 purposes. I believe open software is great, and I would not ask any
 user to install something that they can't reasonably verify is not
-doing anything malicious. However, the license does permit
+doing anything malicious. However, the license does not permit
 redistribution of the source code in your own projects.
 
 ## Installation:
