@@ -1,5 +1,8 @@
-JSTorrent - The Torrent client for Google Chrome and ChromeOS
+JSTorrent
 =========
+
+<a target="_blank" href="https://chrome.google.com/webstore/detail/jstorrent/anhdpjpojoipgpmfanmedjghaligalgb">![Try it now in CWS](https://raw.github.com/GoogleChrome/chrome-app-samples/master/tryitnowbutton.png "Install JSTorrent")</a>
+
 
 https://chrome.google.com/webstore/detail/jstorrent/anhdpjpojoipgpmfanmedjghaligalgb (JSTorrent Available for install Chrome Web Store)
 
@@ -9,8 +12,8 @@ https://chrome.google.com/webstore/detail/bnceafpojmnimbnhamaeedgomdcgnbjk (Help
 
 JSTorrent is the original Chrome Packaged/Platform App for downloading
 torrents. It stands for "JavaScript Torrent." It is perfect for cheap
-ARM Chromebooks when you need to torrent some stuff, but also perfect
-for your $1200 high end Pixel. :-) While it is specifically designed
+ARM Chromebooks when you need to torrent something, but also perfect
+for your high end Chromebook Pixel. :-) While it is specifically designed
 to integrate well with ChromeOS, it will also run on Windows / Mac /
 Linux, or anywhere else you are able to install Google Chrome.
 
@@ -50,10 +53,11 @@ Installation:
 ====
 Most people would usually install by the Chrome Web Store ([https://chrome.google.com/webstore/detail/jstorrent/anhdpjpojoipgpmfanmedjghaligalgb](link)) but you can install from 
 source too.
-* Click the "Download ZIP" button on the sidebar.***
+* Click the "Download ZIP" button near the top of the page.***
 * Unzip it.
 * Visit "chrome://extensions"
-* Click "load unpacked extension"
+* Click the checkbox "Developer Mode" on the top
+* Click "Load unpacked extension"
 * Browse to the unzipped file then press "Open"
 * You're done! (Note that you will not get updates this way, you will need to manually update)
 * NOTE***: This project now uses a submodule "web-server-chrome" (https://github.com/kzahel/web-server-chrome) so you probably have to download that project separately and put it in the "js" folder. (you may need to rename folder from "web-server-chrome-master" to "web-server-chrome")
@@ -75,6 +79,7 @@ Special New Features
   - download to external media (usb drives)
   - Per-torrent download directories
   - multiple download directories
+  - skip downloading files
 - Unlimited size downloads (multi gigabyte torrents)
 
 Private tracker support notes for site admins
@@ -96,7 +101,7 @@ Todo
 - figure out chrome.fileSystem getting in broken state bugs (persistently problematic)
 - smarter disk cache
 - better seeding disk access / read entire piece at a time
-- implement i8n
+- implement i18n
 - pNaCL sha1 hashing benchmark vs native JS vs window.crypto
 - use chrome.identity and GCM for remote control (pushMessaging) (in progress)
 - DHT
