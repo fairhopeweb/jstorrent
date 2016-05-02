@@ -237,7 +237,7 @@
     var FavIconHandlerprototype = {
         get: function() {
             this.disk.diskio.getWholeContents({
-                path:['favicon.ico']
+                path:['images','favicon.ico']
             }, this.onResult.bind(this))
         },
         onResult: function(evt) {

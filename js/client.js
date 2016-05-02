@@ -51,6 +51,7 @@ function Client(opts) {
                                                    client:this,
                                                   })
             this.packageDisk.key = 'package'
+            this.packageDisk.trigger('ready')
         }.bind(this) )
     }
 
