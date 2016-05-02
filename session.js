@@ -66,7 +66,7 @@
         },
         getNetworkInterfaces: function(cb) {
             chrome.system.network.getNetworkInterfaces( function(info) {
-                this.networkIntarfaces = info
+                this.networkInterfaces = info
                 cb()
             }.bind(this))
         },
@@ -390,7 +390,7 @@
             }
         },
         think: function() {
-            if (this.options.get('dont_shutdown')) { return }
+            if (DEVMODE && this.options.get('dont_shutdown')) { return }
             
             // TODO when ui open, stop interval
             var mainwin = chrome.app.window.get(MAINWIN)

@@ -3,8 +3,15 @@ var client = null
 
 function onready() {
     chrome.runtime.getBackgroundPage( function(bg) {
-        client = new jstorrent.Client({app:bg.session, id:'client01'})
-        window.app = bg.session
-        bg.session.onClientPageInit(window)
+        function ready() {
+            client = new jstorrent.Client({app:bg.session, id:'client01'})
+            window.app = bg.session
+            bg.session.onClientPageInit(window)
+        }
+        if (DEVMODE && bg.session.options.get('wait_devtools')) {
+            setTimeout( ready, 2000 )
+        } else {
+            ready()
+        }
     })
 }

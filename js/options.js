@@ -31,8 +31,15 @@
                 type:'bool'
             },
             dont_shutdown: {
-                visible:true,
-                default:true,
+                help:'(debuggirg) dont suspend event page aggressively',
+                visible:DEVMODE,
+                default:DEVMODE,
+                type:'bool'
+            },
+            wait_devtools: {
+                help: '(debugging) delay window starting to allow devtools to attach (debugging)',
+                visible:DEVMODE,
+                default:false,
                 type:'bool'
             },
             download_rate_limit: {

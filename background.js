@@ -263,11 +263,14 @@ chrome.gcm.onMessage.addListener(function(message) {
         // should also have reqid maybe.
         var msgid = makemsgid()
         var dst = jstorrent.gcm_appid+"@gcm.googleapis.com"
-        console.log('send pong to',dst)
+        var data = {'pong':'1',
+                    'time':Date.now().toString()
+                   }
+        console.log('send pong to',dst,data)
         chrome.gcm.send( {destinationId:dst,
                           messageId:msgid,
                           timeToLive: 20,
-                          data:{'pong':'1'}
+                          data:data
                          }, function(resp){
                              console.log(chrome.runtime.lastError,resp)
                          })

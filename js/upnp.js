@@ -1,5 +1,11 @@
 // multiple devices are using the same extenal port. need to retry for other ports, or randomize chosen port based on GUID would be easiest.
 
+// if switching from wlan to eth, it will fail to map the port because we mapped on the other interface.
+
+// check current mappings and don't attempt to map to an externally bound port
+
+// could choose port by hashing GUID + interface name
+
 // inspiration from https://github.com/indutny/node-nat-upnp
 (function() {
     function flatParseNode(node) {
@@ -171,7 +177,7 @@
             var returned = 0
 
             function oneResult(info, evt) {
-                var doc = evt.target.responseXML
+                var doc = evt.target.responseXML // doc undefined sometimes
                 var ipelt = doc.documentElement.querySelector('NewExternalIPAddress')
                 var ip = ipelt ? ipelt.innerHTML : null
 
@@ -238,11 +244,6 @@
             xhr.setRequestHeader('connection','close')
             xhr.responseType = 'xml'
             xhr.send(payload)
-            function onload(evt) {
-                if (evt.target.code == 200) {
-                }
-                callback()
-            }
             xhr.onload = xhr.onerror = xhr.ontimeout = callback
         },
         getDescription: function(callback) {
