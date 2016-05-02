@@ -11,10 +11,11 @@ zip "package-$VER.zip" manifest.json \
     *.js \
     README.md \
     LICENSE \
+    CHANGES.txt \
     TODO.txt \
-    js-*.png \
-    cws_32.png \
-    js-mini-logo-2x.png \
+    images/js-*.png \
+    images/cws_32.png \
+    images/js-mini-logo-2x.png \
     js/*.js \
     js/deps/*.js \
     js/deps/SlickGrid/*.js \
