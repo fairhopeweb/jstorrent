@@ -82,7 +82,9 @@ Disk.prototype = {
                 var parts = this._opts.id.split(':')
                 parts.shift()
                 var folderName = parts.join(':')
-                this.app.notifyMissingDisk(this.key, folderName)
+                if (this.client.fgapp) {
+                    this.client.fgapp.notifyMissingDisk(this.key, folderName)
+                }
                 var collection = this.getCollection()
                 //collection.opts.client.trigger('error','Unable to load Download Directory: '+ folderName) // double error notification, how annoying.
                 // now loop over torrents using this download directory and set their error state

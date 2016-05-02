@@ -1,3 +1,4 @@
+console.log("ui.js")
 document.addEventListener('DOMContentLoaded',onready)
 var session = null
 var fgapp = null
@@ -34,7 +35,7 @@ function onready() {
             if (client.ready) {
                 clientready()
             } else {
-                client.on('ready', clientready())
+                client.on('ready', clientready)
             }
             onappready()
             bgwin.session.onUIPageInit(window)

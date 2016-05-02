@@ -89,13 +89,13 @@
       ]
     },
     "icons": { 
-        "16": "js-16.png",
-        "19": "js-19.png",
-        "32": "js-32.png",
-        "48": "js-48.png",
-        "96": "js-96.png",
-        "128": "js-128.png",
-        "256": "js-256.png",
-        "512": "js-512.png"
+        "16": "images/js-16.png",
+        "19": "images/js-19.png",
+        "32": "images/js-32.png",
+        "48": "images/js-48.png",
+        "96": "images/js-96.png",
+        "128": "images/js-128.png",
+        "256": "images/js-256.png",
+        "512": "images/js-512.png"
     }
 }

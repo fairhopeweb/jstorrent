@@ -19,6 +19,7 @@
         this.thinking = null
 
         this.gcmid = null
+        this.gcm_retries = 0
 
         this.userProfile = null
         this.platformInfo = null
@@ -26,12 +27,12 @@
         this.storageInfo = null
         this.memoryInfo = null
         this.networkInterfaces = null
+        this.manifest = null
 
         this.analytics = false
         this.client = false
         this[MAINWIN] = false
         this.registerEvent(event)
-
         this.onClientError_ = this.onClientError.bind(this)
         this.onTorrentComplete_ = this.onTorrentComplete.bind(this)
         this.onTorrentProgress_ = this.onTorrentProgress.bind(this)
@@ -222,6 +223,8 @@
         },
         tryGetOpenID: function() {
             var scopes = ["openid"]
+            // would be nice maybe to allow using an account different from the chrome account.
+            // (launch web auth flow ...)
             chrome.identity.getAuthToken({scopes:scopes,
                                           interactive:false
                                          },
@@ -230,7 +233,6 @@
                                              if (lasterr) {
                                                  console.log('could not get token',lasterr)
                                              } else if (result) {
-                                                 console.log('openid/auth result',scopes,result)
                                                  this.registerOAuthGrant(scopes, result)
                                              }
                                          }.bind(this))
@@ -240,6 +242,19 @@
         },
         registerWithGCMServer: function() {
             chrome.gcm.register([jstorrent.gcm_appid], function(gcmid) {
+                var lasterr = chrome.runtime.lastError
+                if (lasterr) {
+                    // try again ?
+                    console.log('error registering with gcm',lasterr)
+                    this.gcm_retries++
+                    if (this.gcm_retries > 3) {
+                        console.log('giving up registering with gcm')
+                    } else {
+                        setTimeout( this.registerWithGCMServer.bind(this), 1000 * Math.pow(this.gcm_retries, 2) )
+                    }
+                    return
+                }
+                console.log('registered with gcm',gcmid)
                 this.gcmid = gcmid
                 var oauth = this.oauth[this.oauth.length - 1]
                 var params = {
@@ -247,6 +262,9 @@
                     guid: this.GUID,
                     scopes: oauth.scopes.join(' '),
                     token: oauth.token,
+                    version: this.manifest.version,
+                    locale: chrome.i18n.getUILanguage(),
+                    dev: DEVMODE,
                     device_name: this.options.get('remote_access_device_name'),
                     device: this.prettyDeviceName(),
                     gcmid: gcmid
@@ -280,6 +298,7 @@
             }
         },
         onReady: function() {
+            this.manifest = chrome.runtime.getManifest()
             console.clog(L.SESSION,'ready')
             this.ready = true
             this.tryGetOpenID()
@@ -441,7 +460,14 @@
                 console.log('wants UI')
                 this.launch(event)
                 break
+            case 'onStartup':
+                // called when chrome browser is opened fresh
+                if (this.options.get('start_in_background')) {
+                    this.launch(event)
+                }
+                break
             case 'onInstalled':
+                // called if chrome.runtime.reload from background page
                 if (this.options.get('start_in_background')) {
                     this.launch(event)
                 }

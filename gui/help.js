@@ -42,6 +42,14 @@ $(document).ready( function() {
                                          })
         })
 
+
+        var elt = document.getElementById('bgpermission')
+        elt.addEventListener('click',function() {
+            chrome.permissions.request({permissions:['background']}, function(result) {
+                console.log('bg permission result',result)
+            })
+        })
+
         
         if (! bg.session.userProfile.email) {
             var signup = document.getElementById('signup')

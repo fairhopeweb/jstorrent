@@ -163,6 +163,7 @@ Item.prototype = {
         },this))
     },
     on: function(event_name, callback) {
+        assert(callback)
         if (! this._event_listeners[event_name]) {
             this._event_listeners[event_name] = []
         }

@@ -1,5 +1,4 @@
-JSTorrent
-=========
+## JSTorrent
 
 <a target="_blank" href="https://chrome.google.com/webstore/detail/jstorrent/anhdpjpojoipgpmfanmedjghaligalgb">![Try it now in CWS](https://raw.github.com/GoogleChrome/chrome-app-samples/master/tryitnowbutton.png "Install JSTorrent")</a>
 
@@ -25,8 +24,6 @@ control.
 I don't frequently keep this readme very up to date. You can find the
 actual changelogs in the (Chrome Web Store listing)[https://chrome.google.com/webstore/detail/jstorrent/anhdpjpojoipgpmfanmedjghaligalgb], or sometimes in the [CHANGES.txt](https://github.com/kzahel/jstorrent/blob/fresh/CHANGES.txt)
 
-https://github.com/kzahel/jstorrent/blob/fresh/CHANGES.txt
-
 One of my main goals with this project is to get it nearly as fast as
 the other clients. Disk I/O is pretty slow with the chrome APIs, which I am working on optimizing for.
 Some other bottlenecks at this point include SHA1 hashing (done in a worker)
@@ -51,8 +48,8 @@ user to install something that they can't reasonably verify is not
 doing anything malicious. However, the license does permit
 redistribution of the source code in your own projects.
 
-Installation:
-====
+## Installation:
+
 Most people would usually install by the Chrome Web Store ([link](https://chrome.google.com/webstore/detail/jstorrent/anhdpjpojoipgpmfanmedjghaligalgb)) but you can install from 
 source too.
 * Click the "Download ZIP" button near the top of the page.***
@@ -64,17 +61,17 @@ source too.
 * You're done! (Note that you will not get updates this way, you will need to manually update)
 * NOTE***: This project now uses a submodule "web-server-chrome" (https://github.com/kzahel/web-server-chrome) so you probably have to download that project separately and put it in the "js" folder. (you may need to rename folder from "web-server-chrome-master" to "web-server-chrome")
 
-Websites:
-----
+## Websites:
 
-https://www.jstorrent.com
+- https://www.jstorrent.com
 
-https://google.com/+jstorrent (Official Google+ Community Page)
+- https://www.reddit.com/r/jstorrent (on Reddit)
 
-https://twitter.com/jstorrent (Twitter Page)
+- https://plus.google.com/+Jstorrent (Google+ Community Page)
 
+- https://twitter.com/jstorrent (Twitter Page)
 
-Special New Features
+## Special New Features
 =======
 
 - Support downloading directly to directory of choice
@@ -84,8 +81,7 @@ Special New Features
   - skip downloading files
 - Unlimited size downloads (multi gigabyte torrents)
 
-Private tracker support notes for site admins
-=======
+### Private tracker support notes for site admins
 
 Private tracker support is very lacking. I don't know of any sites
 that have whitelisted/allowed JSTorrent. I am working on addressing
@@ -96,8 +92,7 @@ this, and improving the situation
 
 I have disabled the spoofing feature.
 
-Todo
-=======
+### Todo
 - see [TODO.txt](https://github.com/kzahel/jstorrent/blob/fresh/TODO.txt)
 - too many things
 - figure out chrome.fileSystem getting in broken state bugs (persistently problematic)
@@ -111,7 +106,7 @@ Todo
 - SOCKS5 proxy support
 - headless operation (in progress)
 
-Credits
-=======
+### Credits
+
 - JSTorrent Logo - Michael Cook (https://plus.google.com/+michaelcook)
 - Users and supporters that produce good bug reports :-)

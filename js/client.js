@@ -124,6 +124,7 @@ function Client(opts) {
     this.on('ready', _.bind(this.onReady, this))
 
     this.listenSock = null
+    this.listenHost = this.app.options.get('incoming_ipv6')?'::':'0.0.0.0'
     this.listenPort = this.session.options.get('listen_port') // TODO retry on other ports
     // TODO only setup UPNP after this
     this.listening = false
@@ -240,14 +241,17 @@ Client.prototype = {
     onAccept: function(sockInfo) {
         //console.log('incoming connection',sockInfo)
         // check if bittorrent connection, dont even know what torrent we're looking at...
-        assert(sockInfo.clientSocketId)
-        chrome.sockets.tcp.getInfo(sockInfo.clientSocketId, function(info) {
-            //console.log('got incoming socket info',info)
-            var peer = new jstorrent.Peer({host:info.peerAddress,
-                                           torrent:null,
-                                           port:info.peerPort})
-            var peerconn = new jstorrent.PeerConnection({sockInfo:sockInfo, peer:peer, client:this})
-        }.bind(this))
+        if (sockInfo.resultCode < 0 || ! sockInfo.clientSocketId) {
+            console.log('accept error', sockInfo, NET_ERRORS_D[sockInfo.resultCode])
+        } else {
+            chrome.sockets.tcp.getInfo(sockInfo.clientSocketId, function(info) {
+                //console.log('got incoming socket info',info)
+                var peer = new jstorrent.Peer({host:info.peerAddress,
+                                               torrent:null,
+                                               port:info.peerPort})
+                var peerconn = new jstorrent.PeerConnection({sockInfo:sockInfo, peer:peer, client:this})
+            }.bind(this))
+        }
     },
     stopListen: function() {
         console.clog(L.CLIENT, "Stop listening")
@@ -262,7 +266,7 @@ Client.prototype = {
         this.settingUpListen = true
         function onCreate(sockInfo) {
             this.listenSock = sockInfo
-            chrome.sockets.tcpServer.listen(sockInfo.socketId,this.app.options.get('incoming_ipv6')?'::':'0.0.0.0',this.listenPort,onListen.bind(this))
+            chrome.sockets.tcpServer.listen(sockInfo.socketId,this.listenHost,this.listenPort,onListen.bind(this))
         }
         function onListen(result) {
             var lasterr = chrome.runtime.lastError
@@ -270,7 +274,7 @@ Client.prototype = {
                 console.log('lasterr listen on port',lasterr)
                 debugger
             } else {
-                console.clog(L.CLIENT,"listening",this.listenPort)
+                console.clog(L.CLIENT,"listening",this.listenHost, this.listenPort)
                 this.settingUpListen = false
                 this.listening = true
                 chrome.sockets.tcpServer.onAcceptError.addListener(this._onAccept)

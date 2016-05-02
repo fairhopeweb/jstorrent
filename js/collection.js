@@ -39,6 +39,7 @@ BasicCollection.prototype = {
         this.trigger('add',item)
     },
     on: function(event_type, callback) {
+        assert(callback)
         // XXX - if we set a debugger here, UI fucks up
         //console.log('register',event_type)
         if (! this.event_listeners[event_type]) {

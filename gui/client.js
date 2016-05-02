@@ -1,3 +1,4 @@
+console.log("client.js")
 document.addEventListener('DOMContentLoaded',onready)
 var client = null
 
