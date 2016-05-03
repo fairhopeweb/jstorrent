@@ -22,7 +22,7 @@ Chrome sandbox, so it does not have access to any files on your system
 control.
 
 I don't frequently keep this readme very up to date. You can find the
-actual changelogs in the (Chrome Web Store listing)[https://chrome.google.com/webstore/detail/jstorrent/anhdpjpojoipgpmfanmedjghaligalgb], or sometimes in the [CHANGES.txt](https://github.com/kzahel/jstorrent/blob/fresh/CHANGES.txt)
+actual changelogs in the [Chrome Web Store listing](https://chrome.google.com/webstore/detail/jstorrent/anhdpjpojoipgpmfanmedjghaligalgb), or sometimes in the [CHANGES.txt](https://github.com/kzahel/jstorrent/blob/fresh/CHANGES.txt)
 
 One of my main goals with this project is to get it nearly as fast as
 the other clients. Disk I/O is pretty slow with the chrome APIs, which I am working on optimizing for.
@@ -46,7 +46,7 @@ The source code is available here for auditing and education
 purposes. I believe open software is great, and I would not ask any
 user to install something that they can't reasonably verify is not
 doing anything malicious. However, the license does not permit
-redistribution of the source code in your own projects.
+redistribution of the jstorrent code or assets in your own projects.
 
 ## Installation:
 
@@ -72,7 +72,6 @@ source too.
 - https://twitter.com/jstorrent (Twitter Page)
 
 ## Special New Features
-=======
 
 - Support downloading directly to directory of choice
   - download to external media (usb drives)
@@ -85,12 +84,12 @@ source too.
 
 Private tracker support is very lacking. I don't know of any sites
 that have whitelisted/allowed JSTorrent. I am working on addressing
-this, and improving the situation
+this by improving the seeding and tracker funcions.
 
 - The "User-Agent" header looks like: (JSTorrent/{version}) (current x-user-agent string version: "JSTorrent/2480") for version 2.4.8
 - The peer id begins with "-JS{version}-", currently peer id begins with "-JS2480-"
 
-I have disabled the spoofing feature.
+I have disabled the "spoofing" feature.
 
 ### Todo
 - see [TODO.txt](https://github.com/kzahel/jstorrent/blob/fresh/TODO.txt)
