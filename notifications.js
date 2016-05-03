@@ -30,7 +30,7 @@
             title: message,
             priority: opts.priority || 0,
             message: opts.details,
-            iconUrl: "/js-128.png"
+            iconUrl: "/images/js-128.png"
         }
         if (opts.contextMessage) {
             this.notificationOpts.contextMessage = opts.contextMessage
