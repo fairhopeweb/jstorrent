@@ -480,6 +480,7 @@
                 break
             case 'gcmMessage':
                 this.handleGCM(event)
+                break
             default:
                 console.log('other/unrecognized runtime event',event)
             }
@@ -489,7 +490,6 @@
             var data = event.message.data
             var reqid = data.reqid
             console.assert(reqid)
-            data.request = JSON.parse(data.request)
             console.log("got a GCM message!", data)
             this.launch(event)
         }

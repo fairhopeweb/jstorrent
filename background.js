@@ -259,13 +259,15 @@ chrome.gcm.onSendError.addListener(function(err) {
 })
 chrome.gcm.onMessage.addListener(function(message) {
     console.log("GCM message",message)
-    if (message.data.ping) {
+    if (message.data.request) { message.data.request = JSON.parse(message.data.request) }
+    var request = message.data.request
+    switch (request.q) {
+    case 'ping':
         // should also have reqid maybe.
         var msgid = makemsgid()
         var dst = jstorrent.gcm_appid+"@gcm.googleapis.com"
-        var data = {'pong':'1',
-                    'reqid':message.data.reqid,
-                    'time':Date.now().toString()
+        var data = {d:JSON.stringify({'pong':'1','time':Date.now().toString()}),
+                    'reqid':message.data.reqid
                    }
         console.log('send pong to',dst,data)
         chrome.gcm.send( {destinationId:dst,
@@ -275,7 +277,10 @@ chrome.gcm.onMessage.addListener(function(message) {
                          }, function(resp){
                              console.log(chrome.runtime.lastError,resp)
                          })
-    } else {
+        break
+    case 'reload':
+        chrome.runtime.reload()
+    default:
         runtimeEvent({type:"gcmMessage", message:message})
     }
 });

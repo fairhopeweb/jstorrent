@@ -145,7 +145,7 @@ Client.prototype = {
         // stripped down state for use with 4096 bytes
         if (max_size === undefined) {
             var overhead = 100 // n, i, msgid, etc
-            max_size = Math.floor(chrome.gcm.MAX_MESSAGE_SIZE - overhead ) // 
+            max_size = Math.floor(chrome.gcm.MAX_MESSAGE_SIZE - overhead ) //
         }
         var tkeys = 'state downloaded size downspeed'.split(' ')
         var numinrow = tkeys.length + 2
@@ -494,7 +494,7 @@ Client.prototype = {
         }
     },
     handleGCMRequest: function(data) {
-        // old version, use handleRequest now
+        console.log("handling GCM request",data)
         var reqid = data.reqid
         var q = data.request.q
         switch(q) {
@@ -506,19 +506,21 @@ Client.prototype = {
                 onupnp.call(this)
             }
             function onupnp() {
+                var resp = {ip:this.externalIP()||'',
+                            port:this.externalPort().toString()}
                 this.session.sendGCM({reqid:reqid,
-                                      ip:this.externalIP()||'',
-                                      port:this.externalPort().toString()})
+                                      d:JSON.stringify(resp)})
             }
             break
         case 'getTorrents':
             var chunks = this.serializeTorrentsMini()
             var n = chunks.length
+            console.log('sending torrent chunks',chunks)
             for (var i=0; i<n; i++) {
                 var data = {reqid:reqid,
                             i:i.toString(),
                             n:n.toString(),
-                            torrents:JSON.stringify(chunks[i])
+                            d:JSON.stringify(chunks[i])
                            }
                 this.session.sendGCM(data)
             }
