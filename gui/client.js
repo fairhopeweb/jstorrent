@@ -7,6 +7,7 @@ function onready() {
         function ready() {
             client = new jstorrent.Client({app:bg.session, id:'client01'})
             window.app = bg.session
+			console.log('sending init to bg')
             bg.session.onClientPageInit(window)
         }
         if (DEVMODE && bg.session.options.get('wait_devtools')) {

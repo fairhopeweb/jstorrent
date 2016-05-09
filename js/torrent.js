@@ -1335,9 +1335,9 @@ Torrent.prototype = {
         //if (reallyStart === undefined) { return }
         if (this.started || this.starting) { return } // some kind of edge case where starting is true... and everything locked up. hmm
         if (this.isComplete()) {
-            if (this.isPrivate()) {
+            if (this.canSeed()) {
                 // let it seed!
-            } else if (! jstorrent.options.seed_public_torrents) {
+            } else {
                 this.set('state','complete')
                 this.save()
                 return

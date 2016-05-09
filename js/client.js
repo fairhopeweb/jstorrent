@@ -138,6 +138,7 @@ function Client(opts) {
 
     this.webapp = null
     this.maybeStartWebApp()
+    this.setupListen()
 }
 
 Client.prototype = {
@@ -210,13 +211,14 @@ Client.prototype = {
             wopts.optAllInterfaces = false
             wopts.optTryOtherPorts = true
             wopts.optRetryInterfaces = false
-            wopts.useCORSHeaders = true // needed for subtitles
+            wopts.useCORSHeaders = false // needed for subtitles
             //opts.optStopIdleServer = 1000 * 30 // 20 seconds
             var handlers = [
                 ['/favicon.ico',jstorrent.FavIconHandler],
                 ['/stream.*',jstorrent.StreamHandler],
-                ['/package/(.*)',jstorrent.PackageHandler]
-                //        ['.*', jstorrent.WebHandler]
+                ['/package/(.*)',jstorrent.PackageHandler],
+//                        ['.*', jstorrent.WebHandler]
+                ['.*', jstorrent.PublicHandler]
             ]
             wopts.handlers = handlers
             this.webapp = new WSC.WebApplication(wopts)
@@ -247,10 +249,31 @@ Client.prototype = {
         } else {
             chrome.sockets.tcp.getInfo(sockInfo.clientSocketId, function(info) {
                 //console.log('got incoming socket info',info)
-                var peer = new jstorrent.Peer({host:info.peerAddress,
-                                               torrent:null,
-                                               port:info.peerPort})
-                var peerconn = new jstorrent.PeerConnection({sockInfo:sockInfo, peer:peer, client:this})
+                // peek at the data
+                var stream = new WSC.IOStream(sockInfo.clientSocketId)
+                var _readonce = false
+                stream.onread = function() {
+                    if (_readonce) {
+                        console.log('already peeked this')
+                        return
+                    }
+                    stream.onread = null
+                    _readonce = true
+                    var peeked = stream.peekstr(5)
+                    if (peeked == 'GET /') {
+                        stream.source = 'bittorrent'
+                        this.webapp.adopt_stream(sockInfo, stream)
+                    } else {
+                        chrome.sockets.tcp.setPaused(sockInfo.clientSocketId, true, function(){})
+                        stream.removeHandler()
+                        var peer = new jstorrent.Peer({host:info.peerAddress,
+                                                       torrent:null,
+                                                       port:info.peerPort})
+                        var peerconn = new jstorrent.PeerConnection({sockInfo:sockInfo, stream: stream, peer:peer, client:this})
+                    }
+                }.bind(this)
+
+
             }.bind(this))
         }
     },
@@ -263,6 +286,7 @@ Client.prototype = {
         this.listenSock = null
     },
     setupListen: function() {
+        if (this.listening) { return }
         if (this.settingUpListen) { console.error("already setting up listening socket"); return }
         this.settingUpListen = true
         function onCreate(sockInfo) {

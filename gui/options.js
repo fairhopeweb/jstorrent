@@ -169,7 +169,9 @@ function OptionsView(opts) {
     // move maxconns to be the first option
     keys.splice(keys.indexOf('maxconns'),1)
     keys.splice(keys.indexOf('download_rate_limit'),1)
+    keys.splice(keys.indexOf('upload_rate_limit'),1)
     keys = ['download_rate_limit'].concat(keys)
+    keys = ['upload_rate_limit'].concat(keys)
     keys = ['maxconns'].concat(keys)
     
     var cur, curdom

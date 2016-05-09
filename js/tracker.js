@@ -102,7 +102,7 @@
             }
             this.next_announce_timeout_id = null
             if (jstorrent.options.disable_trackers) {
-                callback({error:'disabled'})
+                if (callback) {callback({error:'disabled'})}
                 return
             }
             if (this.announcing) { callback({error:'already announcing'}); return }

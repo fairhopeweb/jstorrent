@@ -60,6 +60,14 @@
                 'maxval':9999,
                 'type':'int'
             },
+            upload_rate_limit: {
+                'name': 'Max Upload (kB/s) 0:unlimited',
+                'help': 'Set a limit to maximum upload speed per torrent. The value of 0 means no limit.',
+                'default': 0,
+                'minval':0,
+                'maxval':9999,
+                'type':'int'
+            },
             'show_progress_notifications': {
                 'default':true,
                 'name':'Show notifications for download progress',
@@ -180,7 +188,7 @@
                 'default':false,
                 'name':'Enable seeding public torrents (BETA)',
                 'type':'bool',
-                'visible':false
+                'visible':true
             },
             'max_unflushed_piece_data': {
                 'editable': false,

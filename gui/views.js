@@ -555,7 +555,6 @@ GeneralInfoView.prototype = {
                     s += ('<li>Stream Page: <a target="_blank" href="'+streamUrl+'">Video Player</a></li>') // now in files tab
                 }
             }
-
             //var attr_includes = ['added']
             var attr_includes = this.torrent._attributes
             var attr_excludes = ['bitfield','filePriority']
@@ -576,6 +575,7 @@ GeneralInfoView.prototype = {
             }
 
             s += '<label style="margin-top:0.5em">Attributes</label>'
+            s += ('<li>' + _.escape('infohash') + ': ' + this.renderValue(this.torrent.hashhexlower) + '</li>')
             for (var key in attr_includes) {
                 if (! _.contains(attr_excludes, key)) {
                     s += ('<li>' + _.escape(key) + ': ' + this.renderValue(this.torrent._attributes[key]) + '</li>')

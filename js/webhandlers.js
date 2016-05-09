@@ -2,12 +2,34 @@
     if (! (window.WSC && WSC.BaseHandler && WSC.WebApplication)) { // if web-server-chrome available
         return
     }
+    function PublicHandler() {
+        WSC.BaseHandler.prototype.constructor.call(this)
+    }
+    var PublicHandlerProto = {
+        get: function() {
+            if (this.request.connection.stream.source == 'bittorrent') {
+                this.write('bad request',400,true);
+                return
+            }
+        }
+    }
+    _.extend(PublicHandler.prototype,
+             PublicHandlerProto,
+             WSC.BaseHandler.prototype
+            )
+    jstorrent.PublicHandler = PublicHandler
+
+    
     function PackageHandler() {
         this.disk = app.client.packageDisk
         WSC.BaseHandler.prototype.constructor.call(this)
     }
     var PackageHandlerprototype = {
         get: function() {
+            if (this.request.connection.stream.source == 'bittorrent') {
+                this.write('bad request',400,true);
+                return
+            }
             var parts = this.request.path.split('/')
             var path = parts.slice(2,parts.length)
 
@@ -48,6 +70,10 @@
     }
     var StreamHandlerprototype = {
         get: function() {
+            if (this.request.connection.stream.source == 'bittorrent') {
+                this.write('bad request',400,true);
+                return
+            }
             this.setHeader('accept-ranges','bytes')
             this.setHeader('connection','keep-alive')
             var hash = this.request.arguments['hash']
@@ -236,6 +262,10 @@
     }
     var FavIconHandlerprototype = {
         get: function() {
+            if (this.request.connection.stream.source == 'bittorrent') {
+                this.write('bad request',400,true);
+                return
+            }
             this.disk.diskio.getWholeContents({
                 path:['images','favicon.ico']
             }, this.onResult.bind(this))

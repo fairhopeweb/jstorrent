@@ -55,6 +55,8 @@ function PeerConnection(opts) {
     this.lastReadTime = null
     this.lastWriteTime = null
 
+	this.pieceRequestQueue = []
+
     this.set('address', this.peer.get_key())
     this.set('bytes_sent', 0)
     this.set('bytes_received', 0)
@@ -106,18 +108,28 @@ function PeerConnection(opts) {
     // read/write buffer stuff
     this.writing = false
     this.writing_length = 0
-    this.readBuffer = new jstorrent.Buffer
+    if (opts.stream) {
+        this.readBuffer = opts.stream.readBuffer // adopt from existing stream
+    } else {
+        this.readBuffer = new jstorrent.Buffer
+    }
     this.writeBuffer = new jstorrent.Buffer
 
     if (opts.sockInfo) {
         this.sockInfo = {socketId: opts.sockInfo.clientSocketId}
-        chrome.sockets.tcp.setPaused(this.sockInfo.socketId, false, function(){})
+        if (opts.paused === undefined || opts.paused) {
+            chrome.sockets.tcp.setPaused(this.sockInfo.socketId, false, function(){})
+        }
         peerSockMap[this.sockInfo.socketId] = this
         this.set('socketId',this.sockInfo.socketId)
         this.set('incoming',true)
+        this.state = 'incoming'
         this.connected = true
     } else {
         this.state = 'outgoing'
+    }
+    if (opts.stream) {
+        this.checkBuffer()
     }
 }
 
@@ -542,7 +554,7 @@ PeerConnection.prototype = {
                 if (! this.peerInterested) {
                     if (this.torrent.canSeed()) {
                         // dont close connection
-                    } else if (! jstorrent.options.seed_public_torrents) {
+                    } else {
                         this.close('both complete and peer not interested',true)
                     }
                 }
@@ -786,8 +798,8 @@ PeerConnection.prototype = {
             // silently dont handle PIECE requests from choked peers.
             return 
         }
-        
-
+        var ul_limit = this.client.app.options.get('upload_rate_limit')
+		
         // TODO -- if write buffer is pretty full, don't create diskio
         //job yet, since we want to do it more lazily, not too
         //eagerly.  :-) todo -- make this work better haha
@@ -798,7 +810,12 @@ PeerConnection.prototype = {
         var offset = header.getUint32(4)
         var size = header.getUint32(8)
         if (this.torrent.has_infodict() && this.torrent.havePieceData(pieceNum)) {
-            this.torrent.registerPieceRequested(this, pieceNum, offset, size)            
+			if (ul_limit && this.torrent.get('upspeed') > (ul_limit * 1024)) {
+				// put this in a queue
+				this.pieceRequestQueue.push(msg)
+			} else {
+				this.torrent.registerPieceRequested(this, pieceNum, offset, size)
+			}
         } else {
             // my bitfield may be one off...
             this.sendMessage("REJECT_REQUEST", msg.payload) 
@@ -851,8 +868,8 @@ PeerConnection.prototype = {
         this.peerInterested = true
         if (this.torrent.isPrivate()) {
             this.sendMessage('UNCHOKE')
-        } else if (app.options.get('seed_public') || jstorrent.options.seed_public_torrents || this.peer.host == '127.0.0.1') {
-            if (this.torrent.isComplete()) {
+        } else if (app.options.get('seed_public') || this.peer.host == '127.0.0.1') {
+            if (this.torrent.isComplete()) { // disk io queue getting full with piece requests
                 this.sendMessage('UNCHOKE')
             }
         }

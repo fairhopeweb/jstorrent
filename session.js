@@ -111,7 +111,7 @@
             console.clog(L.SESSION,'torrent complete',evt)
         },
         onTorrentProgress: function(torrent) {
-            console.clog(L.SESSION,'torrent progress',torrent.get('name'), Math.floor(100 * torrent.get('complete')))
+            //console.clog(L.SESSION,'torrent progress',torrent.get('name'), Math.floor(100 * torrent.get('complete')))
         },
         onClientError: function(evt,e) {
             console.clog(L.SESSION,'on client error',evt,e)
@@ -217,11 +217,12 @@
             if (cbs) cbs.forEach( function(cb){cb()} )
         },
         registerOAuthGrant: function(scopes, token) {
-            console.log('got oauth',scopes,token)
+            console.clog(L.SESSION,'got oauth',scopes,token)
             this.oauth.push( { scopes: scopes, token: token } )
             this.registerWithGCMServer()
         },
         tryGetOpenID: function() {
+			if (! this.options.get('remote_access')) { return }
             var scopes = ["openid"]
             // would be nice maybe to allow using an account different from the chrome account.
             // (launch web auth flow ...)
@@ -233,12 +234,13 @@
                                              if (lasterr) {
                                                  console.log('could not get token',lasterr)
                                              } else if (result) {
+												 // token can be empty? (maybe user clicks cancel)
                                                  this.registerOAuthGrant(scopes, result)
                                              }
                                          }.bind(this))
         },
         registerWithGCMServerResult: function(evt) {
-            console.log('got register result',evt,evt.target.status)
+            console.clog(L.SESSION,'got register result',evt.target.status)
         },
         registerWithGCMServer: function() {
             chrome.gcm.register([jstorrent.gcm_appid], function(gcmid) {
@@ -254,7 +256,7 @@
                     }
                     return
                 }
-                console.log('registered with gcm',gcmid)
+                console.clog(L.SESSION,'registered with gcm',gcmid)
                 this.gcmid = gcmid
                 var oauth = this.oauth[this.oauth.length - 1]
                 var params = {
@@ -277,7 +279,7 @@
             }.bind(this))
         },
         registerEvent: function(event) {
-            //console.clog(L.SESSION,'register event',event,this.debugState())
+            console.clog(L.SESSION,'register event',event,this.debugState())
             this.events.push(event)
             this.runEvents()
         },
@@ -386,13 +388,14 @@
             this.launchDone()
         },
         launchDone: function() {
-            console.log('launchdone',this.eventData)
+            console.clog(L.SESSION,'launchdone',this.eventData)
             this.launching = false
             this.client.handleLaunchData(this.eventData)
             this.eventData = null
             this.runEvents()
         },
         launch: function(data) {
+			console.clog(L.SESSION,'launch',data)
             if (! this.thinking) {
                 this.thinking = setInterval(this.think.bind(this), 10000)
             }
@@ -400,7 +403,7 @@
                 console.warn('call to launch with',data,'but already launching')
                 return
             }
-            this.launching = true
+            this.launching = true // this is getting stuck
             if (this[MAINWIN]) {
                 // have all windows already
                 if (data.type != 'gcmMessage') {// only for some types of events
@@ -474,9 +477,17 @@
                 break
             case 'onSuspend':
                 console.log('going to suspend. great!')
+                var fgapp = this.get_fgapp()
+                if (fgapp) {
+                    fgapp.runtimeMessage(event.type)
+                }
                 break
             case 'onSuspendCanceled':
                 console.log('suspend canceled!')
+                var fgapp = this.get_fgapp()
+                if (fgapp) {
+                    fgapp.runtimeMessage(event.type)
+                }
                 break
             case 'gcmMessage':
                 this.handleGCM(event)
@@ -484,6 +495,10 @@
             default:
                 console.log('other/unrecognized runtime event',event)
             }
+        },
+        get_fgapp: function() {
+            var mainwin = chrome.app.window.get(MAINWIN)
+            return mainwin && mainwin.contentWindow && mainwin.contentWindow.fgapp
         },
         handleGCM: function(event) {
             // gets handled in js/client.js

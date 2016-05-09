@@ -118,7 +118,7 @@ jstorrent.options = {
     transferable_objects: true,
     use_metadata_cache: true, // speeds up the app diskio
     use_fileentry_cache: true, // speeds up the app diskio
-    load_options_on_start: false,
+    load_options_on_start: false, // for debugging options page
     add_torrents_on_start: false,
     run_unit_tests: false,
     disable_trackers: false,
@@ -126,7 +126,6 @@ jstorrent.options = {
     slow_hashcheck: false,
     disable_pex: false,
     use_piece_cache: false,
-    seed_public_torrents: false, // default off
     allow_report_torrent_bug: false,
     reset_on_complete: false, // reset torrent state on torrent completion (testing)
     manual_peer_connect_on_start: {

@@ -2,52 +2,8 @@ console.log('background.js')
 var reload = chrome.runtime.reload
 var MAINWIN = 'mainWindow2'
 var _update_available = false
-// the browser extension that adds a context menu
 var extensionId = "bnceafpojmnimbnhamaeedgomdcgnbjk"
 var session = null
-
-/*
-
-    onRestoredMainWindow: function() {
-        console.log('main window restored. re-create UI')
-        var app = this.mainWindow.contentWindow.app
-        app.UI.undestroy()
-        // restore the UI
-    },
-    onMinimizedMainWindow: function() {
-        console.log('main window minimized. destroy UI')
-        var app = this.mainWindow.contentWindow.app
-        app.UI.destroy()
-        // destroy the UI completely to free up memory
-    },
-    onClosedMainWindow: function() {
-        console.log('onClosedMainWindow')
-
-        if (_update_available) {
-            chrome.runtime.reload()
-        }
-        
-        this.mainWindow = null
-
-        chrome.notifications.getAll( function(nots) {
-            for (var key in nots) {
-                chrome.notifications.clear(key)
-            }
-        })
-        var opts = chrome.app.window.get('options')
-        if (opts) { opts.close() }
-        var help = chrome.app.window.get('help')
-        if (help) { help.close() }
-        
-        if (window.mediaPort) {
-            console.log('disconnecting media port')
-            // send notification to media page that it's about to break.
-            mediaPort.postMessage({error:"window closed"})
-            mediaPort.disconnect()
-        }
-    }
-}
-*/
 
 function launch() {
     runtimeEvent({type:'onLaunched', data:{source:'debugger'}})
@@ -60,39 +16,6 @@ function runtimeEvent(event) {
         session = new jstorrent.Session(event)
     }
 }
-/*
-function onAppLaunchMessage_old(launchData) {
-    // launchData, request, sender, sendRepsonse
-
-    function onMainWindow(mainWindow) {
-        mainWindow.contentWindow.app.registerLaunchData(launchData)
-    }
-    function onMainWindowSpecial(mainWindow) {
-        // the app object has not been initialized
-        if (! mainWindow.contentWindow.jstorrent_launchData) {
-            mainWindow.contentWindow.jstorrent_launchData = []
-        }
-        mainWindow.contentWindow.jstorrent_launchData.push( launchData )
-    }
-
-    windowManager.getMainWindow( function(mainWindow) {
-        // if window already existed...
-        if (mainWindow.focus) {
-            mainWindow.focus()
-        } else {
-            // WTF chrome.app.window.get doesnt even exist at this point
-            // crash
-            chrome.runtime.reload()
-        }
-
-        if (mainWindow.contentWindow.app) {
-            onMainWindow(mainWindow)
-        } else {
-            onMainWindowSpecial(mainWindow)
-        }
-    })
-}
-*/
 function setup_uninstall() {
     try {
         chrome.runtime.setUninstallURL('http://jstorrent.com/uninstall/?id=' + encodeURIComponent(chrome.runtime.id),
@@ -257,26 +180,56 @@ function checkForUpdateMaybe() {
 chrome.gcm.onSendError.addListener(function(err) {
     console.error('gcm send error',err)
 })
+
+function setupRTC(offerobj, cb) {
+    //http://www.html5rocks.com/en/tutorials/webrtc/infrastructure/ steps 1--3 alice eve
+    console.log('got offer',offerobj)
+    var offer = new RTCSessionDescription(offerobj)
+    window.peerconn = new webkitRTCPeerConnection({
+        iceServers: [{ 'url': 'stun:stun.l.google.com:19302' }]})
+    peerconn.setRemoteDescription(offer, function() {
+        peerconn.createAnswer(function(answer) {
+            peerconn.setLocalDescription(answer)
+            console.log('created answer',answer)
+            cb(answer)
+        }, function(error) {
+            console.log('yar')
+        })
+    })
+}
+
+
+function respondGCM(message, resp) {
+    var data = {d:JSON.stringify(resp),
+                'reqid':message.data.reqid
+               }
+    var msgid = makemsgid()
+    var dst = jstorrent.gcm_appid+"@gcm.googleapis.com"
+    chrome.gcm.send( {destinationId:dst,
+                      messageId:msgid,
+                      timeToLive: 20,
+                      data:data
+                     }, function(resp){
+                         console.log(chrome.runtime.lastError,resp)
+                     })
+}
+
 chrome.gcm.onMessage.addListener(function(message) {
     console.log("GCM message",message)
     if (message.data.request) { message.data.request = JSON.parse(message.data.request) }
     var request = message.data.request
     switch (request.q) {
+    case 'webrtc_offer':
+		return
+        var offer = request.offer
+        setupRTC(offer, function(answer) {
+            respondGCM(message, answer)
+        })
+        break;
     case 'ping':
         // should also have reqid maybe.
-        var msgid = makemsgid()
-        var dst = jstorrent.gcm_appid+"@gcm.googleapis.com"
-        var data = {d:JSON.stringify({'pong':'1','time':Date.now().toString()}),
-                    'reqid':message.data.reqid
-                   }
-        console.log('send pong to',dst,data)
-        chrome.gcm.send( {destinationId:dst,
-                          messageId:msgid,
-                          timeToLive: 20,
-                          data:data
-                         }, function(resp){
-                             console.log(chrome.runtime.lastError,resp)
-                         })
+        var resp = {'pong':'1','time':Date.now().toString()}
+        respondGCM(message, resp)
         break
     case 'reload':
         chrome.runtime.reload()
