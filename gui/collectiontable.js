@@ -104,10 +104,11 @@ debugger // using CellSelectEditor now
         //return
         //console.log(app.UI.torrenttable.grid.rowsCache)
 
+        evt.stopPropagation()
         var cell = grid.getCellFromEvent(evt)
 
         if (cell) {
-            if (this.collection.itemClass != jstorrent.File) {
+            if (this.__name__ != 'File') {
                 grid.setSelectedRows([cell.row])
             }
             var item = grid.getDataItem(cell.row)
@@ -202,7 +203,7 @@ SlickCollectionTable.prototype = {
             // need to perhaps clear selection
 
             // XXX - THIS BREAKS KEEPING ITEM SELECTED THOUGH! SO RESTORE SELECTION after we do this...
-            if (this.collection.itemClass == jstorrent.Torrent) {
+            if (item.__name__ == 'Torrent') {
                 // maybe only do this on the torrent table, where it isn't so important, since torrents only get removed when user clicks somewhere else
                 this.grid.setActiveCell(0,0)
                 this.grid.setActiveCell(0,1)

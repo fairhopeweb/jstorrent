@@ -30,7 +30,7 @@
         this.manifest = null
 
         this.analytics = false
-        this.client = false
+        this.client = false // becomes true and then reference to actual client
         this[MAINWIN] = false
         this.registerEvent(event)
         this.onClientError_ = this.onClientError.bind(this)
@@ -368,6 +368,7 @@
         },
         onClientPageInit: function(win) {
             console.clog(L.SESSION,'client page created client',win.client)
+            console.assert(win.client)
             this.client = win.client
             //this.lastclient = win.client // debug how long this reference stays around
             this.bindClientEvents()
@@ -410,7 +411,7 @@
                     chrome.app.window.get(MAINWIN).focus()
                 }
                 this.launchDone()
-            } else if (this.wantsUI && this.analytics && this.client) {
+            } else if (this.wantsUI && this.analytics && this.client) { // this.client == false even when should be true
                 this.createUI()
             } else {
                 this.createAnalytics() // made it a separate page because analytics bundle seems to prevent sleep.
@@ -505,7 +506,6 @@
             var data = event.message.data
             var reqid = data.reqid
             console.assert(reqid)
-            console.log("got a GCM message!", data)
             this.launch(event)
         }
     }

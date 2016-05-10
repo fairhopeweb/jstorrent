@@ -142,6 +142,7 @@ AppForeground.prototype = {
         }
     },
     onContextMenuNoItem: function(grid, info, evt) {
+        console.log('oncontextmenunoitem')
         chrome.contextMenus.removeAll()
 
         var ui = this.UI
@@ -167,16 +168,16 @@ AppForeground.prototype = {
         console.clog(L.UI,'Context Menu with:',item)
         chrome.contextMenus.removeAll()
         var cls = item._collections && item._collections[0] && item._collections[0].itemClass
-        if (cls == jstorrent.PeerConnection) {
+        if (cls.name == 'PeerConnection') {
             item.debugInfo()
             window.contextMenuContextItem = item
             var actions = ['Unchoke','Choke','Disconnect']
             actions.forEach(function(action){chrome.contextMenus.create({contexts:["all"],title:action,id:action})})
-        } else if (cls == jstorrent.Tracker) {
+        } else if (cls.name == 'Tracker') {
             window.contextMenuContextItem = item
             var actions = ['Force announce','Delete']
             actions.forEach(function(action){chrome.contextMenus.create({contexts:["all"],title:action,id:action})})
-        } else if (item.itemClass == jstorrent.Torrent) {
+        } else if (cls.name == 'Torrent') {
             if (jstorrent.options.allow_report_torrent_bug) {
 
                 var opts = {
@@ -187,7 +188,7 @@ AppForeground.prototype = {
                 window.contextMenuContextItem = item
                 chrome.contextMenus.create(opts, _.bind(this.onContextMenuCreate,this) )
             }
-        } else if (item.itemClass == jstorrent.File) {
+        } else if (cls.name == 'File') {
             window.contextMenuContextItem = item
             var opts1 = {
                 contexts:["all"],
@@ -248,12 +249,12 @@ AppForeground.prototype = {
             clientwin.L[k].show = ! clientwin.L[k].show
             bgwin.L[k].show = ! bgwin.L[k].show
             L[k].show = ! L[k].show
-        } else if (cls == jstorrent.PeerConnection) {
+        } else if (item.__name__ == 'PeerConnection') {
             if (id == 'Disconnect') item.disconnect()
             else if (id == 'Choke') item.sendMessage("CHOKE")
             else if (id == 'Unchoke') item.sendMessage("UNCHOKE")
             
-        } else if (cls == jstorrent.Tracker) {
+        } else if (item.__name__ == 'Tracker') {
             if (id == 'Force announce') {
                 item.announce()
             } else if (id == 'Delete') {
@@ -325,7 +326,7 @@ AppForeground.prototype = {
         this.client.torrents.on('complete', _.bind(this.onTorrentComplete, this))
         this.client.on('error', _.bind(this.onClientError, this))
     },
-    initialize_client: function() {
+    initialize_client: function() { // not being called
         console.clog(L.INIT,'app:initialize_client')
         this.client = new jstorrent.Client({app:this, id:'client01'});
         this.bind_misc_client_torrent()
@@ -405,7 +406,7 @@ AppForeground.prototype = {
         }
         this.createNotification({ details:"Sorry, this is the free trial version, and you have used all your free downloads",
                                   buttons: [ 
-                                      {title:"Get JSTorrent Full Version", iconUrl:"/cws_32.png"},
+                                      {title:"Get JSTorrent Full Version", iconUrl:"/images/cws_32.png"},
                                       {title:"Why do I have to pay?"},
                                   ],
                                   id:'no-downloads-left',
@@ -492,14 +493,7 @@ AppForeground.prototype = {
             if (item) {
                 var peer = item
                 var torrent = peer.torrent
-                var peerconn = new jstorrent.PeerConnection({peer:peer})
-                //console.log('should add peer!', idx, peer)
-                if (! torrent.peers.contains(peerconn)) {
-                    torrent.peers.add( peerconn )
-                    //torrent.set('numpeers',torrent.peers.items.length)
-                    peerconn.connect()
-                }
-
+                console.log('todo -- force connect',peer)
             }
         }
     },
@@ -910,7 +904,7 @@ AppForeground.prototype = {
         this.createNotification({id:"pleaseReviewMe",
                                  priority:1,
                                  buttons: [ 
-                                     {title:"Leave a Review", iconUrl:"/cws_32.png"},
+                                     {title:"Leave a Review", iconUrl:"/images/cws_32.png"},
                                      {title:"Don't show this message again"}
                                  ],
                                  onClick: _.bind(this.openReviewPage,this),
@@ -973,7 +967,7 @@ AppForeground.prototype = {
             if (! isInstalled) {
                 this.createNotification({id:"extension",
                                          buttons: [ 
-                                             {title:"Install the Extension", iconUrl:"/cws_32.png"},
+                                             {title:"Install the Extension", iconUrl:"/images/cws_32.png"},
                                              {title:"Don't show this message again"}
                                                   ],
                                          onButtonClick: _.bind(function(idx) {
@@ -1128,7 +1122,7 @@ AppForeground.prototype = {
         this.createNotification({details:msg, priority:prio})
         console.warn('notification:',msg);
     },
-    initialize: function(callback) {
+    initialize: function(callback) { // not being called
         this.options.load( _.bind(function() {
             this.on_options_loaded()
             this.initialize_client()

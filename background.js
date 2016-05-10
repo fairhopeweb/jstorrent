@@ -70,10 +70,10 @@ function doShowUpdateAvailableDEV(details) {
                                 { title:chrome.i18n.getMessage("extName") + " Version Warning",
                                   type:"basic",
                                   priority:2,
-                                  iconUrl: "js-128.png",
+                                  iconUrl: "/images/js-128.png",
                                   message:msg,
                                   buttons:[
-                                      {title:"Install", iconUrl:"cws_32.png"},
+                                      {title:"Install", iconUrl:"/images/cws_32.png"},
                                       {title:"Not now"}
                                   ]
                                 }, function(id) {
@@ -99,11 +99,11 @@ function doShowUpdateAvailable(details) {
                                 { title:chrome.i18n.getMessage("extName") + " Update",
                                   type:"basic",
                                   priority:2,
-                                  iconUrl: "js-128.png",
+                                  iconUrl: "/images/js-128.png",
                                   message:msg,
                                   buttons:[
-                                      {title:"Install Now", iconUrl:"cws_32.png"},
-                                      {title:"Later", iconUrl:"cws_32.png"}
+                                      {title:"Install Now", iconUrl:"/images/cws_32.png"},
+                                      {title:"Later", iconUrl:"/images/cws_32.png"}
                                   ]
                                 }, function(id) {
                                     console.log('created notification with id',id,chrome.runtime.lastError)
@@ -128,10 +128,10 @@ function doShowUpdateNotification(details, history) {
                                 { title:chrome.i18n.getMessage("extName") + " Updated",
                                   type:"basic",
                                   priority:2,
-                                  iconUrl: "js-128.png",
+                                  iconUrl: "/images/js-128.png",
                                   message:msg,
                                   buttons:[
-                                      {title:"View changes", iconUrl:"cws_32.png"}
+                                      {title:"View changes", iconUrl:"/images/cws_32.png"}
                                   ]
                                 }, function(id) {
                                     console.log('created notification with id',id,chrome.runtime.lastError)
@@ -190,6 +190,11 @@ function setupRTC(offerobj, cb) {
     peerconn.setRemoteDescription(offer, function() {
         peerconn.createAnswer(function(answer) {
             peerconn.setLocalDescription(answer)
+            peerconn.onicecandidate = function(evt) {
+                console.log('ice candidate',evt)
+                
+            }
+            
             console.log('created answer',answer)
             cb(answer)
         }, function(error) {
@@ -211,20 +216,56 @@ function respondGCM(message, resp) {
                       data:data
                      }, function(resp){
                          console.log(chrome.runtime.lastError,resp)
+                         console.log('GCM respond',data)
                      })
 }
 
+function sendNegotiation(type, data) {
+    //respondGCM(
+}
+
+function openDataChannel (){
+    var config = {"iceServers":[{"url":"stun:stun.l.google.com:19302"}]};
+    var connection = { 'optional': [{'DtlsSrtpKeyAgreement': true}, {'RtpDataChannels': true }] };
+
+    peerConnection = new webkitRTCPeerConnection(config, connection);
+    window.peerConnection = peerConnection
+    peerConnection.onicecandidate = function(e){
+        if (!peerConnection || !e || !e.candidate) return;
+        var candidate = event.candidate;
+        sendNegotiation("candidate", candidate);
+    }
+
+    dataChannel = peerConnection.createDataChannel(
+        "datachannel", {reliable: false});
+
+    dataChannel.onmessage = function(e){
+        console.log("DC from ["+user2+"]:" +e.data);
+    }
+    dataChannel.onopen = function(){
+        console.log("------ DATACHANNEL OPENED ------")
+        $("#sendform").show();
+    };
+    dataChannel.onclose = function(){console.log("------ DC closed! ------")};
+    dataChannel.onerror = function(){console.log("DC ERROR!!!")};
+
+    peerConnection.ondatachannel = function () {
+        console.log('peerConnection.ondatachannel event fired.');
+    };
+}
+
+
 chrome.gcm.onMessage.addListener(function(message) {
-    console.log("GCM message",message)
     if (message.data.request) { message.data.request = JSON.parse(message.data.request) }
     var request = message.data.request
+    console.log("GCM onMessage",message.data)
     switch (request.q) {
-    case 'webrtc_offer':
-		return
-        var offer = request.offer
-        setupRTC(offer, function(answer) {
-            respondGCM(message, answer)
-        })
+    case 'webrtc':
+        if (request.type == 'offer') {
+            setupRTC(request.data, function(answer) {
+                respondGCM(message, answer)
+            })
+        }
         break;
     case 'ping':
         // should also have reqid maybe.
@@ -424,4 +465,5 @@ if (chrome.runtime.setUninstallURL && ! DEVMODE) {
     setup_uninstall()
 }
 
-console.assert(chrome.app.window.getAll().length == 0)
+
+// console.assert(chrome.app.window.getAll().length == 0)

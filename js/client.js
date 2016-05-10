@@ -10,6 +10,7 @@ function Client(opts) {
        want a callback for when all that is done
     */
 
+    this.callback = opts.callback
     this.ready = false
     this.app = opts.app
     this.session = opts.app
@@ -146,7 +147,7 @@ Client.prototype = {
         // stripped down state for use with 4096 bytes
         if (max_size === undefined) {
             var overhead = 100 // n, i, msgid, etc
-            max_size = Math.floor(chrome.gcm.MAX_MESSAGE_SIZE - overhead ) //
+            max_size = Math.floor(chrome.gcm.MAX_MESSAGE_SIZE - overhead )
         }
         var tkeys = 'state downloaded size downspeed'.split(' ')
         var numinrow = tkeys.length + 2
@@ -477,6 +478,12 @@ Client.prototype = {
         }
     },
     onReady: function() {
+        var callback = this.callback
+        if (callback) {
+            callback()
+            this.callback = null
+        }
+        
         var item
         if (window.jstorrent_launchData) {
             while (true) {

@@ -1,3 +1,4 @@
+// XXX/todo this is not closing udp sockets on errors/timeouts etc
 (function() {
     function UDPTracker() {
         jstorrent.Tracker.apply(this, arguments)
@@ -123,7 +124,7 @@
             // look at http://www.bittorrent.org/beps/bep_0015.html
             // do retry when connect timeout, or announce timeout
             this.updateState('get_connection')
-	    this.getConnection( this.onConnection.bind(this,event) )
+            this.getConnection( this.onConnection.bind(this,event) )
         },
         onConnection: function(event, connection) {
             if (connection.error) {

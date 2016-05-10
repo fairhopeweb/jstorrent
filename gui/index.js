@@ -108,6 +108,7 @@ function onappready() {
 }
 
 function onready() {
+    // not being called.
     
     function go() {
         window.app = new jstorrent.App;
