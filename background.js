@@ -176,7 +176,7 @@ function checkForUpdateMaybe() {
         }
     })
 }
-
+function logError(err) { console.error(err) }
 chrome.gcm.onSendError.addListener(function(err) {
     console.error('gcm send error',err)
 })
@@ -219,63 +219,123 @@ function respondGCM(message, resp) {
                          console.log('GCM respond',data)
                      })
 }
-
-function sendNegotiation(type, data) {
-    //respondGCM(
+function respondGCMChannel(channel, message) {
+    var data = {'message':JSON.stringify(message),
+                'channel':channel
+               }
+    var msgid = makemsgid()
+    var dst = jstorrent.gcm_appid+"@gcm.googleapis.com"
+    chrome.gcm.send( {destinationId:dst,
+                      messageId:msgid,
+                      timeToLive: 20,
+                      data:data
+                     }, function(resp){
+                         //console.log(chrome.runtime.lastError,resp)
+                         //console.log('GCM channel respond',data)
+                     })
 }
 
-function openDataChannel (){
+function DataChannel(channel){
+    this.channel = channel
     var config = {"iceServers":[{"url":"stun:stun.l.google.com:19302"}]};
-    var connection = { 'optional': [{'DtlsSrtpKeyAgreement': true}, {'RtpDataChannels': true }] };
+    //var conn_conf = { 'optional': [{'DtlsSrtpKeyAgreement': true}, {'RtpDataChannels': true }] };
+    //var conn_conf = { 'optional': [{'RtpDataChannels': true }] };
+    var conn_conf = {}
 
-    peerConnection = new webkitRTCPeerConnection(config, connection);
-    window.peerConnection = peerConnection
-    peerConnection.onicecandidate = function(e){
-        if (!peerConnection || !e || !e.candidate) return;
+    this.conn = new webkitRTCPeerConnection(config, conn_conf);
+    this.conn.onicecandidate = function(e){
+        if (!e || !e.candidate) return;
         var candidate = event.candidate;
-        sendNegotiation("candidate", candidate);
+        respondGCMChannel(this.channel, {type:'candidate', data:candidate})
+    }.bind(this)
+    this.conn.ondatachannel = function (e) {
+        console.log('peerConnection.ondatachannel event fired.',e);
+        this.setDataChannel(e.channel)
+    }.bind(this);
+}
+DataChannel.prototype = {
+    setDataChannel: function(dataChannel) {
+        this.dataChannel = dataChannel
+        dataChannel.onmessage = function(e){
+            console.log("DC onmessage:",e.data)
+        }
+        dataChannel.onopen = function(){
+            console.log("------ DATACHANNEL OPENED ------")
+        };
+        dataChannel.onclose = function(){console.log("------ DC closed! ------")};
+        dataChannel.onerror = function(){console.log("DC ERROR!!!")};
+    },
+    setOfferCreateAnswer: function(data) {
+        this.conn.setRemoteDescription(new RTCSessionDescription(data))
+        var sdpConstraints = {'mandatory':
+                              {
+                                  'OfferToReceiveAudio': false,
+                                  'OfferToReceiveVideo': false
+                              }
+                             };
+        this.conn.createAnswer(function (sdp) {
+            this.conn.setLocalDescription(sdp);
+            respondGCMChannel(this.channel, {q:'webrtc',type:"answer", data:sdp})
+            console.log("------ SEND ANSWER ------");
+        }.bind(this), logError, sdpConstraints);
+    },
+    addCandidates: function(arr) {
+        console.log('adding candidates')
+        arr.forEach( function(c) {
+            var cand = new RTCIceCandidate(c)
+            console.log('adding cand',cand)
+            this.conn.addIceCandidate(cand)
+        }.bind(this) )
     }
-
-    dataChannel = peerConnection.createDataChannel(
-        "datachannel", {reliable: false});
-
-    dataChannel.onmessage = function(e){
-        console.log("DC from ["+user2+"]:" +e.data);
-    }
-    dataChannel.onopen = function(){
-        console.log("------ DATACHANNEL OPENED ------")
-        $("#sendform").show();
-    };
-    dataChannel.onclose = function(){console.log("------ DC closed! ------")};
-    dataChannel.onerror = function(){console.log("DC ERROR!!!")};
-
-    peerConnection.ondatachannel = function () {
-        console.log('peerConnection.ondatachannel event fired.');
-    };
 }
 
-
+var channels = {}
 chrome.gcm.onMessage.addListener(function(message) {
     if (message.data.request) { message.data.request = JSON.parse(message.data.request) }
+    if (message.data.message) { message.data.message = JSON.parse(message.data.message) }
     var request = message.data.request
+    var channel = message.data.channel
     console.log("GCM onMessage",message.data)
-    switch (request.q) {
-    case 'webrtc':
-        if (request.type == 'offer') {
-            setupRTC(request.data, function(answer) {
-                respondGCM(message, answer)
-            })
+    if (channel) {
+        var msg = message.data.message
+        // not a request-response type message
+        if (! channels[channel])
+            channels[channel] = {}
+        var state = channels[channel]
+        switch( msg.q ) {
+        case 'webrtc':
+            var type = msg.type
+            var data = msg.data
+            if (type == 'offer') {
+                state.conn = new DataChannel(channel)
+                state.conn.setOfferCreateAnswer(data)
+            } else if (type == 'candidates') {
+                state.conn.addCandidates(data)
+            }
+            break
+        default:
+            console.warn('unhandled channel message')
         }
-        break;
-    case 'ping':
-        // should also have reqid maybe.
-        var resp = {'pong':'1','time':Date.now().toString()}
-        respondGCM(message, resp)
-        break
-    case 'reload':
-        chrome.runtime.reload()
-    default:
-        runtimeEvent({type:"gcmMessage", message:message})
+
+    } else if (request) {
+        switch (request.q) {
+        case 'webrtc':
+            if (request.type == 'offer') {
+                setupRTC(request.data, function(answer) {
+                    respondGCM(message, answer)
+                })
+            }
+            break;
+        case 'ping':
+            // should also have reqid maybe.
+            var resp = {'pong':'1','time':Date.now().toString()}
+            respondGCM(message, resp)
+            break
+        case 'reload':
+            chrome.runtime.reload()
+        default:
+            runtimeEvent({type:"gcmMessage", message:message})
+        }
     }
 });
 chrome.gcm.onMessagesDeleted.addListener(messagesDeleted);
