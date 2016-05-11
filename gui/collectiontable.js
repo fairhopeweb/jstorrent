@@ -108,7 +108,7 @@ debugger // using CellSelectEditor now
         var cell = grid.getCellFromEvent(evt)
 
         if (cell) {
-            if (this.__name__ != 'File') {
+            if (this.collection.itemClass.name != 'File') {
                 grid.setSelectedRows([cell.row])
             }
             var item = grid.getDataItem(cell.row)
