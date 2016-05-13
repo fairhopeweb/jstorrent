@@ -19,8 +19,8 @@ BasicCollection.prototype = {
         return key
     },
     shift: function() {
-        this.items.shift()
-        this.trigger('remove')
+        var v = this.items.shift()
+        this.trigger('remove',v)
     },
     unon: function(event_type, callback) {
         var idx = this.event_listeners[event_type].indexOf(callback)
@@ -187,7 +187,7 @@ var CollectionProto = {
         if (this.shouldPersist) {
             this.save()
         }
-        this.trigger('remove')
+        this.trigger('remove',v)
     },
     get: function(k) {
         return this.items[this.keyeditems[k]]

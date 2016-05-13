@@ -1,3 +1,5 @@
+- fix onAccept in client vs WSC, if in WSC list, dont accept.
+
 - extension showing popup when it's synced before JST full
 
 - limit reconnect attempts on peers for small swarm (back-off)

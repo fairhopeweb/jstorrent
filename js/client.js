@@ -243,7 +243,7 @@ Client.prototype = {
         }
     },
     onAccept: function(sockInfo) {
-        //console.log('incoming connection',sockInfo)
+        console.log('incoming connection',sockInfo)
         // check if bittorrent connection, dont even know what torrent we're looking at...
         if (sockInfo.resultCode < 0 || ! sockInfo.clientSocketId) {
             console.log('accept error', sockInfo, NET_ERRORS_D[sockInfo.resultCode])

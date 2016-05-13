@@ -1222,6 +1222,8 @@ PeerConnection.prototype = {
     }
 }
 
+jstorrent.peerSockMap = peerSockMap
+
 for (var method in jstorrent.Item.prototype) {
     jstorrent.PeerConnection.prototype[method] = jstorrent.Item.prototype[method]
 }

@@ -197,13 +197,14 @@ SlickCollectionTable.prototype = {
         this.grid.render()
     },
     on_remove: function(item) {
+        // item == undefined with diskio
         if (this.collection.items.length > 0) {
             // Fixes the infamous "unable to select the first column" bug
             // only happens when existing row gets replaced with new item
             // need to perhaps clear selection
 
             // XXX - THIS BREAKS KEEPING ITEM SELECTED THOUGH! SO RESTORE SELECTION after we do this...
-            if (item.__name__ == 'Torrent') {
+            if (item && item.__name__ == 'Torrent') {
                 // maybe only do this on the torrent table, where it isn't so important, since torrents only get removed when user clicks somewhere else
                 this.grid.setActiveCell(0,0)
                 this.grid.setActiveCell(0,1)
