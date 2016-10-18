@@ -9,6 +9,7 @@ cp conf_prod.js conf.js
 zip "package-$VER.zip" manifest.json \
     -r _locales \
     *.js \
+    *.png \
     README.md \
     LICENSE \
     CHANGES.txt \
