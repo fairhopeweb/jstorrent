@@ -1,0 +1,60 @@
+          "scripts": ["all.js","js/log-full.js","minimal.js"]
+
+
+
+            "conf.js",
+            "common.js",
+
+            
+"js/deps/underscore.js",
+"js/deps/digest.js",
+"js/deps/encoding-indexes.js",
+"js/deps/encoding.js",
+"js/common.js",
+"js/ringbuffer.js",
+"js/analytics.js",
+"js/bencode.js",
+"js/collection.js",
+"js/item.js",
+"js/upnp.js",
+"js/disk.js",
+"js/diskio.js",
+"js/tracker.js",
+"js/udptracker.js",
+"js/bridge.js",
+"js/torrent.js",
+"js/torrentsettings.js",
+"js/protocol.js",
+"js/net_errors.js",
+"js/dht.js",
+"js/buffer.js",
+"js/peer.js",
+"js/piece.js",
+"js/piececache.js",
+"js/file.js",
+"js/workerthread.js",
+"js/peerconnection.js",
+"js/client.js",
+"js/notification.js",
+"js/web-server-chrome/common.js",
+"js/web-server-chrome/mime.js",
+"js/web-server-chrome/buffer.js",
+"js/web-server-chrome/request.js",
+"js/web-server-chrome/stream.js",
+"js/web-server-chrome/chromesocketxhr.js",
+"js/web-server-chrome/connection.js",
+"js/web-server-chrome/webapp.js",
+"js/web-server-chrome/handlers.js",
+"js/web-server-chrome/httplib.js",
+            "js/webhandlers.js",
+
+
+
+            "js/options.js",
+            "session.js",
+            "notifications.js",
+            "background.js",
+            
+            "js/log-full.js",
+            "minimal.js"
+

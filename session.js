@@ -29,7 +29,7 @@
         this.networkInterfaces = null
         this.manifest = null
 
-        this.analytics = false
+        this.analytics = null
         this.client = false // becomes true and then reference to actual client
         this[MAINWIN] = false
         this.registerEvent(event)
@@ -303,6 +303,7 @@
             this.manifest = chrome.runtime.getManifest()
             console.clog(L.SESSION,'ready')
             this.ready = true
+            this.analytics = new jstorrent.Analytics({app:this})
             this.tryGetOpenID()
             
             if (this.state && this.state.dontstart_once) {

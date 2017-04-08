@@ -1,9 +1,65 @@
+var _worker_fn = function() {
+    self.addEventListener('message', function(evt) {
+        var msg = evt.data
+        var id = msg._id
+        var transferable = msg.transferable
+        var returnchunks = []
+        var chunks = msg.chunks
+
+        if (msg.command == 'hashChunks') {
+
+            if (true && self.crypto && self.crypto.subtle) { // todo make a nice error
+                var sz = 0
+                for (var i=0; i<chunks.length; i++) { sz += chunks[i].byteLength }
+                var toCheck = new Uint8Array(sz)
+                var offset = 0
+                for (var i=0; i<chunks.length; i++) {
+                    if (transferable) {
+                        // this seems to have helped, creating a new uint8array on it...?
+                        returnchunks.push( new Uint8Array(msg.chunks[i]).buffer )
+                    }
+                    toCheck.set( chunks[i], offset )
+                    offset += chunks[i].byteLength
+                }
+                self.crypto.subtle.digest({name:'SHA-1'}, toCheck).then( function(result) {
+                    if (transferable) {
+                        self.postMessage({hash:new Uint8Array(result), _id:id, chunks:msg.chunks}, returnchunks)
+                    } else {
+                        self.postMessage({hash:new Uint8Array(result), _id:id})
+                    }
+                })
+                return
+            }
+
+            var digest = new Digest.SHA1()
+            for (var i=0; i<msg.chunks.length; i++) {
+                digest.update( msg.chunks[i] )
+                if (transferable) {
+                    // this seems to have helped, creating a new uint8array on it...?
+                    returnchunks.push( new Uint8Array(msg.chunks[i]).buffer )
+                }
+            }
+            var responseHash = new Uint8Array(digest.finalize())
+            if (transferable) {
+                self.postMessage({hash:responseHash, _id:id, chunks:msg.chunks}, returnchunks)
+            } else {
+                self.postMessage({hash:responseHash, _id:id})
+            }
+        } else {
+            self.postMessage({error:'unhandled command', _id:id})
+        }
+    })
+}
+
+
 if (self.jstorrent) {
     // this means we are in the main UI context
 
     function WorkerThread(opts) {
         this.client = opts.client
-        this.worker = new Worker('../js/workerthread.js')
+        //this.worker = new Worker('../js/workerthread.js')
+        var blob = new Blob([ '('+_worker_fn.toString() + ')();'], {type:'text/javascript'})
+        this.worker = new Worker(window.URL.createObjectURL(blob))
         this.worker.addEventListener('message',_.bind(this.onMessage,this))
         this.worker.addEventListener('error',_.bind(this.onError,this))
         this.busy = false
@@ -64,54 +120,4 @@ if (self.jstorrent) {
     // otherwise we are in the worker thread
     // importScripts('deps/digest.js')
 
-    self.addEventListener('message', function(evt) {
-        var msg = evt.data
-        var id = msg._id
-        var transferable = msg.transferable
-        var returnchunks = []
-        var chunks = msg.chunks
-
-        if (msg.command == 'hashChunks') {
-
-            if (true && self.crypto && self.crypto.subtle) { // todo make a nice error
-                var sz = 0
-                for (var i=0; i<chunks.length; i++) { sz += chunks[i].byteLength }
-                var toCheck = new Uint8Array(sz)
-                var offset = 0
-                for (var i=0; i<chunks.length; i++) {
-                    if (transferable) {
-                        // this seems to have helped, creating a new uint8array on it...?
-                        returnchunks.push( new Uint8Array(msg.chunks[i]).buffer )
-                    }
-                    toCheck.set( chunks[i], offset )
-                    offset += chunks[i].byteLength
-                }
-                self.crypto.subtle.digest({name:'SHA-1'}, toCheck).then( function(result) {
-                    if (transferable) {
-                        self.postMessage({hash:new Uint8Array(result), _id:id, chunks:msg.chunks}, returnchunks)
-                    } else {
-                        self.postMessage({hash:new Uint8Array(result), _id:id})
-                    }
-                })
-                return
-            }
-
-            var digest = new Digest.SHA1()
-            for (var i=0; i<msg.chunks.length; i++) {
-                digest.update( msg.chunks[i] )
-                if (transferable) {
-                    // this seems to have helped, creating a new uint8array on it...?
-                    returnchunks.push( new Uint8Array(msg.chunks[i]).buffer )
-                }
-            }
-            var responseHash = new Uint8Array(digest.finalize())
-            if (transferable) {
-                self.postMessage({hash:responseHash, _id:id, chunks:msg.chunks}, returnchunks)
-            } else {
-                self.postMessage({hash:responseHash, _id:id})
-            }
-        } else {
-            self.postMessage({error:'unhandled command', _id:id})
-        }
-    })
 }

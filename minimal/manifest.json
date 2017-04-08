@@ -1,0 +1,90 @@
+{
+    "name": "Minimal Torrent",
+    "description": "minimal",
+    "author": "Kyle Graehl",
+    "version": "0.0.1",
+    "manifest_version": 2,
+    "offline_enabled": true,
+    "minimum_chrome_version": "33",
+    "file_handlers": {
+        "any": {
+            "types": [
+                "application/x-bittorrent"
+            ],
+            "extensions": [
+                "torrent"
+            ]
+        }
+    },
+    "sockets": {
+       "udp": {
+         "send": [""],
+         "bind": [""],
+         "multicastMembership": ""
+       },
+       "tcp": {
+         "connect": [""]
+       },
+       "tcpServer": {
+         "listen": [""]
+       }
+    },
+    "permissions": [
+        {"fileSystem":["write","directory","retainEntries"]},
+        "contextMenus",
+        "alarms",
+        "storage",
+        "unlimitedStorage",
+        "system.storage",
+        "system.cpu",
+        "system.memory",
+	"system.network",
+        "idle",
+        "power",
+        "notifications",
+        "http://*/",
+        "https://*/",
+        "identity",
+        "browser",
+        "alwaysOnTopWindows",
+        "gcm",
+        {"mediaGalleries":["read"]}
+    ],
+    "optional_permissions": [
+        "background",
+        "identity.email"
+    ],
+    "oauth2": {
+        "client_id": "432934632994-20rclui1m8od0p2g09vfbrdnk93gbraa.apps.googleusercontent.com",
+        "scopes": [ 
+            "openid",
+            "email",
+            "profile",
+            "https://www.googleapis.com/auth/drive.appfolder",
+            "https://www.googleapis.com/auth/drive.file"
+                  ]
+    },
+    "app": {
+        "background": {
+          "scripts": [
+            "all.js"
+          ]
+        }
+    },
+    "url_handlers": {
+        "open_jstorrent": {
+            "matches": [
+                "*://*.jstorrent.com/open*",
+                "*://jstorrent.com/open*"
+            ],
+            "title": "Open in jst"
+        }
+    },
+    "externally_connectable": {
+      "ids": [ "bnceafpojmnimbnhamaeedgomdcgnbjk" ],
+      "matches": [
+          "*://*.jstorrent.com/*",
+          "*://jstorrent.com/*"
+      ]
+    }
+}

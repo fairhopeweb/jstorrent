@@ -562,13 +562,25 @@ Client.prototype = {
                                  })
         }
     },
+  prompt_download_location: function() {
+    // must be called from a foreground page...
+    chrome.app.window.create("minimal.html?action=prompt_download")
+    /*
+    var opts = {'type':'openDirectory'}
+    chrome.fileSystem.chooseEntry(opts,
+                                  entry => {
+                                    this.set_default_download_location(entry)
+                                  })*/
+  },
     set_default_download_location: function(entry) {
         if (! entry) {
+          if (this.fgapp)
             this.fgapp.createNotification({details:"No download folder was selected."})
-            return
+          return
         }
 
-        // clear the other notifications
+      if (this.fgapp) {
+      // clear the other notifications
         var id = 'notifyneeddownload'
         if (this.fgapp.notifications.get(id)) {
             chrome.notifications.clear(id,function(){})
@@ -582,6 +594,7 @@ Client.prototype = {
                 chrome.notifications.clear("notifyselected",function(){})
             }
         },this),2000)
+      }
         var disk = new jstorrent.Disk({entry:entry, parent: this.disks, brandnew: true})
         this.disks.add(disk)
         this.disks.setAttribute('default',disk.get_key())

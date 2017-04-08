@@ -62,7 +62,7 @@ function Analytics(opts) {
 
     var report_usage = this.app.options.get('report_usage_statistics')
     
-    if (! id || ! report_usage) {
+    if (! id || ! report_usage || ! window.analytics) {
         function FakeTracker() {}
         FakeTracker.prototype = {
             sendAppView: function(){},
